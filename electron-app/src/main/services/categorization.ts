@@ -55,10 +55,36 @@ function buildCategoryChoicePrompt(
       role: 'system' as const,
       content: `You are an AI assistant that categorizes activities based on CONTENT and PURPOSE, not just the platform or application being used.
 
-IMPORTANT: Focus on what the user is actually doing and why, not just where they're doing it:
-- YouTube can be work if it's educational content related to their goals
-- Twitter/social media can be work if it's for professional networking or research
-- The content and context matter more than the platform.
+CRITICAL RULES FOR CATEGORIZATION:
+
+1. PROFESSIONAL TOOLS = WORK:
+   - IDEs (IntelliJ IDEA, VS Code, PyCharm, Xcode, Android Studio) → Always Work
+   - Code editors (Sublime Text, Vim, Emacs) → Always Work
+   - Developer tools (GitHub Desktop, Terminal, Postman, Docker) → Always Work
+   - Design tools (Figma, Photoshop, Sketch) → Always Work if user is designer/developer
+   - Database tools (MySQL Workbench, pgAdmin, MongoDB Compass) → Always Work
+   - Microsoft Office (Word, Excel, PowerPoint, Outlook, Teams) → Always Work
+   - Professional communication (Slack, Teams, Zoom for meetings) → Always Work
+
+2. SOCIAL MEDIA/ENTERTAINMENT = STRICT:
+   - Social media (Facebook, Reddit, Twitter, Instagram, TikTok) → Entertainment UNLESS:
+     * URL/content shows clear work purpose (e.g., company page management)
+     * User explicitly states "social media management" in goals
+   - YouTube → Entertainment UNLESS clearly educational/tutorial AND related to goals
+   - Shopping sites → Entertainment UNLESS buying work equipment mentioned in goals
+   - News sites → Entertainment (passive consumption)
+
+3. AMBIGUOUS CASES:
+   - When in doubt between Work categories → choose the most relevant
+   - When in doubt between Work and Entertainment → look at URL and content first
+   - No URL/content for professional tools → assume Work
+   - No URL/content for browsers/social media → assume Entertainment
+
+4. DECISION PROCESS:
+   - First check: Is this a professional development/productivity tool? → Work
+   - Then check: Is URL/content clearly work-related? → Work
+   - Finally: Does it directly support stated goals? → Work
+   - Otherwise → Entertainment
 
 Based on the user's goals, their current activity, and their list of personal categories, choose the category name that best fits the activity.
 ${
@@ -87,18 +113,26 @@ CURRENT ACTIVITY:
 ${activityDetailsString}
 
 EXAMPLES OF CORRECT CATEGORIZATION:
-- Activity: Watching a programming tutorial on YouTube. Goal: "Finish coding new feature". Categories: "Work", "Distraction". Correct Category: "Work".
-- Activity: Browsing Instagram profile. Goal: "Find dream wife". Categories: "Find Dream Wife", "Social Media Distraction". Correct Category: "Find Dream Wife".
-- Activity: Twitter DMs about user research. Goal: "Build novel productivity software". Categories: "Product Management", "Distraction". Correct Category: "Product Management".
-- Activity: Watching random entertainment on YouTube. Goal: "Finish coding new feature". Categories: "Work", "Distraction". Correct Category: "Distraction".
-- Activity: Drafting emails for unrelated side project. Goal: "Working on new social app". Categories: "Work Communication", "Distraction". Correct Category: "Distraction".
+- App: "IntelliJ IDEA" (no URL/content). Goal: "Software Developer". → CORRECT: "Work" (professional IDE)
+- App: "VS Code" (no URL/content). Goal: "Software Developer". → CORRECT: "Work" (professional editor)
+- App: "Microsoft Teams" (no URL/content). Goal: "Software Developer". → CORRECT: "Work" or "Communication" (work tool)
+- App: "Arc", URL: "facebook.com/jewelry". Goal: "Software Developer". → CORRECT: "Entertainment" (personal shopping)
+- App: "Arc", URL: "reddit.com/r/funny". Goal: "Software Developer". → CORRECT: "Entertainment" (memes)
+- App: "Arc", URL: "stackoverflow.com/questions/react-bug". Goal: "Software Developer". → CORRECT: "Work" (solving work problem)
+- App: "Chrome", URL: "youtube.com/watch?v=react-tutorial". Goal: "Learning React". → CORRECT: "Work" (directly related)
+- App: "Chrome", URL: "youtube.com/watch?v=cat-video". Goal: "Learning React". → CORRECT: "Entertainment" (unrelated)
+- App: "Figma" (no URL/content). Goal: "UI Designer". → CORRECT: "Work" (professional tool)
+- App: "Slack" (no URL/content). Goal: "Any professional". → CORRECT: "Work" or "Communication" (work chat)
 
 TASK:
-- Look at the CURRENT ACTIVITY through the lens of the user's PROJECTS AND GOALS.
-- Which of the USER'S CATEGORIES best supports their stated objectives?
-- First consider if the CURRENT ACTIVITY could be a step in achieving one of the USER'S PROJECTS AND GOALS, even if it seems unrelated at first.
-- If the activity is obviously unrelated to the user's stated projects and goals, it should be categorized as "Distraction" regardless of the activity type.
-- If the activity doesn't neatly fit into any of the other categories it's likely a distraction.
+1. Check if Application is a known professional tool (IDE, code editor, Office suite, etc.)
+   - If YES and user is a professional → Categorize as Work
+2. If it's a browser, check URL and content:
+   - Social media/shopping/entertainment sites → Entertainment (unless explicit work evidence)
+   - Technical sites (StackOverflow, GitHub, documentation) → Work
+   - Educational content directly related to goals → Work
+3. When in doubt between Work categories → choose most specific
+4. When in doubt between Work and Entertainment for browsers → prefer Entertainment UNLESS clear evidence
 
 Respond in JSON format with the category name and your reasoning.
 `
