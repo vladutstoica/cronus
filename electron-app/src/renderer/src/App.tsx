@@ -1,4 +1,3 @@
-import { usePostHog } from 'posthog-js/react'
 import React, { useCallback, useEffect, useState } from 'react'
 import { DashboardView } from './components/DashboardView'
 import DistractionStatusBar from './components/DistractionStatusBar'
@@ -20,18 +19,20 @@ import { cn } from './lib/utils'
 export const APP_NAME = 'Cronus' + (process.env.NODE_ENV === 'development' ? ' Dev' : '')
 export const APP_USP = 'The first context-aware, AI distraction and time tracker.'
 
-export function MainAppContent(): React.ReactElement {
-  const { isAuthenticated, token } = useAuth()
-  const { isSettingsOpen, setIsSettingsOpen, setFocusOn } = useSettings()
-  const posthog = usePostHog()
+export interface ActivityToRecategorize {
+  identifier: string
+  nameToDisplay: string
+  itemType: 'app' | 'website'
+  currentCategoryId: string
+  currentCategoryName: string
+  currentCategoryColor: string
+  categoryReasoning?: string
+  originalUrl?: string
+}
 
-  useEffect(() => {
-    if (isSettingsOpen) {
-      posthog?.capture('viewed_settings')
-    } else {
-      posthog?.capture('viewed_dashboard')
-    }
-  }, [isSettingsOpen])
+export function MainAppContent(): React.ReactElement {
+  const { isAuthenticated } = useAuth()
+  const { isSettingsOpen, setIsSettingsOpen, setFocusOn } = useSettings()
 
   const [isMiniTimerVisible, setIsMiniTimerVisible] = useState(false)
   const [isTrackingPaused, setIsTrackingPaused] = useState(false)
@@ -40,7 +41,7 @@ export function MainAppContent(): React.ReactElement {
 
   // Use the accessibility permission hook
   const { accessibilityPermissionChecked, missingAccessibilityPermissions } =
-    useAccessibilityPermission({ token })
+    useAccessibilityPermission()
 
   // Use the onboarding logic hook
   const {
@@ -69,7 +70,6 @@ export function MainAppContent(): React.ReactElement {
     updateActivityCategoryMutation
   } = useActivityTracking({
     isAuthenticated,
-    token,
     isTrackingPaused,
     setIsSettingsOpen,
     setFocusOn

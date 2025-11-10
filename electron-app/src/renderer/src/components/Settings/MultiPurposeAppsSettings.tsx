@@ -1,35 +1,43 @@
 import { Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { trpc } from '../../utils/trpc'
+import { localApi } from '../../lib/localApi'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 
 export const MultiPurposeAppsSettings = () => {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [apps, setApps] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const { data: initialApps, isLoading: isFetching } = trpc.user.getMultiPurposeApps.useQuery(
-    { token: token || '' },
-    { enabled: !!token }
-  )
-
-  const updateAppsMutation = trpc.user.updateMultiPurposeApps.useMutation()
-
   useEffect(() => {
-    if (initialApps) {
-      setApps(initialApps)
+    if (user) {
+      loadApps()
+    }
+  }, [user])
+
+  const loadApps = async () => {
+    setIsLoading(true)
+    try {
+      const userData = await localApi.user.get()
+      if (userData && userData.multi_purpose_apps) {
+        setApps(userData.multi_purpose_apps)
+      }
+    } catch (error) {
+      console.error('Failed to load multi-purpose apps:', error)
+    } finally {
       setIsLoading(false)
     }
-  }, [initialApps])
+  }
 
-  const handleUpdate = (updatedApps: string[]) => {
+  const handleUpdate = async (updatedApps: string[]) => {
     const validApps = updatedApps.map((s) => s.trim()).filter(Boolean)
     setApps(validApps)
-    if (token) {
-      updateAppsMutation.mutate({ token, apps: validApps })
+    try {
+      await localApi.user.update({ multi_purpose_apps: validApps })
+    } catch (error) {
+      console.error('Failed to update multi-purpose apps:', error)
     }
   }
 
@@ -48,7 +56,7 @@ export const MultiPurposeAppsSettings = () => {
     handleUpdate(newApps)
   }
 
-  if (isLoading || isFetching) {
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>

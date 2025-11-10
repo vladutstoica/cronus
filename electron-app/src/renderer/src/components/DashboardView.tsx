@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useWindowFocus } from '../hooks/useWindowFocus'
 import { REFRESH_EVENTS_INTERVAL_MS } from '../lib/constants'
 import { generateProcessedEventBlocks } from '../utils/eventProcessing'
-import { trpc } from '../utils/trpc'
+import { localApi } from '../lib/localApi'
 import ActivitiesByCategoryWidget from './ActivityList/ActivitiesByCategoryWidget'
 import CalendarWidget from './CalendarWidget/CalendarWidget'
 import { activityEventService } from '../lib/activityEventService'
@@ -75,20 +75,22 @@ const convertCalendarEventToBlock = (event: CalendarEvent): ProcessedEventBlock 
 }
 
 export function DashboardView({ className }: { className?: string }): ReactElement {
-  const { token } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [weekViewMode, setWeekViewMode] = useState<'stacked' | 'grouped'>('grouped')
   const [googleCalendarProcessedEvents, setGoogleCalendarProcessedEvents] = useState<
     ProcessedEventBlock[] | null
-  >(null)
+  >(null) // Google Calendar events (empty array since no calendar integration)
   const [trackedProcessedEvents, setTrackedProcessedEvents] = useState<
     ProcessedEventBlock[] | null
   >(null)
   const [isLoadingEvents, setIsLoadingEvents] = useState(true)
   const [selectedHour, setSelectedHour] = useState<number | null>(null)
   const [events, setEvents] = useState<ActiveWindowEvent[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
 
   const [startDateMs, setStartDateMs] = useState<number | null>(null)
   const [endDateMs, setEndDateMs] = useState<number | null>(null)
@@ -167,40 +169,77 @@ export function DashboardView({ className }: { className?: string }): ReactEleme
     return [startDateMs, endDateMs]
   }, [startDateMs, endDateMs, selectedHour, selectedDay, viewMode, selectedDate])
 
-  const { data: categoriesData, isLoading: isLoadingCategories } =
-    trpc.category.getCategories.useQuery({ token: token || '' }, { enabled: !!token })
-  const categories = categoriesData as Category[] | undefined
+  // Load categories
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadCategories()
+    }
+  }, [isAuthenticated])
 
-  const { data: calendarEventsData, isLoading: isLoadingCalendarEvents } =
-    trpc.calendar.getEvents.useQuery(
-      {
-        token: token || '',
-        startDate: startDateMs ? new Date(startDateMs).toISOString() : '',
-        endDate: endDateMs ? new Date(endDateMs).toISOString() : ''
-      },
-      {
-        enabled: !!token && startDateMs !== null && endDateMs !== null,
-        refetchOnWindowFocus: true,
-        refetchInterval: getPollingInterval(REFRESH_EVENTS_INTERVAL_MS)
-      }
-    )
+  const loadCategories = async () => {
+    setIsLoadingCategories(true)
+    try {
+      const data = await localApi.categories.getAll()
+      setCategories(data as Category[])
+    } catch (error) {
+      console.error('Error loading categories:', error)
+    } finally {
+      setIsLoadingCategories(false)
+    }
+  }
 
-  const { isLoading: isLoadingFetchedEvents, refetch: refetchEvents } = trpc.activeWindowEvents.getEventsForDateRange.useQuery(
-    { token: token || '', startDateMs: startDateMs!, endDateMs: endDateMs! },
-    {
-      enabled: !!token && startDateMs !== null && endDateMs !== null,
-      refetchOnWindowFocus: true,
-      onSuccess: (data) => {
-        const eventsWithParsedDates = data.map((event) => ({
+  // Load events for date range
+  useEffect(() => {
+    if (isAuthenticated && startDateMs !== null && endDateMs !== null) {
+      loadEvents()
+    }
+  }, [isAuthenticated, startDateMs, endDateMs, isWindowFocused])
+
+  const loadEvents = async () => {
+    if (startDateMs === null || endDateMs === null) return
+
+    try {
+      console.log('🔍 Loading events for date range:', {
+        start: new Date(startDateMs).toISOString(),
+        end: new Date(endDateMs).toISOString()
+      })
+
+      const data = await localApi.events.getByDateRange(
+        new Date(startDateMs).toISOString(),
+        new Date(endDateMs).toISOString()
+      )
+
+      console.log(`✅ Loaded ${data.length} events from API`)
+      console.log('📊 Sample events:', data.slice(0, 3).map((e: any) => ({
+        owner: e.ownerName,
+        timestamp: e.timestamp,
+        timestampType: typeof e.timestamp,
+        categoryId: e.categoryId
+      })))
+
+      const eventsWithParsedDates = data.map((event: any) => ({
         ...event,
         lastCategorizationAt: event.lastCategorizationAt
           ? new Date(event.lastCategorizationAt)
           : undefined
       }))
-        activityEventService.setEvents(eventsWithParsedDates)
-      }
+
+      console.log('📝 Setting events in service:', eventsWithParsedDates.length)
+      activityEventService.setEvents(eventsWithParsedDates)
+    } catch (error) {
+      console.error('❌ Error loading events:', error)
     }
-  )
+  }
+
+  // Refetch events (used by child components)
+  const refetchEvents = () => {
+    loadEvents()
+  }
+
+  // const { data: calendarEventsData, isLoading: isLoadingCalendarEvents } =
+  //   trpc.calendar.getEvents.useQuery(...) // DISABLED - Calendar features removed
+  const isLoadingCalendarEvents = false
+  const calendarEventsData = []
 
   useEffect(() => {
     const subscription = activityEventService.events$.subscribe((data) => {
@@ -210,37 +249,31 @@ export function DashboardView({ className }: { className?: string }): ReactEleme
   }, [])
 
   useEffect(() => {
-    if (isLoadingFetchedEvents || isLoadingCategories || isLoadingCalendarEvents) {
+    if (isLoadingCategories || isLoadingCalendarEvents) {
       setIsLoadingEvents(true)
-      setGoogleCalendarProcessedEvents(null)
+      setGoogleCalendarProcessedEvents([]) // No calendar events since integration is disabled
       setTrackedProcessedEvents(null)
     } else if (events && categories) {
       // Process tracked events (existing logic)
       const canonicalBlocks = generateProcessedEventBlocks(events, categories)
 
-      const calendarEvents = calendarEventsData || []
-
-      // Process calendar events
-      const googleCalendarBlocks: ProcessedEventBlock[] = calendarEvents.length
-        ? calendarEvents
-            .map(convertCalendarEventToBlock)
-            .filter((block): block is ProcessedEventBlock => block !== null)
-        : []
+      // No calendar events since Google Calendar integration is disabled
+      const googleCalendarBlocks: ProcessedEventBlock[] = []
 
       setTrackedProcessedEvents(canonicalBlocks)
       setGoogleCalendarProcessedEvents(googleCalendarBlocks)
       setIsLoadingEvents(false)
     } else {
       setTrackedProcessedEvents(null)
-      setGoogleCalendarProcessedEvents(null)
+      setGoogleCalendarProcessedEvents([])
       setIsLoadingEvents(false)
     }
   }, [
     events,
-    isLoadingFetchedEvents,
+    // isLoadingFetchedEvents, // DISABLED - no longer used
     categories,
     isLoadingCategories,
-    calendarEventsData,
+    // calendarEventsData, // DISABLED - calendar features removed
     isLoadingCalendarEvents
   ])
 

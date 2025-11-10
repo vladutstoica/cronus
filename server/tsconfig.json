@@ -18,7 +18,7 @@
     "paths": {
       "@shared/*": ["../shared/*"]
     },
-    "types": ["bun-types"]
+    "types": ["@types/bun"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"],

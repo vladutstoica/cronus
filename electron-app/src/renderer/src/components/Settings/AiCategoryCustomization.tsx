@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { defaultCategoriesData } from '../../../../shared/categories'
 import { useAuth } from '../../contexts/AuthContext'
-import { trpc } from '../../utils/trpc'
+import { localApi } from '../../lib/localApi'
 import { CategoryBadge } from '../CategoryBadge'
 import { Button } from '../ui/button'
 
@@ -21,12 +21,11 @@ export function AiCategoryCustomization({
   const [countdown, setCountdown] = useState(3)
   const [suggestedCategories, setSuggestedCategories] = useState<any[]>([])
   const [selectedOption, setSelectedOption] = useState<'ai' | 'simple'>('ai')
-  const { token, user } = useAuth()
-  const generateCategoriesMutation = trpc.category.generateAiCategories.useMutation()
+  const { user, isAuthenticated } = useAuth()
 
   useEffect(() => {
     const fetchCategories = async () => {
-      if (token && goals) {
+      if (isAuthenticated && goals) {
         setLoading(true)
         setCountdown(5)
         onLoadingChange?.(true)
@@ -43,10 +42,7 @@ export function AiCategoryCustomization({
         }, 1000)
 
         try {
-          const result = await generateCategoriesMutation.mutateAsync({
-            token,
-            goals
-          })
+          const result = await localApi.categories.generateAiCategories(goals)
           if (result) {
             setSuggestedCategories(result.categories)
           }
@@ -62,7 +58,7 @@ export function AiCategoryCustomization({
     }
 
     fetchCategories()
-  }, [token])
+  }, [isAuthenticated])
 
   const handleComplete = () => {
     if (selectedOption === 'ai') {

@@ -187,7 +187,7 @@ const FloatingDisplay: React.FC = () => {
   let unproductiveIsHighlighted = false
   let unproductiveIsEnlarged = false
   let unproductiveHighlightColor: 'green' | 'red' | 'orange' | undefined = 'red'
-  let unproductiveLabel = 'Unproductive'
+  let unproductiveLabel = 'Distractions'
 
   const productiveTimeFormatted = formatMsToTime(displayedProductiveTimeMs)
   const unproductiveTimeFormatted = formatMsToTime(dailyUnproductiveMs)
@@ -204,7 +204,7 @@ const FloatingDisplay: React.FC = () => {
     unproductiveIsEnlarged = true
     unproductiveBoxCategoryDetails = currentCategoryDetails
   } else if (latestStatus === 'maybe') {
-    unproductiveLabel = 'Uncertain'
+    unproductiveLabel = 'Distractions'
     unproductiveIsHighlighted = true
     unproductiveIsEnlarged = true
     unproductiveHighlightColor = 'orange'

@@ -4,6 +4,9 @@ import { app, BrowserWindow, session } from 'electron'
 import { ActiveWindowDetails } from 'shared/dist/types.js'
 import { nativeWindows } from '../native-modules/native-windows'
 import { initializeAutoUpdater, registerAutoUpdaterHandlers } from './auto-updater'
+import { initDatabase, closeDatabase } from './database'
+import { getOrCreateLocalUser } from './database/services/users'
+import { createDefaultCategories, getCategoriesByUserId } from './database/services/categories'
 import { registerIpcHandlers } from './ipc'
 import { initializeLoggers } from './logging'
 import {
@@ -35,6 +38,21 @@ let isTrackingPaused = false
 function App() {
   async function initializeApp() {
     await initializeLoggers()
+
+    // Initialize local database
+    console.log('Initializing local database...')
+    initDatabase()
+
+    // Create or get local user
+    const user = getOrCreateLocalUser()
+    console.log('Local user:', user.id)
+
+    // Create default categories if none exist
+    const existingCategories = getCategoriesByUserId(user.id)
+    if (existingCategories.length === 0) {
+      console.log('Creating default categories...')
+      createDefaultCategories(user.id)
+    }
 
     if (!setupSingleInstanceLock(() => mainWindow)) {
       return
@@ -184,8 +202,13 @@ function App() {
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
+      closeDatabase()
       app.quit()
     }
+  })
+
+  app.on('will-quit', () => {
+    closeDatabase()
   })
 
   app.on('browser-window-created', (_, window) => {

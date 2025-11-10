@@ -8,6 +8,13 @@ import { nativeWindows, PermissionType } from '../native-modules/native-windows'
 import { logMainToFile } from './logging'
 import { redactSensitiveContent } from './redaction'
 import { setAllowForcedQuit } from './windows'
+import { getOrCreateLocalUser, getUserById, updateUser } from './database/services/users'
+import { getCategoriesByUserId, getCategoryById, createCategory, updateCategory, deleteCategory, deleteRecentlyCreatedCategories } from './database/services/categories'
+import { getEventsByUserId, getEventsByUserAndTimeRange, getEventById, getUserStatistics, updateActiveWindowEvent } from './database/services/activeWindowEvents'
+import { getAllSettings, getSetting, setSetting, updateSettings } from './database/services/settings'
+import { processWindowEvent, updateEventDuration, endWindowEvent, recategorizeEvent } from './services/windowTracking'
+import { listOllamaModels, pullOllamaModel } from './services/ollama'
+import { generateCategorySuggestions } from './services/categorization'
 
 export interface ActivityToRecategorize {
   identifier: string
@@ -184,13 +191,19 @@ export function registerIpcHandlers(
   })
 
   ipcMain.handle('get-env-vars', () => {
+    console.log('DEBUG: process.env.MAIN_VITE_GOOGLE_CLIENT_ID:', process.env.MAIN_VITE_GOOGLE_CLIENT_ID)
+    console.log('DEBUG: import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID:', import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID)
+    console.log('DEBUG: All process.env keys with VITE:', Object.keys(process.env).filter(k => k.includes('VITE')))
+
     return {
       isDev: is.dev,
-      GOOGLE_CLIENT_ID: import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID,
-      POSTHOG_KEY: import.meta.env.MAIN_VITE_POSTHOG_KEY,
-      CLIENT_URL: import.meta.env.MAIN_VITE_CLIENT_URL,
-      POSTHOG_HOST: import.meta.env.MAIN_VITE_POSTHOG_HOST,
-      GOOGLE_CLIENT_SECRET: import.meta.env.MAIN_VITE_GOOGLE_CLIENT_SECRET
+      GOOGLE_CLIENT_ID:
+        process.env.MAIN_VITE_GOOGLE_CLIENT_ID || import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID,
+      POSTHOG_KEY: process.env.MAIN_VITE_POSTHOG_KEY || import.meta.env.MAIN_VITE_POSTHOG_KEY,
+      CLIENT_URL: process.env.MAIN_VITE_CLIENT_URL || import.meta.env.MAIN_VITE_CLIENT_URL,
+      POSTHOG_HOST: process.env.MAIN_VITE_POSTHOG_HOST || import.meta.env.MAIN_VITE_POSTHOG_HOST,
+      GOOGLE_CLIENT_SECRET:
+        process.env.MAIN_VITE_GOOGLE_CLIENT_SECRET || import.meta.env.MAIN_VITE_GOOGLE_CLIENT_SECRET
     }
   })
 
@@ -395,4 +408,248 @@ export function registerIpcHandlers(
   //     logMainToFile('Sentry user context updated', { userId: userData?.id, email: userData?.email })
   //   }
   // )
+
+  // ============================================================
+  // LOCAL DATABASE IPC HANDLERS
+  // ============================================================
+
+  // User handlers
+  ipcMain.handle('local:get-user', () => {
+    const user = getOrCreateLocalUser()
+
+    // Parse JSON fields for frontend with error handling
+    let electronSettings = {}
+    let userGoals: any = []
+
+    try {
+      electronSettings = user.electron_app_settings
+        ? JSON.parse(user.electron_app_settings)
+        : {}
+    } catch (e) {
+      console.error('Failed to parse electron_app_settings, using empty object:', e)
+      electronSettings = {}
+    }
+
+    try {
+      if (user.user_projects_and_goals) {
+        const parsed = JSON.parse(user.user_projects_and_goals)
+        // Handle both array and string formats
+        userGoals = Array.isArray(parsed) ? parsed : [parsed]
+      }
+    } catch (e) {
+      // If JSON parse fails, treat as plain string and wrap in array
+      console.log('Goals stored as plain text, converting to array format')
+      userGoals = user.user_projects_and_goals ? [user.user_projects_and_goals] : []
+    }
+
+    return {
+      ...user,
+      electron_app_settings: electronSettings,
+      user_projects_and_goals: userGoals
+    }
+  })
+
+  ipcMain.handle('local:update-user', (_event, updates: any) => {
+    const user = getOrCreateLocalUser()
+    const updatedUser = updateUser(user.id, updates)
+    if (!updatedUser) return null
+
+    // Parse JSON fields for frontend (with error handling)
+    let electronSettings = {}
+    let userGoals: any = []
+
+    try {
+      electronSettings = updatedUser.electron_app_settings
+        ? JSON.parse(updatedUser.electron_app_settings)
+        : {}
+    } catch (e) {
+      console.error('Failed to parse electron_app_settings:', e)
+    }
+
+    try {
+      if (updatedUser.user_projects_and_goals) {
+        const parsed = JSON.parse(updatedUser.user_projects_and_goals)
+        // Handle both array and string formats
+        userGoals = Array.isArray(parsed) ? parsed : [parsed]
+      }
+    } catch (e) {
+      // If JSON parse fails, treat as plain string
+      console.log('Goals stored as plain text, converting to array')
+      userGoals = updatedUser.user_projects_and_goals ? [updatedUser.user_projects_and_goals] : []
+    }
+
+    return {
+      ...updatedUser,
+      electron_app_settings: electronSettings,
+      user_projects_and_goals: userGoals
+    }
+  })
+
+  // Helper function to convert category snake_case to camelCase for frontend
+  const convertCategoryToCamelCase = (category: any) => ({
+    _id: category.id,
+    userId: category.user_id,
+    name: category.name,
+    description: category.description,
+    color: category.color,
+    emoji: category.emoji,
+    isProductive: category.is_productive,
+    isDefault: category.is_default,
+    isArchived: category.is_archived,
+    createdAt: category.created_at,
+    updatedAt: category.updated_at
+  })
+
+  // Category handlers
+  ipcMain.handle('local:get-categories', () => {
+    const user = getOrCreateLocalUser()
+    const categories = getCategoriesByUserId(user.id, false)
+    return categories.map(convertCategoryToCamelCase)
+  })
+
+  ipcMain.handle('local:get-category-by-id', (_event, id: string) => {
+    const category = getCategoryById(id)
+    if (!category) return category
+    return convertCategoryToCamelCase(category)
+  })
+
+  ipcMain.handle('local:create-category', (_event, category: any) => {
+    const user = getOrCreateLocalUser()
+    const created = createCategory({ ...category, user_id: user.id })
+    return convertCategoryToCamelCase(created)
+  })
+
+  ipcMain.handle('local:update-category', (_event, id: string, updates: any) => {
+    const updated = updateCategory(id, updates)
+    if (!updated) return updated
+    return convertCategoryToCamelCase(updated)
+  })
+
+  ipcMain.handle('local:delete-category', (_event, id: string) => {
+    deleteCategory(id)
+    return { success: true }
+  })
+
+  ipcMain.handle('local:delete-recent-categories', () => {
+    const user = getOrCreateLocalUser()
+    return deleteRecentlyCreatedCategories(user.id)
+  })
+
+  ipcMain.handle('local:generate-ai-categories', async (_event, goals: string) => {
+    const categories = await generateCategorySuggestions(goals)
+    return { categories }
+  })
+
+  // Event handlers
+  // Helper function to convert snake_case to camelCase for frontend
+  const convertEventToCamelCase = (event: any) => ({
+    _id: event.id,
+    userId: event.user_id,
+    windowId: event.window_id,
+    ownerName: event.owner_name,
+    type: event.type,
+    browser: event.browser,
+    title: event.title,
+    url: event.url,
+    content: event.content,
+    categoryId: event.category_id,
+    categoryReasoning: event.category_reasoning,
+    llmSummary: event.llm_summary,
+    timestamp: new Date(event.timestamp).getTime(), // Convert to number
+    screenshotPath: event.screenshot_path,
+    durationMs: event.duration_ms,
+    lastCategorizationAt: event.last_categorization_at,
+    generatedTitle: event.generated_title,
+    oldCategoryId: event.old_category_id,
+    oldCategoryReasoning: event.old_category_reasoning,
+    oldLlmSummary: event.old_llm_summary,
+    createdAt: event.created_at,
+    updatedAt: event.updated_at
+  })
+
+  ipcMain.handle('local:get-events', (_event, limit?: number, offset?: number) => {
+    const user = getOrCreateLocalUser()
+    const events = getEventsByUserId(user.id, limit, offset)
+    return events.map(convertEventToCamelCase)
+  })
+
+  ipcMain.handle('local:get-events-by-date-range', (_event, startDate: string, endDate: string) => {
+    const user = getOrCreateLocalUser()
+    const events = getEventsByUserAndTimeRange(user.id, new Date(startDate), new Date(endDate))
+
+    console.log(`[IPC] Loaded ${events.length} events for range ${startDate} to ${endDate}`)
+
+    const convertedEvents = events.map(convertEventToCamelCase)
+
+    if (convertedEvents.length > 0) {
+      console.log('[IPC] Sample event:', {
+        owner: convertedEvents[0].ownerName,
+        timestamp: convertedEvents[0].timestamp,
+        categoryId: convertedEvents[0].categoryId
+      })
+    }
+
+    return convertedEvents
+  })
+
+  ipcMain.handle('local:get-event-by-id', (_event, id: string) => {
+    const event = getEventById(id)
+    if (!event) return event
+    return convertEventToCamelCase(event)
+  })
+
+  ipcMain.handle('local:update-event', (_event, id: string, updates: any) => {
+    return updateActiveWindowEvent(id, updates)
+  })
+
+  ipcMain.handle('local:get-user-statistics', (_event, startDate: string, endDate: string) => {
+    const user = getOrCreateLocalUser()
+    return getUserStatistics(user.id, new Date(startDate), new Date(endDate))
+  })
+
+  ipcMain.handle('local:recategorize-event', (_event, eventId: string, categoryId: string) => {
+    return recategorizeEvent(eventId, categoryId)
+  })
+
+  // Window tracking handlers
+  ipcMain.handle('local:process-window-event', (_event, eventDetails: any) => {
+    return processWindowEvent({
+      ...eventDetails,
+      timestamp: new Date(eventDetails.timestamp)
+    })
+  })
+
+  ipcMain.handle('local:update-event-duration', (_event, windowId: string, durationMs: number) => {
+    return updateEventDuration(windowId, durationMs)
+  })
+
+  ipcMain.handle('local:end-window-event', (_event, windowId: string) => {
+    return endWindowEvent(windowId)
+  })
+
+  // Settings handlers
+  ipcMain.handle('local:get-all-settings', () => {
+    return getAllSettings()
+  })
+
+  ipcMain.handle('local:get-setting', (_event, key: string) => {
+    return getSetting(key)
+  })
+
+  ipcMain.handle('local:set-setting', (_event, key: string, value: any) => {
+    return setSetting(key, value)
+  })
+
+  ipcMain.handle('local:update-settings', (_event, settings: Record<string, any>) => {
+    return updateSettings(settings)
+  })
+
+  // Ollama handlers
+  ipcMain.handle('local:list-ollama-models', () => {
+    return listOllamaModels()
+  })
+
+  ipcMain.handle('local:pull-ollama-model', (_event, modelName: string) => {
+    return pullOllamaModel(modelName)
+  })
 }

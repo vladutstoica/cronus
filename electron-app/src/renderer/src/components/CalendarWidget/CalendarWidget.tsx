@@ -1,11 +1,10 @@
 import { CanonicalBlock } from '@renderer/lib/dayTimelineHelpers'
-import { usePostHog } from 'posthog-js/react'
 import { JSX, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCurrentTime } from '../../hooks/useCurrentTime'
 import { useDarkMode } from '../../hooks/useDarkMode'
 import { useWindowWidth } from '../../hooks/useWindowWidth'
-import { trpc } from '../../utils/trpc'
+import { localApi } from '../../lib/localApi'
 import type { ProcessedEventBlock } from '../DashboardView'
 import { CalendarWidgetHeader } from './CalendarWidgetHeader'
 import CalendarZoomControls from './DayTimeline/CalendarZoomControls'
@@ -53,15 +52,20 @@ const CalendarWidget = ({
   const width = useWindowWidth()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [hourHeight, setHourHeight] = useState(5) // Default: 80px -> 5rem
-  const { token } = useAuth()
-  const posthog = usePostHog()
+  const { isAuthenticated } = useAuth()
   const [animationDirection, setAnimationDirection] = useState<'prev' | 'next' | 'none'>('none')
+  const [electronSettings, setElectronSettings] = useState<any>(null)
 
-  const { data: electronSettings } = trpc.user.getElectronAppSettings.useQuery(
-    { token: token || '' },
-    { enabled: !!token }
-  )
-  const updateElectronAppSettings = trpc.user.updateElectronAppSettings.useMutation()
+  // Load electron settings
+  useEffect(() => {
+    if (isAuthenticated) {
+      localApi.user.get().then((userData) => {
+        if (userData?.electron_app_settings) {
+          setElectronSettings(userData.electron_app_settings)
+        }
+      })
+    }
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (electronSettings?.calendarZoomLevel) {
@@ -70,22 +74,28 @@ const CalendarWidget = ({
   }, [electronSettings?.calendarZoomLevel])
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      if (!token || !hourHeight || !electronSettings) return
+    const handler = setTimeout(async () => {
+      if (!isAuthenticated || !hourHeight || !electronSettings) return
       // convert back to px
       const newZoomLevel = Math.round(hourHeight * 16)
       if (newZoomLevel !== electronSettings?.calendarZoomLevel) {
-        updateElectronAppSettings.mutate({
-          token,
-          calendarZoomLevel: newZoomLevel
-        })
+        try {
+          await localApi.user.update({
+            electron_app_settings: {
+              ...electronSettings,
+              calendarZoomLevel: newZoomLevel
+            }
+          })
+        } catch (error) {
+          console.error('Failed to update calendar zoom level:', error)
+        }
       }
     }, 500) // 500ms debounce
 
     return () => {
       clearTimeout(handler)
     }
-  }, [hourHeight, token, electronSettings, updateElectronAppSettings])
+  }, [hourHeight, isAuthenticated, electronSettings])
 
   useEffect(() => {
     setWasSetToToday(selectedDate.toDateString() === new Date().toDateString())
@@ -177,12 +187,6 @@ const CalendarWidget = ({
       onDateChange(newDate)
     }
   }
-
-  useEffect(() => {
-    if (viewMode === 'week') {
-      posthog?.capture('viewed_week_view')
-    }
-  }, [viewMode])
 
   const handleDateSelect = (date: Date) => {
     setAnimationDirection('none')

@@ -1,8 +1,8 @@
 import { ChevronDown, FolderPlus, MoreHorizontal, PlusCircle, Rows } from 'lucide-react'
-import { JSX, memo, useMemo, useState } from 'react'
+import { JSX, memo, useEffect, useMemo, useState } from 'react'
 import { Category } from 'shared/dist/types.js'
 import { useAuth } from '../../contexts/AuthContext'
-import { trpc } from '../../utils/trpc'
+import { localApi } from '../../lib/localApi'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import {
@@ -17,66 +17,119 @@ import { CategoryTemplateList } from './CategoryTemplateList'
 
 export const CategoryManagementSettings = memo(function CategoryManagementSettings(): JSX.Element {
   console.log('CategoryManagementSettings re-rendered')
-  const { token } = useAuth()
-  const utils = trpc.useUtils()
-  const {
-    data: categories,
-    isLoading,
-    error: fetchError
-  } = trpc.category.getCategories.useQuery(
-    { token: token || '' },
-    {
-      enabled: !!token,
-      select: (data) =>
-        data?.map((category) => ({
-          ...category,
-          createdAt: category.createdAt, // Removed new Date() conversion
-          updatedAt: category.updatedAt // Removed new Date() conversion
-        }))
-    }
-  )
-  const createMutation = trpc.category.createCategory.useMutation({
-    onSuccess: () => {
-      utils.category.getCategories.invalidate({ token: token || '' })
-      setIsFormOpen(false)
-      setEditingCategory(null)
-      setTemplateData(null)
-    },
-    onError: (err) => {
-      console.error('Error creating category:', err)
-      alert(`Error creating category: ${err.message}`)
-    }
-  })
-  const updateMutation = trpc.category.updateCategory.useMutation({
-    onSuccess: () => {
-      utils.category.getCategories.invalidate({ token: token || '' })
-      setIsFormOpen(false)
-      setEditingCategory(null)
-      setTemplateData(null)
-    },
-    onError: (err) => {
-      console.error('Error updating category:', err)
-      alert(`Error updating category: ${err.message}`)
-    }
-  })
-  const deleteMutation = trpc.category.deleteCategory.useMutation({
-    onSuccess: (_data) => {
-      utils.category.getCategories.invalidate({ token: token || '' })
-    },
-    onError: (err) => {
-      alert(`Error deleting category: ${err.message}`)
-    }
-  })
+  const { isAuthenticated } = useAuth()
 
-  const deleteRecentMutation = trpc.category.deleteRecentlyCreatedCategories.useMutation({
-    onSuccess: () => {
-      utils.category.getCategories.invalidate({ token: token || '' })
-      alert('Recently created categories have been deleted.')
-    },
-    onError: (err) => {
-      alert(`Error deleting recent categories: ${err.message}`)
+  const [categories, setCategories] = useState<Category[] | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(false)
+  const [fetchError, setFetchError] = useState<Error | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  // Load categories
+  const loadCategories = async () => {
+    if (!isAuthenticated) return
+
+    setIsLoading(true)
+    try {
+      const data = await localApi.categories.getAll()
+      setCategories(data as Category[])
+      setFetchError(null)
+    } catch (error: any) {
+      console.error('Error loading categories:', error)
+      setFetchError(error)
+    } finally {
+      setIsLoading(false)
     }
-  })
+  }
+
+  useEffect(() => {
+    loadCategories()
+  }, [isAuthenticated])
+
+  // Create mutation
+  const createMutation = {
+    mutateAsync: async (data: Omit<Category, '_id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+      setIsCreating(true)
+      try {
+        await localApi.categories.create(data)
+        await loadCategories()
+        setIsFormOpen(false)
+        setEditingCategory(null)
+        setTemplateData(null)
+      } catch (err: any) {
+        console.error('Error creating category:', err)
+        alert(`Error creating category: ${err.message}`)
+        throw err
+      } finally {
+        setIsCreating(false)
+      }
+    },
+    isLoading: isCreating
+  }
+
+  // Update mutation
+  const updateMutation = {
+    mutateAsync: async (data: { id: string; [key: string]: any }) => {
+      setIsUpdating(true)
+      setUpdatingId(data.id)
+      try {
+        await localApi.categories.update(data.id, data)
+        await loadCategories()
+        setIsFormOpen(false)
+        setEditingCategory(null)
+        setTemplateData(null)
+      } catch (err: any) {
+        console.error('Error updating category:', err)
+        alert(`Error updating category: ${err.message}`)
+        throw err
+      } finally {
+        setIsUpdating(false)
+        setUpdatingId(null)
+      }
+    },
+    isLoading: isUpdating,
+    variables: updatingId ? { id: updatingId } : undefined
+  }
+
+  // Delete mutation
+  const deleteMutation = {
+    mutateAsync: async (data: { id: string }) => {
+      setIsDeleting(true)
+      setDeletingId(data.id)
+      try {
+        await localApi.categories.delete(data.id)
+        await loadCategories()
+      } catch (err: any) {
+        console.error('Error deleting category:', err)
+        alert(`Error deleting category: ${err.message}`)
+        throw err
+      } finally {
+        setIsDeleting(false)
+        setDeletingId(null)
+      }
+    },
+    isLoading: isDeleting,
+    variables: deletingId ? { id: deletingId } : undefined
+  }
+
+  // Delete recent mutation
+  const deleteRecentMutation = {
+    mutateAsync: async () => {
+      try {
+        await localApi.categories.deleteRecent()
+        await loadCategories()
+        alert('Recently created categories have been deleted.')
+      } catch (err: any) {
+        console.error('Error deleting recent categories:', err)
+        alert(`Error deleting recent categories: ${err.message}`)
+        throw err
+      }
+    },
+    isLoading: false
+  }
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isTemplateViewOpen, setIsTemplateViewOpen] = useState(false)
@@ -103,36 +156,24 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
   }
 
   const handleDelete = async (id: string) => {
-    if (!token) {
-      alert('Authentication token not found. Please log in again.')
-      return
-    }
     if (window.confirm('Are you sure you want to delete this category?')) {
-      await deleteMutation.mutateAsync({ id, token })
+      await deleteMutation.mutateAsync({ id })
     }
   }
 
   const handleDeleteRecent = async () => {
-    if (!token) {
-      alert('Authentication token not found. Please log in again.')
-      return
-    }
     if (window.confirm('Are you sure you want to delete recently created categories?')) {
-      await deleteRecentMutation.mutateAsync({ token })
+      await deleteRecentMutation.mutateAsync()
     }
   }
 
   const handleSaveCategory = async (
     data: Omit<Category, '_id' | 'userId' | 'createdAt' | 'updatedAt'>
   ) => {
-    if (!token) {
-      alert('Authentication token not found. Please log in again.')
-      return
-    }
     if (editingCategory) {
-      await updateMutation.mutateAsync({ id: editingCategory._id, ...data, token })
+      await updateMutation.mutateAsync({ id: editingCategory._id, ...data })
     } else {
-      await createMutation.mutateAsync({ ...data, token })
+      await createMutation.mutateAsync(data)
     }
   }
 
@@ -147,42 +188,27 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
   }
 
   const handleToggleProductive = async (category: Category) => {
-    if (!token) {
-      alert('Authentication token not found. Please log in again.')
-      return
-    }
     await updateMutation.mutateAsync({
       id: category._id,
-      isProductive: !category.isProductive,
-      token
+      isProductive: !category.isProductive
     })
   }
 
   const handleToggleArchive = async (category: Category) => {
-    if (!token) {
-      alert('Authentication token not found. Please log in again.')
-      return
-    }
     await updateMutation.mutateAsync({
       id: category._id,
-      isArchived: !category.isArchived,
-      token
+      isArchived: !category.isArchived
     })
   }
 
   const handleArchiveAll = async () => {
-    if (!token) {
-      alert('Authentication token not found. Please log in again.')
-      return
-    }
     if (window.confirm('Are you sure you want to archive all categories?')) {
       // Archive all active categories
       const activeCategories = categories?.filter((c) => !c.isArchived) || []
       for (const category of activeCategories) {
         await updateMutation.mutateAsync({
           id: category._id,
-          isArchived: true,
-          token
+          isArchived: true
         })
       }
     }
@@ -191,14 +217,6 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
   const memoizedInitialData = useMemo(() => {
     return editingCategory || templateData || undefined
   }, [editingCategory, templateData])
-
-  if (!token && !isLoading) {
-    return (
-      <div className="p-4 text-center text-yellow-500 bg-yellow-100 border border-yellow-500 rounded-md">
-        Please log in to manage categories.
-      </div>
-    )
-  }
 
   const activeCategories = categories?.filter((c) => !c.isArchived) || []
   const archivedCategories = categories?.filter((c) => c.isArchived) || []
@@ -234,7 +252,6 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
                 <DropdownMenuItem
                   onClick={handleDeleteRecent}
                   disabled={
-                    !token ||
                     deleteRecentMutation.isLoading ||
                     createMutation.isLoading ||
                     updateMutation.isLoading ||
@@ -247,7 +264,6 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
                 <DropdownMenuItem
                   onClick={handleArchiveAll}
                   disabled={
-                    !token ||
                     createMutation.isLoading ||
                     updateMutation.isLoading ||
                     deleteMutation.isLoading ||
@@ -263,7 +279,7 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
                 <Button
                   variant="outline"
                   className="flex items-center text-sm font-medium"
-                  disabled={!token || isFormOpen || isTemplateViewOpen}
+                  disabled={isFormOpen || isTemplateViewOpen}
                 >
                   Add Category
                   <ChevronDown size={18} className="ml-2" />
@@ -327,7 +343,6 @@ export const CategoryManagementSettings = memo(function CategoryManagementSettin
                   onClick={handleAddNew}
                   type="button"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-primary"
-                  disabled={!token}
                 >
                   <PlusCircle size={20} className="-ml-1 mr-2 h-5 w-5" />
                   New Category

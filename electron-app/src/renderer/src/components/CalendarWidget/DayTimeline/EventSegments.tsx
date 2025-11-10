@@ -1,288 +1,88 @@
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger
-} from '@renderer/components/ui/context-menu'
-import clsx from 'clsx'
-import { endOfDay, startOfDay } from 'date-fns'
-import { AnimatePresence } from 'framer-motion'
 import React from 'react'
 import { getDarkerColor, getLighterColor, hexToRgba } from '../../../lib/colors'
 import { type DaySegment } from '../../../lib/dayTimelineHelpers'
-import { trpc } from '../../../utils/trpc'
-import { CalendarEventTooltip } from './CalendarEventTooltip'
-import { MultiCalendarEventTooltip } from './MultiCalendarEventTooltip'
 import TimelineSegmentContent from './TimelineSegmentContent'
-import { TimelineSegmentTooltip } from './TimelineSegmentTooltip'
 
 interface EventSegmentsProps {
-  daySegments: DaySegment[]
-  selectedHour: number | null
+  segments: DaySegment[]
+  hourHeight: number
   isDarkMode: boolean
-  segmentBackgroundColor: (segment: DaySegment) => string
+  type: 'tracked' | 'calendar'
   onSegmentClick: (entry: DaySegment) => void
-  onResizeStart: (entry: DaySegment, direction: 'top' | 'bottom', e: React.MouseEvent) => void
-  onMoveStart: (entry: DaySegment, e: React.MouseEvent) => void
-  SEGMENT_TOP_OFFSET_PX: number
-  totalSegmentVerticalSpacing: number
-  type: 'activity' | 'calendar'
-  layout: 'full' | 'split'
-  token: string | null
-  dayForEntries: Date
-  googleCalendarSegments?: DaySegment[]
-}
-
-const getSegmentLayout = (
-  segment: DaySegment,
-  googleCalendarSegments: DaySegment[] = [],
-  isCalendarEvent: boolean
-) => {
-  // Calendar events should always use split layout
-  if (isCalendarEvent) {
-    return 'split'
-  }
-
-  // Check if there are any Google Calendar events that overlap with this segment
-  const hasOverlappingCalendarEvents = googleCalendarSegments.some((calendarSegment) => {
-    const segmentStart = segment.startTime.getTime()
-    const segmentEnd = segment.endTime.getTime()
-    const calendarStart = calendarSegment.startTime.getTime()
-    const calendarEnd = calendarSegment.endTime.getTime()
-
-    return segmentStart < calendarEnd && segmentEnd > calendarStart
-  })
-
-  return hasOverlappingCalendarEvents ? 'split' : 'full'
 }
 
 export const EventSegments: React.FC<EventSegmentsProps> = ({
-  daySegments,
-  selectedHour,
+  segments,
+  hourHeight,
   isDarkMode,
-  segmentBackgroundColor,
-  onSegmentClick,
-  onResizeStart,
-  onMoveStart,
-  SEGMENT_TOP_OFFSET_PX,
-  totalSegmentVerticalSpacing,
   type,
-  layout,
-  token,
-  dayForEntries,
-  googleCalendarSegments = []
+  onSegmentClick
 }) => {
-  const utils = trpc.useUtils()
-  const deleteEventsMutation = trpc.activeWindowEvents.deleteEventsByIds.useMutation({
-    onMutate: async (deletedEventIds) => {
-      const queryInput = {
-        token: token || '',
-        startDateMs: startOfDay(dayForEntries).getTime(),
-        endDateMs: endOfDay(dayForEntries).getTime()
-      }
-      await utils.activeWindowEvents.getEventsForDateRange.cancel(queryInput)
-      const previousEvents = utils.activeWindowEvents.getEventsForDateRange.getData(queryInput)
+  const isCalendarEvent = type === 'calendar'
+  const SEGMENT_TOP_OFFSET_PX = 2
+  const totalSegmentVerticalSpacing = SEGMENT_TOP_OFFSET_PX * 2
 
-      utils.activeWindowEvents.getEventsForDateRange.setData(queryInput, (oldData) => {
-        if (!oldData) return []
-        return oldData.filter((event) => {
-          return event._id ? !deletedEventIds.eventIds.includes(event._id) : true
-        })
-      })
-
-      return { previousEvents }
-    },
-    onError: (err, newEntry, context) => {
-      const queryInput = {
-        token: token || '',
-        startDateMs: startOfDay(dayForEntries).getTime(),
-        endDateMs: endOfDay(dayForEntries).getTime()
-      }
-      if (context?.previousEvents) {
-        utils.activeWindowEvents.getEventsForDateRange.setData(queryInput, context.previousEvents)
-      }
-      console.error('Failed to delete segment:', err)
-      alert('Error: Could not delete the segment. Please try again.')
-    },
-    onSettled: () => {
-      const queryInput = {
-        token: token || '',
-        startDateMs: startOfDay(dayForEntries).getTime(),
-        endDateMs: endOfDay(dayForEntries).getTime()
-      }
-      utils.activeWindowEvents.getEventsForDateRange.invalidate(queryInput)
+  const segmentBackgroundColor = (segment: DaySegment) => {
+    if (!segment.categoryColor) {
+      return isDarkMode ? '#374151' : '#e5e7eb'
     }
-  })
+    return isDarkMode
+      ? hexToRgba(getDarkerColor(segment.categoryColor, 0.3), 0.9)
+      : hexToRgba(getLighterColor(segment.categoryColor, 0.8), 0.9)
+  }
 
-  const handleDeleteSegment = (segment: DaySegment) => {
-    if (!token) return
+  const getTopPosition = (segment: DaySegment) => {
+    const hours = segment.startTime.getHours()
+    const minutes = segment.startTime.getMinutes()
+    return (hours + minutes / 60) * hourHeight
+  }
 
-    // Use the originalEventIds from the segment if available, otherwise fall back to segment._id
-    const eventIdsToDelete = segment.originalEventIds && segment.originalEventIds.length > 0 
-      ? segment.originalEventIds 
-      : segment._id ? [segment._id] : []
-
-    if (eventIdsToDelete.length === 0) {
-      console.error('No event IDs found for segment deletion:', segment)
-      alert('Error: Cannot delete segment - no associated events found.')
-      return
-    }
-
-    console.log(`[EventSegments] Deleting ${eventIdsToDelete.length} events:`, eventIdsToDelete)
-
-    deleteEventsMutation.mutate({
-      token: token,
-      eventIds: eventIdsToDelete
-    })
+  const getHeight = (segment: DaySegment) => {
+    const durationMs = segment.durationMs
+    const durationHours = durationMs / (1000 * 60 * 60)
+    return Math.max(durationHours * hourHeight - totalSegmentVerticalSpacing / 16, 0.25)
   }
 
   return (
-    <AnimatePresence mode="sync">
-      {daySegments.map((segment, index) => {
-        const isManual = segment.type === 'manual'
-        const isCalendarEvent = type === 'calendar'
-        const isSuggestion = segment.isSuggestion
-        const isGroupedCalendarEvent =
-          isCalendarEvent && !!segment.groupedEvents && segment.groupedEvents.length > 0
-
+    <>
+      {segments.map((segment, index) => {
         const textColor = segment.categoryColor
           ? isDarkMode
             ? getLighterColor(segment.categoryColor, 0.8)
-            : getDarkerColor(segment.categoryColor, 0.6)
-          : undefined
+            : getDarkerColor(segment.categoryColor, 0.5)
+          : isDarkMode
+            ? '#d1d5db'
+            : '#374151'
 
-        const suggestionBorderColor = textColor || (isDarkMode ? '#4b5563' : '#d1d5db') // gray-600 or gray-300
-
-        const segmentLayout = getSegmentLayout(segment, googleCalendarSegments, isCalendarEvent)
-        const positionClasses =
-          segmentLayout === 'full'
-            ? `absolute left-[67px] right-1 rounded-md`
-            : isCalendarEvent
-              ? 'absolute left-2/3 right-1 rounded-md'
-              : `absolute left-[67px] right-1/3 mr-2 rounded-md` // Split, left half
-
-        // If an hour is selected, only show segments that are part of that hour
-        const segmentHeight = segment.height - totalSegmentVerticalSpacing
-        if (segmentHeight <= 0) {
-          return null // Don't render segments that are too small to be visible
-        }
-
-        const canInteract = isManual && !isSuggestion
-        const segmentCursor = canInteract ? 'pointer' : 'default'
-        const zIndexClass = isCalendarEvent ? 'z-20' : 'z-10'
-
-        const segmentDiv = (
-          <div
-            data-is-segment="true"
-            className={clsx(
-              'group transition-all overflow-hidden',
-              positionClasses,
-              zIndexClass,
-              canInteract && 'hover:brightness-75',
-              isSuggestion && 'border-[1px] border-dotted border-gray-400 dark:border-gray-500'
-            )}
-            style={{
-              cursor: segmentCursor,
-              backgroundColor: isSuggestion
-                ? segment.categoryColor
-                  ? hexToRgba(segment.categoryColor, 0.1)
-                  : 'transparent'
-                : segmentBackgroundColor(segment),
-              borderColor: isSuggestion ? suggestionBorderColor : undefined,
-              top: `${segment.top + SEGMENT_TOP_OFFSET_PX}px`,
-              height: `max(1px, ${segment.height - totalSegmentVerticalSpacing}px)`,
-              opacity:
-                selectedHour !== null && Math.floor(segment.startMinute / 60) !== selectedHour
-                  ? 0.5
-                  : 1
-            }}
-            onMouseDown={(e) => {
-              if (canInteract) {
-                onMoveStart(segment, e)
-              }
-            }}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (canInteract) {
-                onSegmentClick(segment)
-              }
-            }}
-          >
-            <TimelineSegmentContent segment={segment} isDarkMode={isDarkMode} />
-            {canInteract && (
-              <>
-                <div
-                  className="absolute top-0 left-0 right-0 h-4 -translate-y-1/2 cursor-row-resize z-30 group"
-                  onMouseDown={(e) => {
-                    e.stopPropagation()
-                    onResizeStart(segment, 'top', e)
-                  }}
-                >
-                  <div className="flex items-center justify-center h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <div className="w-4 h-3 flex flex-col justify-between">
-                      <div className="w-full h-[2px] bg-gray-400 dark:bg-gray-500 rounded-full" />
-                      <div className="w-full h-[2px] bg-gray-400 dark:bg-gray-500 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-4 translate-y-1/2 cursor-row-resize z-30 group"
-                  onMouseDown={(e) => {
-                    e.stopPropagation()
-                    onResizeStart(segment, 'bottom', e)
-                  }}
-                >
-                  <div className="flex items-center justify-center h-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <div className="w-4 h-3 flex flex-col justify-between">
-                      <div className="w-full h-[2px] bg-gray-400 dark:bg-gray-500 rounded-full" />
-                      <div className="w-full h-[2px] bg-gray-400 dark:bg-gray-500 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )
-
-        if (isGroupedCalendarEvent) {
-          return (
-            <MultiCalendarEventTooltip
-              key={segment._id || `${segment.startTime}-${segment.name}`}
-              events={segment.groupedEvents!}
-            >
-              {segmentDiv}
-            </MultiCalendarEventTooltip>
-          )
-        }
-
-        if (isCalendarEvent) {
-          return (
-            <CalendarEventTooltip
-              key={segment._id || `${segment.startTime}-${segment.name}`}
-              event={segment.originalEvent}
-            >
-              {segmentDiv}
-            </CalendarEventTooltip>
-          )
-        }
+        const top = getTopPosition(segment)
+        const height = getHeight(segment)
 
         return (
-          <ContextMenu key={segment._id || `${segment.startTime}-${segment.name}`}>
-            <ContextMenuTrigger>
-              <TimelineSegmentTooltip segment={segment}>{segmentDiv}</TimelineSegmentTooltip>
-            </ContextMenuTrigger>
-            <ContextMenuContent>
-              <ContextMenuItem
-                onClick={(e) => {
-                  handleDeleteSegment(segment)
-                }}
-              >
-                Delete Segment
-              </ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
+          <div
+            key={`${segment._id}-${index}`}
+            className="absolute cursor-pointer transition-opacity hover:opacity-90"
+            style={{
+              top: `${top}rem`,
+              height: `${height}rem`,
+              left: isCalendarEvent ? '0%' : '50%',
+              width: '50%',
+              backgroundColor: segmentBackgroundColor(segment),
+              borderLeft: `3px solid ${segment.categoryColor || (isDarkMode ? '#6b7280' : '#9ca3af')}`,
+              paddingTop: `${SEGMENT_TOP_OFFSET_PX}px`,
+              paddingBottom: `${SEGMENT_TOP_OFFSET_PX}px`,
+              zIndex: 10
+            }}
+            onClick={() => onSegmentClick(segment)}
+          >
+            <TimelineSegmentContent
+              segment={segment}
+              isDarkMode={isDarkMode}
+            />
+          </div>
         )
       })}
-    </AnimatePresence>
+    </>
   )
 }
+
+export default EventSegments

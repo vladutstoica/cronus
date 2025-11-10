@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { trpc } from '../../utils/trpc'
+import { localApi } from '../../lib/localApi'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Label } from '../ui/label'
@@ -8,46 +8,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../ui/switch'
 
 export const DistractionSoundSettings = () => {
-  const { token } = useAuth()
+  const { user } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
   const [playDistractionSound, setPlayDistractionSound] = useState(true)
   const [distractionSoundInterval, setDistractionSoundInterval] = useState(30) // in seconds
   const [showDistractionNotifications, setShowDistractionNotifications] = useState(true)
   const [distractionNotificationInterval, setDistractionNotificationInterval] = useState(60) // in seconds
 
-  const { data: electronSettings, isLoading } = trpc.user.getElectronAppSettings.useQuery(
-    { token: token || '' },
-    { enabled: !!token }
-  )
+  // Load settings
+  useEffect(() => {
+    if (user) {
+      loadSettings()
+    }
+  }, [user])
 
-  const updateSettingsMutation = trpc.user.updateElectronAppSettings.useMutation({
-    onError: (error) => {
+  const loadSettings = async () => {
+    setIsLoading(true)
+    try {
+      const userData = await localApi.user.get()
+      if (userData && userData.electron_app_settings) {
+        const settings = userData.electron_app_settings
+        setPlayDistractionSound(settings.playDistractionSound ?? true)
+        setDistractionSoundInterval(settings.distractionSoundInterval ?? 30)
+        setShowDistractionNotifications(settings.showDistractionNotifications ?? true)
+        setDistractionNotificationInterval(settings.distractionNotificationInterval ?? 60)
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateSettings = async (newSettings: any) => {
+    try {
+      await localApi.user.update({
+        electron_app_settings: newSettings
+      })
+    } catch (error) {
       console.error('Failed to update settings:', error)
       alert('Failed to save settings. Your changes might not be saved.')
-      // Revert on error to stay in sync with the backend
-      if (electronSettings) {
-        setPlayDistractionSound(electronSettings.playDistractionSound)
-        setDistractionSoundInterval(electronSettings.distractionSoundInterval)
-        setShowDistractionNotifications(electronSettings.showDistractionNotifications)
-        setDistractionNotificationInterval(electronSettings.distractionNotificationInterval || 60)
-      }
+      // Reload settings on error
+      loadSettings()
     }
-  })
-
-  // Load settings when data is fetched
-  useEffect(() => {
-    if (electronSettings) {
-      setPlayDistractionSound(electronSettings.playDistractionSound)
-      setDistractionSoundInterval(electronSettings.distractionSoundInterval)
-      setShowDistractionNotifications(electronSettings.showDistractionNotifications)
-      setDistractionNotificationInterval(electronSettings.distractionNotificationInterval || 60)
-    }
-  }, [electronSettings])
+  }
 
   const handlePlaySoundChange = (isChecked: boolean) => {
-    if (!token) return
     setPlayDistractionSound(isChecked)
-    updateSettingsMutation.mutate({
-      token,
+    updateSettings({
       playDistractionSound: isChecked,
       distractionSoundInterval,
       showDistractionNotifications,
@@ -56,11 +64,9 @@ export const DistractionSoundSettings = () => {
   }
 
   const handleIntervalChange = (value: string) => {
-    if (!token) return
     const interval = Number(value)
     setDistractionSoundInterval(interval)
-    updateSettingsMutation.mutate({
-      token,
+    updateSettings({
       playDistractionSound,
       distractionSoundInterval: interval,
       showDistractionNotifications,
@@ -69,10 +75,8 @@ export const DistractionSoundSettings = () => {
   }
 
   const handleShowNotificationsChange = (isChecked: boolean) => {
-    if (!token) return
     setShowDistractionNotifications(isChecked)
-    updateSettingsMutation.mutate({
-      token,
+    updateSettings({
       playDistractionSound,
       distractionSoundInterval,
       showDistractionNotifications: isChecked,
@@ -81,11 +85,9 @@ export const DistractionSoundSettings = () => {
   }
 
   const handleNotificationIntervalChange = (value: string) => {
-    if (!token) return
     const interval = Number(value)
     setDistractionNotificationInterval(interval)
-    updateSettingsMutation.mutate({
-      token,
+    updateSettings({
       playDistractionSound,
       distractionSoundInterval,
       showDistractionNotifications,

@@ -1,40 +1,74 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { trpc } from '../utils/trpc'
+import { localApi } from '../lib/localApi'
 
 export function useOnboardingQueries() {
   const [isDev, setIsDev] = useState(false)
   const [userGoals, setUserGoals] = useState('')
   const [isAiCategoriesLoading, setIsAiCategoriesLoading] = useState(false)
   const [referralSource, setReferralSource] = useState('')
-  
-  const { token } = useAuth()
-  const utils = trpc.useUtils()
 
-  const { data: electronSettings } = trpc.user.getElectronAppSettings.useQuery(
-    {
-      token: token || ''
+  const { user, isAuthenticated } = useAuth()
+
+  const [electronSettings, setElectronSettings] = useState<any>(null)
+  const [userProjectsAndGoals, setUserProjectsAndGoals] = useState<string>('')
+  const [isLoadingGoals, setIsLoadingGoals] = useState(true)
+  const [hasCategories, setHasCategories] = useState(false)
+  const [isLoadingHasCategories, setIsLoadingHasCategories] = useState(true)
+  const [existingReferralSource, setExistingReferralSource] = useState<string>('')
+  const [isLoadingReferral, setIsLoadingReferral] = useState(true)
+  const [isCreatingCategories, setIsCreatingCategories] = useState(false)
+
+  // Load data
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadOnboardingData()
+    }
+  }, [isAuthenticated])
+
+  const loadOnboardingData = async () => {
+    try {
+      const userData = await localApi.user.get()
+
+      if (userData) {
+        setElectronSettings(userData.electron_app_settings || null)
+        setUserProjectsAndGoals(userData.user_projects_and_goals || '')
+        setExistingReferralSource(userData.referral_source || '')
+      }
+      setIsLoadingGoals(false)
+      setIsLoadingReferral(false)
+
+      // Check if user has categories
+      const categoriesData = await localApi.categories.getAll()
+      setHasCategories(categoriesData && categoriesData.length > 0)
+      setIsLoadingHasCategories(false)
+    } catch (error) {
+      console.error('Error loading onboarding data:', error)
+      setIsLoadingGoals(false)
+      setIsLoadingHasCategories(false)
+      setIsLoadingReferral(false)
+    }
+  }
+
+  const createCategoriesMutation = {
+    mutateAsync: async (data: { categories: any[] }) => {
+      setIsCreatingCategories(true)
+      try {
+        // Create each category
+        for (const category of data.categories) {
+          await localApi.categories.create(category)
+        }
+        // Reload to check hasCategories
+        await loadOnboardingData()
+      } catch (error) {
+        console.error('Error creating categories:', error)
+        throw error
+      } finally {
+        setIsCreatingCategories(false)
+      }
     },
-    {
-      enabled: !!token
-    }
-  )
-
-  const { data: userProjectsAndGoals, isLoading: isLoadingGoals } =
-    trpc.user.getUserProjectsAndGoals.useQuery({ token: token || '' }, { enabled: !!token })
-  
-  const { data: hasCategories, isLoading: isLoadingHasCategories } =
-    trpc.category.hasCategories.useQuery({ token: token || '' }, { enabled: !!token })
-  
-  const { data: existingReferralSource, isLoading: isLoadingReferral } =
-    trpc.user.getUserReferralSource.useQuery({ token: token || '' }, { enabled: !!token })
-
-  const createCategoriesMutation = trpc.category.createCategories.useMutation({
-    onSuccess: () => {
-      utils.category.getCategories.invalidate()
-      utils.category.hasCategories.invalidate()
-    }
-  })
+    isLoading: isCreatingCategories
+  }
 
   useEffect(() => {
     console.log('🚪 Onboarding modal mounted. Enabling permission requests for onboarding.')
@@ -62,10 +96,9 @@ export function useOnboardingQueries() {
   }
 
   const handleCategoriesComplete = async (categories: any[]) => {
-    if (token && categories.length > 0) {
+    if (categories.length > 0) {
       try {
         await createCategoriesMutation.mutateAsync({
-          token,
           categories
         })
       } catch (error) {
@@ -94,7 +127,6 @@ export function useOnboardingQueries() {
     hasExistingReferral,
     isLoading,
     handleGoalsComplete,
-    handleCategoriesComplete,
-    utils
+    handleCategoriesComplete
   }
 }

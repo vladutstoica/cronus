@@ -98,7 +98,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   })
 
   const { isCompleting, setHasOptedInToPosthog, handleComplete } = useOnboardingCompletion({
-    token: (user as any)?.token || null,
     steps
   })
 

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { trpc } from '../utils/trpc'
 
 interface UseOnboardingLogicProps {
   permissionsChecked: boolean // Whether accessibility permission check has completed
@@ -22,10 +21,9 @@ export function useOnboardingLogic({
   missingAccessibilityPermissions,
   isAuthenticated
 }: UseOnboardingLogicProps): UseOnboardingLogicReturn {
-  const { justLoggedIn, resetJustLoggedIn, user } = useAuth()
+  const { user } = useAuth()
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
-  const trpcUtils = trpc.useContext()
 
   // Override localStorage methods to track hasCompletedOnboarding changes
   useEffect(() => {
@@ -110,7 +108,6 @@ export function useOnboardingLogic({
     console.log('🔍 [ONBOARDING DEBUG] useEffect triggered', {
       permissionsChecked,
       missingAccessibilityPermissions,
-      justLoggedIn,
       user: user?.email,
       userHasCompletedOnboarding: user?.hasCompletedOnboarding,
       stack: new Error().stack
@@ -142,9 +139,6 @@ export function useOnboardingLogic({
         stack: new Error().stack
       })
       setShowOnboarding(true)
-      if (justLoggedIn) {
-        resetJustLoggedIn() // Reset the flag if it was set
-      }
     } else {
       console.log('🔍 [ONBOARDING DEBUG] Onboarding completed locally, checking tutorial')
       // User has completed onboarding, check if they've seen the tutorial
@@ -153,7 +147,7 @@ export function useOnboardingLogic({
         setShowTutorial(true)
       }
     }
-  }, [permissionsChecked, missingAccessibilityPermissions, justLoggedIn, resetJustLoggedIn, user])
+  }, [permissionsChecked, missingAccessibilityPermissions, user])
 
   const handleOnboardingComplete = useCallback((): void => {
     console.log(
@@ -181,12 +175,11 @@ export function useOnboardingLogic({
       window.electron.ipcRenderer.invoke('enable-permission-requests')
     }
 
-    console.log('🔍 [ONBOARDING DEBUG] Invalidating user queries and setting tutorial to show')
-    trpcUtils.user.getUserProjectsAndGoals.invalidate()
+    console.log('🔍 [ONBOARDING DEBUG] Setting tutorial to show')
     setShowTutorial(true)
 
     console.log('🔍 [ONBOARDING DEBUG] handleOnboardingComplete completed successfully')
-  }, [trpcUtils])
+  }, [])
 
   const handleResetOnboarding = useCallback((): void => {
     console.log('🔍 [PERMISSIONS DEBUG] Resetting onboarding')

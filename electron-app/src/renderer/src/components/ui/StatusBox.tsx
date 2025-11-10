@@ -90,8 +90,7 @@ const StatusBox: React.FC<StatusBoxProps> = ({
             </span>
           )}
           <span className="truncate w-full max-w-[80px]">
-            {categoryDetails?.name || label}
-            {process.env.NODE_ENV === 'development' && ' Dev'}
+            {label}
           </span>
         </span>
       )}

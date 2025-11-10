@@ -39,11 +39,8 @@ export const uploadActiveWindowEvent = async (
     return
   }
 
-  if (!token || !windowDetails) {
-    console.log('Skipping event upload - missing token or details:', {
-      token: !!token,
-      details: !!windowDetails
-    })
+  // Token no longer needed in local-first version
+  if (!windowDetails) {
     return
   }
 

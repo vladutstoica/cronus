@@ -1,64 +1,30 @@
-import clsx from 'clsx'
 import React from 'react'
-import { type DaySegment } from '@renderer/lib/dayTimelineHelpers'
-import { CurrentTimeIndicator } from './CurrentTimeIndicator'
-import { SelectionBox } from './SelectionBox'
 
 interface TimelineOverlaysProps {
-  previewState: {
-    top: number
-    height: number
-    backgroundColor: string
-    hasOverlappingCalendarEvents: boolean
-  } | null
-  dragState: any
-  yToTime: (y: number) => { hour: number; minute: number; y: number } | null
   isToday: boolean
-  currentTime: Date
-  timelineHeight: number
-  isDragging: boolean
-  isModalOpen: boolean
-  hasGoogleCalendarEvents: boolean
-  existingSegments: DaySegment[]
+  currentTimeTop: number | null
+  currentHourRef: React.RefObject<HTMLDivElement | null>
+  hourHeight: number
 }
 
 export const TimelineOverlays: React.FC<TimelineOverlaysProps> = ({
-  previewState,
-  dragState,
-  yToTime,
   isToday,
-  currentTime,
-  timelineHeight,
-  isDragging,
-  isModalOpen,
-  hasGoogleCalendarEvents,
-  existingSegments
+  currentTimeTop,
+  currentHourRef,
+  hourHeight
 }) => {
   return (
     <>
-      {previewState && (
+      {isToday && currentTimeTop !== null && (
         <div
-          className={clsx(
-            `absolute left-[67px] rounded-md z-20 pointer-events-none`,
-            previewState.hasOverlappingCalendarEvents ? 'right-1/3 mr-2' : 'right-1'
-          )}
-          style={{
-            top: `${previewState.top}px`,
-            height: `${previewState.height}px`,
-            backgroundColor: previewState.backgroundColor
-          }}
-        />
-      )}
-      <SelectionBox
-        isVisible={isDragging || isModalOpen}
-        dragState={dragState}
-        yToTime={yToTime}
-        hasGoogleCalendarEvents={hasGoogleCalendarEvents}
-        existingSegments={existingSegments}
-      />
-
-      {isToday && (
-        <CurrentTimeIndicator currentTime={currentTime} timelineHeight={timelineHeight} />
+          ref={currentHourRef}
+          className="absolute left-0 right-0 z-30 pointer-events-none"
+          style={{ top: `${currentTimeTop}rem` }}
+        >
+          <div className="w-full h-0.5 bg-red-500">
+            <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+          </div>
+        </div>
       )}
     </>
   )

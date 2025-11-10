@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "echo 'Scraper has no dev mode'",
     "scrape:all": "bun src/scrape-all.ts",
     "export-csv": "bun src/export-to-csv.ts"
   },

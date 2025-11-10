@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { toast } from '../../hooks/use-toast'
-import { trpc } from '../../utils/trpc'
+import { localApi } from '../../lib/localApi'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Textarea } from '../ui/textarea'
@@ -17,56 +17,38 @@ const GoalInputForm = ({
   onComplete,
   shouldFocus = false
 }: GoalInputFormProps) => {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [userProjectsAndGoals, setUserProjectsAndGoals] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const hasContent = userProjectsAndGoals.trim().length > 0
 
-  // Fetch user goals
-  const { data: initialProjectsAndGoals, isLoading } = trpc.user.getUserProjectsAndGoals.useQuery(
-    { token: token || '' },
-    { enabled: !!token }
-  )
-
-  // Update goals mutation
-  const updateGoalsMutation = trpc.user.updateUserProjectsAndGoals.useMutation({
-    onSuccess: (data) => {
-      if (data.userProjectsAndGoals && typeof data.userProjectsAndGoals === 'string') {
-        setUserProjectsAndGoals(data.userProjectsAndGoals)
-      }
-      setIsEditing(false)
-
-      if (!onboardingMode) {
-        toast({
-          title: 'Goals Updated!',
-          duration: 1500,
-          description: 'Your goals have been successfully updated.'
-        })
-      }
-
-      // Call onComplete if in onboarding mode
-      if (onboardingMode && onComplete) {
-        onComplete(userProjectsAndGoals)
-      }
-    },
-    onError: (error) => {
-      console.error('Failed to update goals:', error)
-      alert('Failed to save goals. Please try again.')
-    },
-    onSettled: () => {
-      setIsSaving(false)
-    }
-  })
-
-  // Load goals when data is fetched
+  // Load user goals
   useEffect(() => {
-    if (initialProjectsAndGoals) {
-      setUserProjectsAndGoals(initialProjectsAndGoals)
+    if (user) {
+      loadGoals()
     }
-  }, [initialProjectsAndGoals])
+  }, [user])
+
+  const loadGoals = async () => {
+    setIsLoading(true)
+    try {
+      const userData = await localApi.user.get()
+      if (userData && userData.user_projects_and_goals) {
+        const goals = typeof userData.user_projects_and_goals === 'string'
+          ? userData.user_projects_and_goals
+          : JSON.stringify(userData.user_projects_and_goals)
+        setUserProjectsAndGoals(goals)
+      }
+    } catch (error) {
+      console.error('Failed to load goals:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Auto-edit mode for onboarding
   useEffect(() => {
@@ -86,23 +68,40 @@ const GoalInputForm = ({
   }, [shouldFocus])
 
   const handleSave = async () => {
-    if (!token) return
-
     setIsSaving(true)
-    updateGoalsMutation.mutate({
-      token,
-      userProjectsAndGoals
-    })
+    try {
+      await localApi.user.update({
+        user_projects_and_goals: userProjectsAndGoals
+      })
+
+      setIsEditing(false)
+
+      if (!onboardingMode) {
+        toast({
+          title: 'Goals Updated!',
+          duration: 1500,
+          description: 'Your goals have been successfully updated.'
+        })
+      }
+
+      // Call onComplete if in onboarding mode
+      if (onboardingMode && onComplete) {
+        onComplete(userProjectsAndGoals)
+      }
+    } catch (error) {
+      console.error('Failed to update goals:', error)
+      alert('Failed to save goals. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleCancel = () => {
     if (onboardingMode) {
       return
     } else {
-      // Reset to original values in settings mode
-      if (initialProjectsAndGoals) {
-        setUserProjectsAndGoals(initialProjectsAndGoals)
-      }
+      // Reload goals from server
+      loadGoals()
       setIsEditing(false)
     }
   }

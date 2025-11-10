@@ -26,7 +26,7 @@ import {
   getStatusTextColor
 } from '../utils/distractionStatusBarUIHelpers'
 import { calculateProductivityMetrics } from '../utils/timeMetrics'
-import { trpc } from '../utils/trpc'
+import { localApi } from '../lib/localApi'
 import { ActivityIcon } from './ActivityList/ActivityIcon'
 import DistractionStatusLoadingSkeleton from './DistractionStatusLoadingSkeleton'
 import PauseInfoModal from './PauseInfoModal'
@@ -89,10 +89,22 @@ const DistractionStatusBar = ({
   isTrackingPaused,
   onToggleTracking
 }: DistractionStatusBarProps): JSX.Element | null => {
-  const { token } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [isNarrowView, setIsNarrowView] = useState(false)
   const [showPauseModal, setShowPauseModal] = useState(false)
   const lastSentData = useRef<string | null>(null)
+
+  const [latestEvent, setLatestEvent] = useState<ActiveWindowEvent | null>(null)
+  const [isLoadingLatestEvent, setIsLoadingLatestEvent] = useState(true)
+  const [categoryDetails, setCategoryDetails] = useState<Category | null>(null)
+  const [isLoadingCategory, setIsLoadingCategory] = useState(false)
+  const [userCategories, setUserCategories] = useState<Category[]>([])
+  const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(true)
+  const [todayEvents, setTodayEvents] = useState<ActiveWindowEvent[]>([])
+  const [isLoadingTodayEvents, setIsLoadingTodayEvents] = useState(true)
+
+  // No error tracking in simplified implementation
+  const categoryError = null
 
   const handlePauseClick = () => {
     const hasPausedBefore = localStorage.getItem('cronus-has-paused-before')
@@ -126,28 +138,36 @@ const DistractionStatusBar = ({
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const { data: latestEvent, isLoading: isLoadingLatestEvent } =
-    // note: make sure you invalidate the query when you create a new event, otherwise it will not be updated
-    trpc.activeWindowEvents.getLatestEvent.useQuery(
-      { token: token || '' },
-      {
-        enabled: !!token && typeof token === 'string' && token.length > 0,
-        refetchInterval: 1000, // Poll every 1 second
-        select: (data) => {
-          if (!data) {
-            return null
-          }
-          const event = data as unknown as ActiveWindowEvent
-          return {
+  // Load latest event - poll every 1 second
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const loadLatestEvent = async () => {
+      try {
+        const events = await localApi.events.getAll(1, 0) // Get latest 1 event
+        if (events && events.length > 0) {
+          const event = events[0] as unknown as ActiveWindowEvent
+          setLatestEvent({
             ...event,
             lastCategorizationAt: event.lastCategorizationAt
               ? new Date(event.lastCategorizationAt)
               : undefined,
             categoryReasoning: event.categoryReasoning
-          }
+          })
+        } else {
+          setLatestEvent(null)
         }
+      } catch (error) {
+        console.error('Error loading latest event:', error)
+      } finally {
+        setIsLoadingLatestEvent(false)
       }
-    )
+    }
+
+    loadLatestEvent()
+    const interval = setInterval(loadLatestEvent, 1000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (latestEvent) {
@@ -161,27 +181,47 @@ const DistractionStatusBar = ({
 
   const categoryId = latestEvent?.categoryId
 
-  const {
-    data: categoryDetails,
-    isLoading: isLoadingCategory,
-    error: categoryError
-  } = trpc.category.getCategoryById.useQuery(
-    { token: token || '', categoryId: categoryId || '' },
-    {
-      enabled:
-        !!token &&
-        typeof token === 'string' &&
-        token.length > 0 &&
-        !!categoryId &&
-        categoryId !== ''
+  // Load category details when categoryId changes
+  useEffect(() => {
+    if (!isAuthenticated || !categoryId) {
+      setCategoryDetails(null)
+      return
     }
-  )
 
-  const { data: userCategories, isLoading: isLoadingUserCategories } =
-    trpc.category.getCategories.useQuery(
-      { token: token || '' },
-      { enabled: !!token && typeof token === 'string' && token.length > 0 }
-    )
+    const loadCategory = async () => {
+      setIsLoadingCategory(true)
+      try {
+        const category = await localApi.categories.getById(categoryId)
+        setCategoryDetails(category as Category)
+      } catch (error) {
+        console.error('Error loading category:', error)
+        setCategoryDetails(null)
+      } finally {
+        setIsLoadingCategory(false)
+      }
+    }
+
+    loadCategory()
+  }, [isAuthenticated, categoryId])
+
+  // Load user categories
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const loadCategories = async () => {
+      setIsLoadingUserCategories(true)
+      try {
+        const categories = await localApi.categories.getAll()
+        setUserCategories(categories as Category[])
+      } catch (error) {
+        console.error('Error loading categories:', error)
+      } finally {
+        setIsLoadingUserCategories(false)
+      }
+    }
+
+    loadCategories()
+  }, [isAuthenticated])
 
   const [currentDayStartDateMs, setCurrentDayStartDateMs] = React.useState<number | null>(null)
   const [currentDayEndDateMs, setCurrentDayEndDateMs] = React.useState<number | null>(null)
@@ -201,37 +241,38 @@ const DistractionStatusBar = ({
     return () => clearInterval(intervalId)
   }, [])
 
-  const { data: todayEvents, isLoading: isLoadingTodayEvents } =
-    trpc.activeWindowEvents.getEventsForDateRange.useQuery(
-      {
-        token: token || '',
-        startDateMs: currentDayStartDateMs!,
-        endDateMs: currentDayEndDateMs!
-      },
-      {
-        enabled:
-          !!token &&
-          typeof token === 'string' &&
-          token.length > 0 &&
-          currentDayStartDateMs !== null &&
-          currentDayEndDateMs !== null,
-        refetchInterval: 30000,
-        select: (data) => {
-          if (!data) {
-            return []
+  // Load today's events - poll every 30 seconds
+  useEffect(() => {
+    if (!isAuthenticated || currentDayStartDateMs === null || currentDayEndDateMs === null) return
+
+    const loadTodayEvents = async () => {
+      setIsLoadingTodayEvents(true)
+      try {
+        const data = await localApi.events.getByDateRange(
+          new Date(currentDayStartDateMs).toISOString(),
+          new Date(currentDayEndDateMs).toISOString()
+        )
+        const eventsWithParsedDates = (data || []).map((event: any) => {
+          const e = event as unknown as ActiveWindowEvent
+          return {
+            ...e,
+            lastCategorizationAt: e.lastCategorizationAt
+              ? new Date(e.lastCategorizationAt)
+              : undefined
           }
-          return data.map((event) => {
-            const e = event as unknown as ActiveWindowEvent
-            return {
-              ...e,
-              lastCategorizationAt: e.lastCategorizationAt
-                ? new Date(e.lastCategorizationAt)
-                : undefined
-            }
-          })
-        }
+        })
+        setTodayEvents(eventsWithParsedDates)
+      } catch (error) {
+        console.error('Error loading today events:', error)
+      } finally {
+        setIsLoadingTodayEvents(false)
       }
-    )
+    }
+
+    loadTodayEvents()
+    const interval = setInterval(loadTodayEvents, 30000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated, currentDayStartDateMs, currentDayEndDateMs])
 
   useDistractionSound(categoryDetails as Category | null | undefined)
 
@@ -305,7 +346,6 @@ const DistractionStatusBar = ({
     categoryDetails,
     userCategories,
     todayEvents,
-    token,
     displayWindowInfo,
     isTrackingPaused
   ])
@@ -349,7 +389,7 @@ const DistractionStatusBar = ({
 
   const isLoadingPrimary =
     isLoadingLatestEvent ||
-    (token && !latestEvent && !isLoadingCategory && !isLoadingUserCategories)
+    (!latestEvent && !isLoadingCategory && !isLoadingUserCategories)
 
   const handleOpenRecategorize = useRecategorizationHandler(
     latestEvent,

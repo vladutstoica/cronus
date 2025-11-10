@@ -1,17 +1,31 @@
 import { useEffect, useRef, useState } from 'react'
 import { Category } from 'shared'
 import { useAuth } from '../contexts/AuthContext'
-import { trpc } from '../utils/trpc'
+import { localApi } from '../lib/localApi'
 
 export function useDistractionSound(categoryDetails: Category | null | undefined) {
-  const { token } = useAuth()
-  const { data: electronSettings } = trpc.user.getElectronAppSettings.useQuery(
-    { token: token || '' },
-    { enabled: !!token }
-  )
+  const { user, isAuthenticated } = useAuth()
+  const [electronSettings, setElectronSettings] = useState<any>(null)
 
   const [distractionAudio, setDistractionAudio] = useState<HTMLAudioElement | null>(null)
   const lastPlayedRef = useRef<number | null>(null)
+
+  // Load electron settings
+  useEffect(() => {
+    if (isAuthenticated) {
+      const loadSettings = async () => {
+        try {
+          const userData = await localApi.user.get()
+          if (userData && userData.electron_app_settings) {
+            setElectronSettings(userData.electron_app_settings)
+          }
+        } catch (error) {
+          console.error('Error loading electron settings:', error)
+        }
+      }
+      loadSettings()
+    }
+  }, [isAuthenticated])
 
   // On mount, get the audio data URL from the main process and create the Audio object.
   useEffect(() => {

@@ -1,18 +1,8 @@
-import { endOfDay, startOfDay } from 'date-fns'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ActivityEventSuggestion } from 'shared'
-import { useAuth } from '../../../contexts/AuthContext'
-import { useManualEntry } from '../../../hooks/useManualEntry'
-import { useTimeSelection } from '../../../hooks/useTimeSelection'
-import { hexToRgba } from '../../../lib/colors'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import {
   getTimelineSegmentsForDay,
-  type CanonicalBlock,
-  type DaySegment
+  type CanonicalBlock
 } from '../../../lib/dayTimelineHelpers'
-import { convertYToTime } from '../../../lib/timePositioning'
-import { trpc } from '../../../utils/trpc'
-import { CreateEntryModal } from './CreateEntryModal'
 import { EventSegments } from './EventSegments'
 import { TimelineGrid } from './TimelineGrid'
 import { TimelineOverlays } from './TimelineOverlays'
@@ -45,624 +35,118 @@ export const DayTimeline = ({
   const currentHourRef = useRef<HTMLDivElement>(null)
   const prevHourHeightRef = useRef(hourHeight)
   const timelineContainerRef = useRef<HTMLDivElement>(null)
-  const justModifiedRef = useRef(false)
-  const { token, user } = useAuth()
 
-  const [resizingState, setResizingState] = useState<{
-    isResizing: boolean
-    entry: DaySegment | null
-    direction: 'top' | 'bottom' | null
-    startY: number | null
-    limitedTop: number | null
-    limitedHeight: number | null
-  }>({
-    isResizing: false,
-    entry: null,
-    direction: null,
-    startY: null,
-    limitedTop: null,
-    limitedHeight: null
-  })
+  const daySegments = useMemo(() => {
+    return getTimelineSegmentsForDay(trackedTimeBlocks, 24 * hourHeight * 16, isToday)
+  }, [trackedTimeBlocks, hourHeight, isToday])
 
-  const [movingState, setMovingState] = useState<{
-    isMoving: boolean
-    entry: DaySegment | null
-    startY: number | null
-    initialTop: number | null
-    hasMoved: boolean
-  }>({
-    isMoving: false,
-    entry: null,
-    startY: null,
-    initialTop: null,
-    hasMoved: false
-  })
+  const calendarSegments = useMemo(() => {
+    return getTimelineSegmentsForDay(googleCalendarTimeBlocks, 24 * hourHeight * 16, isToday)
+  }, [googleCalendarTimeBlocks, hourHeight, isToday])
 
-  const [previewState, setPreviewState] = useState<{
-    top: number
-    height: number
-    backgroundColor: string
-    hasOverlappingCalendarEvents: boolean
-  } | null>(null)
-
-  const {
-    modalState,
-    handleModalClose,
-    handleModalSubmit,
-    handleModalDelete,
-    handleSelectManualEntry,
-    openNewEntryModal,
-    updateManualEntry
-  } = useManualEntry({
-    baseDate: dayForEntries,
-    onModalClose: () => resetDragState(),
-    token,
-    userId: user?.id || null
-  })
-
-  const { data: suggestions, refetch: refetchSuggestions } = trpc.suggestions.list.useQuery(
-    {
-      token: token || '',
-      startTime: startOfDay(dayForEntries).getTime(),
-      endTime: endOfDay(dayForEntries).getTime()
-    },
-    { enabled: !!token }
-  )
-
-  const utils = trpc.useUtils()
-
-  const acceptSuggestion = trpc.suggestions.accept.useMutation({
-    onSuccess: () => {
-      // Refetch activities and suggestions
-      utils.activeWindowEvents.getEventsForDateRange.invalidate()
-      refetchSuggestions()
-    }
-  })
-
-  const rejectSuggestion = trpc.suggestions.reject.useMutation({
-    onSuccess: () => {
-      refetchSuggestions()
-    }
-  })
-
-  const timelineHeight = useMemo(() => {
-    const rootFontSize = 16 // Assuming default 16px
-    return 24 * hourHeight * rootFontSize
-  }, [hourHeight])
-
-  const trackedDaySegments = useMemo(
-    () => getTimelineSegmentsForDay(trackedTimeBlocks, timelineHeight, isToday, currentTime),
-    [trackedTimeBlocks, timelineHeight, isToday, currentTime]
-  )
-
-  const suggestionDaySegments = useMemo(() => {
-    if (!suggestions) return []
-
-    const suggestionTimeBlocks: CanonicalBlock[] = (suggestions as ActivityEventSuggestion[]).map(
-      (s: ActivityEventSuggestion) => ({
-        _id: s._id.toString(),
-        type: 'manual',
-        name: s.name,
-        startTime: new Date(s.startTime),
-        endTime: new Date(s.endTime),
-        durationMs: new Date(s.endTime).getTime() - new Date(s.startTime).getTime(),
-        description: '',
-        categoryColor: s.categoryColor,
-        categoryName: s.categoryName,
-        isSuggestion: true,
-        onAccept: (e: React.MouseEvent) => {
-          e.stopPropagation()
-          if (!token) return
-          acceptSuggestion.mutate({ token, suggestionId: s._id })
-        },
-        onReject: (e: React.MouseEvent) => {
-          e.stopPropagation()
-          if (!token) return
-          rejectSuggestion.mutate({ token, suggestionId: s._id })
-        }
-      })
-    )
-    return getTimelineSegmentsForDay(suggestionTimeBlocks, timelineHeight)
-  }, [suggestions, timelineHeight, token, acceptSuggestion, rejectSuggestion])
-
-  const googleCalendarDaySegments = useMemo(
-    () => getTimelineSegmentsForDay(googleCalendarTimeBlocks, timelineHeight),
-    [googleCalendarTimeBlocks, timelineHeight]
-  )
-
-  const allExistingSegments = useMemo(
-    () => [...trackedDaySegments, ...suggestionDaySegments, ...googleCalendarDaySegments],
-    [trackedDaySegments, suggestionDaySegments, googleCalendarDaySegments]
-  )
-
-  const {
-    dragState,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    handleMouseLeave,
-    resetDragState
-  } = useTimeSelection(
-    timelineContainerRef as React.RefObject<HTMLDivElement>,
-    (y: number) => {
-      if (!timelineContainerRef.current) return null
-      // y is already relative to the timeline container, so we pass it directly
-      return convertYToTime(y, timelineContainerRef.current)
-    },
-    (startTime, endTime) => {
-      openNewEntryModal(startTime, endTime)
-    },
-    !modalState.isOpen && !resizingState.isResizing && !movingState.isMoving,
-    dayForEntries,
-    allExistingSegments
-  )
-
-  const hourlyActivity = useMemo(() => {
-    const activity = new Array(24).fill(false)
-    const allSegments = [...trackedDaySegments]
-
-    if (allSegments.length === 0) return activity
-    const currentHour = new Date().getHours()
-
-    for (let hour = 0; hour < 24; hour++) {
-      if (isToday && hour === currentHour && trackedTimeBlocks.length > 0) {
-        activity[hour] = true
-        continue
-      }
-      const hourStart = new Date(dayForEntries)
-      hourStart.setHours(hour, 0, 0, 0)
-
-      const hourEnd = new Date(hourStart)
-      hourEnd.setHours(hour + 1)
-
-      for (const segment of allSegments) {
-        const segmentStart = new Date(segment.startTime)
-        const segmentEnd = new Date(segment.endTime)
-
-        // Check for overlap
-        if (segmentStart < hourEnd && segmentEnd > hourStart) {
-          activity[hour] = true
-          break
-        }
-      }
-    }
-    return activity
-  }, [trackedDaySegments, dayForEntries, isToday, trackedTimeBlocks])
-
-  const hasGoogleCalendarEvents = googleCalendarDaySegments.length > 0
-
-  const SEGMENT_TOP_OFFSET_PX = 1
-  const SEGMENT_SPACING_PX = 1 // Gap between segments
-  const totalSegmentVerticalSpacing = SEGMENT_TOP_OFFSET_PX + SEGMENT_SPACING_PX
-
-  const handleResizeStart = (
-    entry: DaySegment,
-    direction: 'top' | 'bottom',
-    e: React.MouseEvent
-  ) => {
-    if (modalState.isOpen || dragState.isDragging || movingState.isMoving) return
-    resetDragState() // Prevent new entry drag
-    e.stopPropagation()
-
-    setResizingState({
-      isResizing: true,
-      entry,
-      direction,
-      startY: e.clientY,
-      limitedTop: null,
-      limitedHeight: null
-    })
-  }
-
-  const handleMoveStart = (entry: DaySegment, e: React.MouseEvent) => {
-    if (modalState.isOpen || resizingState.isResizing || dragState.isDragging) return
-    resetDragState() // Prevent new entry drag
-    e.stopPropagation()
-
-    setMovingState({
-      isMoving: true,
-      entry,
-      startY: e.clientY,
-      initialTop: entry.top,
-      hasMoved: false
-    })
-  }
-
-  const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (resizingState.isResizing && resizingState.entry && resizingState.startY) {
-      const { entry, startY, direction } = resizingState
-      const deltaY = e.clientY - startY
-
-      // Snap to nearest 5 minutes
-      const minutesPerPixel = (24 * 60) / timelineHeight
-      const deltaMinutes = Math.round((deltaY * minutesPerPixel) / 5) * 5
-      const pixelsPerMinute = timelineHeight / (24 * 60)
-      const snappedDeltaY = deltaMinutes * pixelsPerMinute
-
-      let newTop: number
-      let newHeight: number
-
-      if (direction === 'top') {
-        newTop = entry.top + snappedDeltaY
-        newHeight = entry.height - snappedDeltaY
-      } else {
-        // 'bottom'
-        newTop = entry.top
-        newHeight = entry.height + snappedDeltaY
-      }
-
-      // Apply collision detection - limit resize based on existing segments
-      if (direction === 'top') {
-        // When resizing from top, check for existing segments above
-        for (const segment of allExistingSegments) {
-          // Skip calendar events and the current entry being resized
-          if (segment.type === 'calendar' || segment._id === entry._id) {
-            continue
-          }
-          const segmentBottom = segment.top + segment.height
-          // If there's a segment above that would collide, limit the resize
-          if (segmentBottom <= entry.top && segmentBottom > newTop) {
-            newTop = Math.max(newTop, segmentBottom)
-            newHeight = entry.top + entry.height - newTop
-          }
-        }
-      } else {
-        // When resizing from bottom, check for existing segments below
-        const newBottom = newTop + newHeight
-        let closestSegmentTop = newBottom // Initialize to current target
-
-        for (const segment of allExistingSegments) {
-          // Skip calendar events and the current entry being resized
-          if (segment.type === 'calendar' || segment._id === entry._id) {
-            continue
-          }
-          // If there's a segment below that would collide, find the closest one
-          if (segment.top >= entry.top + entry.height && segment.top < newBottom) {
-            closestSegmentTop = Math.min(closestSegmentTop, segment.top)
-          }
-        }
-
-        // Update height to stop at the closest segment
-        if (closestSegmentTop < newBottom) {
-          newHeight = closestSegmentTop - newTop
-        }
-      }
-
-      // Clamp resize
-      newHeight = Math.max(5, newHeight) // Min height 5px
-      if (direction === 'top') {
-        newTop = Math.min(newTop, entry.top + entry.height - 5)
-      }
-
-      const hasOverlappingCalendarEvents = googleCalendarDaySegments.some((calendarSegment) => {
-        const entryStart = entry.startTime.getTime()
-        const entryEnd = entry.endTime.getTime()
-        const calendarStart = calendarSegment.startTime.getTime()
-        const calendarEnd = calendarSegment.endTime.getTime()
-
-        return entryStart < calendarEnd && entryEnd > calendarStart
-      })
-
-      // Store the collision-limited values in resizing state
-      setResizingState((prev) => ({
-        ...prev,
-        limitedTop: newTop,
-        limitedHeight: newHeight
-      }))
-
-      setPreviewState({
-        top: newTop,
-        height: newHeight,
-        backgroundColor: segmentBackgroundColor(entry),
-        hasOverlappingCalendarEvents
-      })
-    } else if (
-      movingState.isMoving &&
-      movingState.entry &&
-      movingState.startY &&
-      movingState.initialTop !== null
-    ) {
-      const { entry, startY, initialTop } = movingState
-      const deltaY = e.clientY - startY
-
-      // Check for movement threshold to differentiate click from drag
-      if (!movingState.hasMoved && Math.abs(deltaY) > 5) {
-        setMovingState((s) => ({ ...s, hasMoved: true }))
-      }
-
-      if (movingState.hasMoved) {
-        const minutesPerPixel = (24 * 60) / timelineHeight
-        const deltaMinutes = Math.round((deltaY * minutesPerPixel) / 5) * 5
-        const pixelsPerMinute = timelineHeight / (24 * 60)
-        const snappedDeltaY = deltaMinutes * pixelsPerMinute
-        const newTop = initialTop + snappedDeltaY
-
-        const hasOverlappingCalendarEvents = googleCalendarDaySegments.some((calendarSegment) => {
-          const entryStart = entry.startTime.getTime()
-          const entryEnd = entry.endTime.getTime()
-          const calendarStart = calendarSegment.startTime.getTime()
-          const calendarEnd = calendarSegment.endTime.getTime()
-
-          return entryStart < calendarEnd && entryEnd > calendarStart
-        })
-
-        setPreviewState({
-          top: newTop,
-          height: entry.height,
-          backgroundColor: segmentBackgroundColor(entry),
-          hasOverlappingCalendarEvents
-        })
-      }
-    } else {
-      handleMouseMove(e)
-    }
-  }
-
-  // Scroll to current hour when viewing today
-  useEffect(() => {
-    if (isToday && currentHourRef.current && scrollContainerRef.current) {
-      currentHourRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-  }, [isToday, scrollContainerRef])
-
-  // Adjust scroll position on zoom to keep the view centered
+  // Auto-scroll to current hour on initial load (only for today)
   useLayoutEffect(() => {
-    const scrollElement = scrollContainerRef.current
-    if (!scrollElement) return
+    if (isToday && currentHourRef.current && scrollContainerRef.current) {
+      const parentTop = scrollContainerRef.current.getBoundingClientRect().top
+      const currentTop = currentHourRef.current.getBoundingClientRect().top
+      const relativeTop = currentTop - parentTop
+      const offset = scrollContainerRef.current.clientHeight / 3
 
-    const prevHourHeight = prevHourHeightRef.current
-    const zoomRatio = hourHeight / prevHourHeight
+      scrollContainerRef.current.scrollTop = relativeTop - offset
+    }
+  }, [isToday])
 
-    if (zoomRatio !== 1) {
-      const { scrollTop, clientHeight } = scrollElement
-      const scrollCenter = scrollTop + clientHeight / 2
-      const newScrollTop = scrollCenter * zoomRatio - clientHeight / 2
-      scrollElement.scrollTop = newScrollTop
+  // Handle zoom changes - maintain relative scroll position
+  useEffect(() => {
+    const prevHeight = prevHourHeightRef.current
+    const newHeight = hourHeight
+
+    if (prevHeight !== newHeight && scrollContainerRef.current) {
+      const scrollRatio = newHeight / prevHeight
+      scrollContainerRef.current.scrollTop *= scrollRatio
     }
 
-    // Update ref for the next render
     prevHourHeightRef.current = hourHeight
   }, [hourHeight, scrollContainerRef])
 
-  const handleTimelineMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
-    let actionTaken = false
-    if (resizingState.isResizing && resizingState.entry && resizingState.startY) {
-      const { entry, direction, limitedTop, limitedHeight } = resizingState
-      actionTaken = true
-
-      // Use collision-limited values if available, otherwise fall back to raw calculation
-      let newStartTime = new Date(entry.startTime)
-      let newEndTime = new Date(entry.endTime)
-
-      if (limitedTop !== null && limitedHeight !== null) {
-        // Calculate new times based on collision-limited visual position
-        const minutesPerPixel = (24 * 60) / timelineHeight
-        const totalMinutesInDay = 24 * 60
-
-        // Convert limited visual position back to time
-        const startMinutes = (limitedTop / timelineHeight) * totalMinutesInDay
-        const durationMinutes = (limitedHeight / timelineHeight) * totalMinutesInDay
-
-        const dayStart = new Date(entry.startTime)
-        dayStart.setHours(0, 0, 0, 0)
-
-        newStartTime = new Date(dayStart.getTime() + startMinutes * 60000)
-        newEndTime = new Date(dayStart.getTime() + (startMinutes + durationMinutes) * 60000)
-      } else {
-        // Fallback to raw calculation (shouldn't happen in normal flow)
-        const deltaY = e.clientY - resizingState.startY
-        const minutesPerPixel = (24 * 60) / timelineHeight
-        const deltaMinutes = Math.round((deltaY * minutesPerPixel) / 5) * 5
-
-        if (direction === 'top') {
-          newStartTime.setMinutes(newStartTime.getMinutes() + deltaMinutes)
-        } else {
-          newEndTime.setMinutes(newEndTime.getMinutes() + deltaMinutes)
-        }
-      }
-
-      // Basic validation - enforce minimum 5 minute duration
-      const minDurationMs = 5 * 60 * 1000 // 5 minutes
-      const currentDurationMs = newEndTime.getTime() - newStartTime.getTime()
-
-      if (currentDurationMs < minDurationMs) {
-        if (direction === 'top') {
-          newStartTime = new Date(newEndTime.getTime() - minDurationMs)
-        } else {
-          newEndTime = new Date(newStartTime.getTime() + minDurationMs)
-        }
-      }
-
-      const durationMs = newEndTime.getTime() - newStartTime.getTime()
-
-      if (entry._id && durationMs > 0 && token) {
-        updateManualEntry.mutate({
-          token,
-          id: entry._id,
-          startTime: newStartTime.getTime(),
-          durationMs
-        })
-      }
-    } else if (movingState.isMoving && movingState.entry && movingState.startY) {
-      // Only complete the move if the mouse has actually dragged
-      if (movingState.hasMoved) {
-        const { entry, startY } = movingState
-        actionTaken = true
-
-        const deltaY = e.clientY - startY
-        const minutesPerPixel = (24 * 60) / timelineHeight
-        const deltaMinutes = Math.round((deltaY * minutesPerPixel) / 5) * 5
-
-        const newStartTime = new Date(entry.startTime)
-        newStartTime.setMinutes(newStartTime.getMinutes() + deltaMinutes)
-
-        const durationMs = new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()
-
-        if (entry._id && token) {
-          console.log('[DayTimeline] Updating manual entry:', {
-            token,
-            id: entry._id,
-            startTime: newStartTime.getTime(),
-            durationMs
-          })
-
-          updateManualEntry.mutate({
-            token,
-            id: entry._id,
-            startTime: newStartTime.getTime(),
-            durationMs
-          })
-        }
-      }
-    }
-
-    if (actionTaken) {
-      justModifiedRef.current = true
-    }
-
-    // Reset state regardless of what happened
-    setResizingState({
-      isResizing: false,
-      entry: null,
-      direction: null,
-      startY: null,
-      limitedTop: null,
-      limitedHeight: null
-    })
-    setMovingState({
-      isMoving: false,
-      entry: null,
-      startY: null,
-      initialTop: null,
-      hasMoved: false
-    })
-    setPreviewState(null)
-    handleMouseUp(e)
-  }
-
-  const yToTime = (y: number) => {
-    if (!timelineContainerRef.current) return null
-    return convertYToTime(y, timelineContainerRef.current)
-  }
-
   // Calculate current time position
-  const getCurrentTimePosition = () => {
+  const currentTimeTop = useMemo(() => {
+    if (!isToday) return null
     const hours = currentTime.getHours()
-    return { hours }
+    const minutes = currentTime.getMinutes()
+    return (hours + minutes / 60) * hourHeight
+  }, [currentTime, isToday, hourHeight])
+
+  const handleHourClick = (hour: number | null) => {
+    if (hour === null) {
+      onHourSelect(null)
+    } else if (selectedHour === hour) {
+      onHourSelect(null)
+    } else {
+      onHourSelect(hour)
+    }
   }
 
-  const handleSegmentClick = (segment: DaySegment) => {
-    if (justModifiedRef.current) {
-      justModifiedRef.current = false
-      return
-    }
-    if (segment.type === 'manual') {
-      handleSelectManualEntry(segment)
-    }
-  }
+  // Calculate current hour
+  const currentHour = currentTime.getHours()
 
-  const { hours: currentHour } = getCurrentTimePosition()
-  const segmentBackgroundColor = (segment: DaySegment) =>
-    segment.categoryColor
-      ? hexToRgba(segment.categoryColor, isDarkMode ? 0.5 : 0.3)
-      : hexToRgba('#808080', isDarkMode ? 0.3 : 0.2)
+  // Calculate hourly activity (which hours have events)
+  const hourlyActivity = new Array(24).fill(false)
+  daySegments.forEach(segment => {
+    const startHour = segment.startTime.getHours()
+    const endHour = segment.endTime.getHours()
+    for (let h = startHour; h <= endHour; h++) {
+      hourlyActivity[h] = true
+    }
+  })
 
   return (
-    <div className="flex-1 border border-border rounded-b-lg bg-card">
-      <div
-        ref={timelineContainerRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleTimelineMouseMove}
-        onMouseUp={handleTimelineMouseUp}
-        onMouseLeave={handleMouseLeave}
-        className={`relative`}
-        style={{ height: timelineHeight }}
-      >
-        <TimelineGrid
-          currentHour={currentHour}
-          selectedHour={selectedHour}
-          currentHourRef={currentHourRef}
+    <div
+      ref={timelineContainerRef}
+      className="relative w-full select-none"
+      style={{ height: `${24 * hourHeight}rem` }}
+    >
+      {/* Timeline Grid (hours, lines, etc.) */}
+      <TimelineGrid
+        currentHour={currentHour}
+        selectedHour={selectedHour}
+        currentHourRef={currentHourRef}
+        hourHeight={hourHeight}
+        onHourSelect={handleHourClick}
+        hourlyActivity={hourlyActivity}
+      />
+
+      {/* Google Calendar Events */}
+      {calendarSegments.length > 0 && (
+        <EventSegments
+          segments={calendarSegments}
           hourHeight={hourHeight}
-          onHourSelect={onHourSelect}
-          hourlyActivity={hourlyActivity}
-        />
-
-        <EventSegments
-          daySegments={trackedDaySegments}
-          selectedHour={selectedHour}
           isDarkMode={isDarkMode}
-          segmentBackgroundColor={segmentBackgroundColor}
-          onSegmentClick={handleSegmentClick}
-          onResizeStart={handleResizeStart}
-          onMoveStart={handleMoveStart}
-          SEGMENT_TOP_OFFSET_PX={SEGMENT_TOP_OFFSET_PX}
-          totalSegmentVerticalSpacing={totalSegmentVerticalSpacing}
-          type="activity"
-          layout={hasGoogleCalendarEvents ? 'split' : 'full'}
-          token={token}
-          dayForEntries={dayForEntries}
-          googleCalendarSegments={googleCalendarDaySegments}
-        />
-
-        <EventSegments
-          daySegments={suggestionDaySegments}
-          selectedHour={selectedHour}
-          isDarkMode={isDarkMode}
-          segmentBackgroundColor={segmentBackgroundColor}
-          onSegmentClick={handleSegmentClick}
-          onResizeStart={handleResizeStart}
-          onMoveStart={handleMoveStart}
-          SEGMENT_TOP_OFFSET_PX={SEGMENT_TOP_OFFSET_PX}
-          totalSegmentVerticalSpacing={totalSegmentVerticalSpacing}
-          type="activity"
-          layout={hasGoogleCalendarEvents ? 'split' : 'full'}
-          token={token}
-          dayForEntries={dayForEntries}
-          googleCalendarSegments={googleCalendarDaySegments}
-        />
-
-        {hasGoogleCalendarEvents && (
-          <EventSegments
-            daySegments={googleCalendarDaySegments}
-            selectedHour={selectedHour}
-            isDarkMode={isDarkMode}
-            segmentBackgroundColor={segmentBackgroundColor}
-            onSegmentClick={handleSegmentClick}
-            onResizeStart={handleResizeStart}
-            onMoveStart={handleMoveStart}
-            SEGMENT_TOP_OFFSET_PX={SEGMENT_TOP_OFFSET_PX}
-            totalSegmentVerticalSpacing={totalSegmentVerticalSpacing}
-            type="calendar"
-            layout="split"
-            token={token}
-            dayForEntries={dayForEntries}
-          />
-        )}
-
-        <TimelineOverlays
-          previewState={previewState}
-          dragState={dragState}
-          yToTime={yToTime}
-          isToday={isToday}
-          currentTime={currentTime}
-          timelineHeight={timelineHeight}
-          isDragging={dragState.isDragging}
-          isModalOpen={modalState.isOpen}
-          hasGoogleCalendarEvents={hasGoogleCalendarEvents}
-          existingSegments={allExistingSegments}
-        />
-      </div>
-      {modalState.isOpen && (
-        <CreateEntryModal
-          isOpen={modalState.isOpen}
-          onClose={handleModalClose}
-          onSubmit={handleModalSubmit}
-          onDelete={handleModalDelete}
-          startTime={modalState.startTime}
-          endTime={modalState.endTime}
-          existingEntry={modalState.editingEntry as CanonicalBlock | null}
+          type="calendar"
+          onSegmentClick={() => {}}
         />
       )}
+
+      {/* Tracked Events */}
+      {daySegments.length > 0 && (
+        <EventSegments
+          segments={daySegments}
+          hourHeight={hourHeight}
+          isDarkMode={isDarkMode}
+          type="tracked"
+          onSegmentClick={() => {}}
+        />
+      )}
+
+      {/* Current time indicator and overlays */}
+      <TimelineOverlays
+        isToday={isToday}
+        currentTimeTop={currentTimeTop}
+        currentHourRef={currentHourRef}
+        hourHeight={hourHeight}
+      />
     </div>
   )
 }
+
+export default DayTimeline
