@@ -75,7 +75,6 @@ export function getOrCreateLocalUser(): User {
     user.updated_at
   );
 
-  console.log('Created local user:', user.id);
   return user;
 }
 
