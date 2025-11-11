@@ -21,7 +21,7 @@ export function initDatabase(): Database.Database {
 
   console.log('Initializing database at:', dbPath);
 
-  db = new Database(dbPath, { verbose: console.log });
+  db = new Database(dbPath); // Removed verbose logging
   db.pragma('journal_mode = WAL'); // Enable Write-Ahead Logging for better performance
   db.pragma('foreign_keys = ON'); // Enable foreign key constraints
 
@@ -154,6 +154,20 @@ function runMigrations(database: Database.Database): void {
           ('screenshots_enabled', 'false'),
           ('ollama_model', 'llama3.2'),
           ('categorization_enabled', 'true');
+      `
+    },
+    {
+      name: '003_ai_provider_settings',
+      up: `
+        -- Add AI provider settings
+        INSERT OR IGNORE INTO app_settings (key, value) VALUES
+          ('ai_provider', 'ollama'),
+          ('ollama_base_url', 'http://localhost:11434'),
+          ('lmstudio_base_url', 'http://localhost:1234/v1'),
+          ('lmstudio_model', '');
+
+        -- Update ollama_model to use 1b variant for better performance
+        UPDATE app_settings SET value = 'llama3.2:1b' WHERE key = 'ollama_model' AND value = 'llama3.2';
       `
     }
   ];
