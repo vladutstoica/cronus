@@ -1,4 +1,5 @@
-import { generateChatCompletion } from './ollama';
+import { getActiveProvider, isActiveProviderAvailable } from './aiProvider';
+import { isAIEnabled } from './ollama';
 import { Category } from '../database/services/categories';
 
 export interface ActivityDetails {
@@ -141,13 +142,25 @@ Respond in JSON format with the category name and your reasoning.
 }
 
 /**
- * Get AI category choice using Ollama
+ * Get AI category choice using active provider
  */
 export async function getAICategoryChoice(
   userProjectsAndGoals: string,
   userCategories: Pick<Category, 'name' | 'description'>[],
   activityDetails: ActivityDetails
 ): Promise<CategoryChoice | null> {
+  if (!isAIEnabled()) {
+    return null;
+  }
+
+  const available = await isActiveProviderAvailable();
+
+  if (!available) {
+    return null;
+  }
+
+  const provider = getActiveProvider();
+
   const messages = buildCategoryChoicePrompt(
     userProjectsAndGoals,
     userCategories,
@@ -172,7 +185,7 @@ export async function getAICategoryChoice(
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   try {
-    const response = await generateChatCompletion(messages, {
+    const response = await provider.generateChatCompletion(messages, {
       temperature: 0,
       format: 'json'
     });
@@ -209,6 +222,18 @@ export async function getAICategoryChoice(
 export async function getAISummaryForBlock(
   activityDetails: ActivityDetails
 ): Promise<string | null> {
+  if (!isAIEnabled()) {
+    return null;
+  }
+
+  const available = await isActiveProviderAvailable();
+
+  if (!available) {
+    return null;
+  }
+
+  const provider = getActiveProvider();
+
   const prompt = [
     {
       role: 'system' as const,
@@ -228,7 +253,7 @@ BROWSER: ${activityDetails.browser || ''}`
   ];
 
   try {
-    const response = await generateChatCompletion(prompt, {
+    const response = await provider.generateChatCompletion(prompt, {
       temperature: 0.3,
       maxTokens: 50
     });
@@ -244,6 +269,18 @@ BROWSER: ${activityDetails.browser || ''}`
  * Check if a title is informative
  */
 export async function isTitleInformative(title: string): Promise<boolean> {
+  if (!isAIEnabled()) {
+    return false;
+  }
+
+  const available = await isActiveProviderAvailable();
+
+  if (!available) {
+    return false;
+  }
+
+  const provider = getActiveProvider();
+
   const prompt = [
     {
       role: 'system' as const,
@@ -256,7 +293,7 @@ export async function isTitleInformative(title: string): Promise<boolean> {
   ];
 
   try {
-    const response = await generateChatCompletion(prompt, {
+    const response = await provider.generateChatCompletion(prompt, {
       temperature: 0,
       maxTokens: 3
     });
@@ -274,6 +311,18 @@ export async function isTitleInformative(title: string): Promise<boolean> {
 export async function generateActivityTitle(
   activityDetails: ActivityDetails
 ): Promise<string | null> {
+  if (!isAIEnabled()) {
+    return null;
+  }
+
+  const available = await isActiveProviderAvailable();
+
+  if (!available) {
+    return null;
+  }
+
+  const provider = getActiveProvider();
+
   const prompt = [
     {
       role: 'system' as const,
@@ -290,7 +339,7 @@ CONTENT: ${activityDetails.content ? activityDetails.content.slice(0, 1000) : ''
   ];
 
   try {
-    const response = await generateChatCompletion(prompt, {
+    const response = await provider.generateChatCompletion(prompt, {
       temperature: 0.3,
       maxTokens: 50
     });
@@ -309,6 +358,18 @@ export async function getEmojiForCategory(
   categoryName: string,
   categoryDescription?: string
 ): Promise<string | null> {
+  if (!isAIEnabled()) {
+    return null;
+  }
+
+  const available = await isActiveProviderAvailable();
+
+  if (!available) {
+    return null;
+  }
+
+  const provider = getActiveProvider();
+
   const prompt = [
     {
       role: 'system' as const,
@@ -321,7 +382,7 @@ export async function getEmojiForCategory(
   ];
 
   try {
-    const response = await generateChatCompletion(prompt, {
+    const response = await provider.generateChatCompletion(prompt, {
       temperature: 0,
       maxTokens: 10
     });
@@ -346,6 +407,18 @@ export async function generateCategorySuggestions(
   emoji: string;
   isProductive: boolean;
 }> | null> {
+  if (!isAIEnabled()) {
+    return null;
+  }
+
+  const available = await isActiveProviderAvailable();
+
+  if (!available) {
+    return null;
+  }
+
+  const provider = getActiveProvider();
+
   const prompt = [
     {
       role: 'system' as const,
@@ -374,7 +447,7 @@ Generate ${count} relevant categories to help track time for these goals.`
   ];
 
   try {
-    const response = await generateChatCompletion(prompt, {
+    const response = await provider.generateChatCompletion(prompt, {
       temperature: 0,
       format: 'json'
     });

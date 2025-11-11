@@ -7,7 +7,7 @@ import { createActiveWindowEvent, updateActiveWindowEvent } from '../database/se
 import { getAICategoryChoice, getAISummaryForBlock, CategoryChoice } from './categorization';
 import { getRuleBasedCategoryChoice } from './ruleBasedCategorization';
 import { getBooleanSetting } from '../database/services/settings';
-import { isAIEnabled, isOllamaAvailable } from './ollama';
+import { isAIEnabled } from './ollama';
 
 export interface WindowEventDetails {
   windowId: string;
@@ -152,31 +152,29 @@ async function categorizeEventAsync(
 
     // Try AI categorization first if enabled and available
     if (isAIEnabled()) {
-      const aiAvailable = await isOllamaAvailable();
-      if (aiAvailable) {
-        // Parse goals properly for AI categorization
-        let userGoals = '';
-        try {
-          if (typeof user.user_projects_and_goals === 'string') {
-            const parsed = JSON.parse(user.user_projects_and_goals);
-            // Convert array to readable string
-            userGoals = Array.isArray(parsed) ? parsed.join('\n') : parsed;
-          } else if (Array.isArray(user.user_projects_and_goals)) {
-            userGoals = user.user_projects_and_goals.join('\n');
-          } else {
-            userGoals = user.user_projects_and_goals || '';
-          }
-        } catch {
-          // If parsing fails, use as plain text
+      // Parse goals properly for AI categorization
+      let userGoals = '';
+      try {
+        if (typeof user.user_projects_and_goals === 'string') {
+          const parsed = JSON.parse(user.user_projects_and_goals);
+          // Convert array to readable string
+          userGoals = Array.isArray(parsed) ? parsed.join('\n') : parsed;
+        } else if (Array.isArray(user.user_projects_and_goals)) {
+          userGoals = user.user_projects_and_goals.join('\n');
+        } else {
           userGoals = user.user_projects_and_goals || '';
         }
-
-        categoryChoice = await getAICategoryChoice(
-          userGoals,
-          categories.map(c => ({ name: c.name, description: c.description })),
-          activityDetails
-        );
+      } catch {
+        // If parsing fails, use as plain text
+        userGoals = user.user_projects_and_goals || '';
       }
+
+      // getAICategoryChoice now handles provider availability checking internally
+      categoryChoice = await getAICategoryChoice(
+        userGoals,
+        categories.map(c => ({ name: c.name, description: c.description })),
+        activityDetails
+      );
     }
 
     // Fall back to rule-based categorization if AI failed or is disabled

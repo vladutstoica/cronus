@@ -90,13 +90,36 @@ export const localApi = {
     }
   },
 
-  // Ollama/AI operations
+  // Ollama/AI operations (deprecated, use ai.* instead)
   ollama: {
     listModels: async () => {
       return window.electron.ipcRenderer.invoke('local:list-ollama-models');
     },
     pullModel: async (modelName: string) => {
       return window.electron.ipcRenderer.invoke('local:pull-ollama-model', modelName);
+    }
+  },
+
+  // AI Provider operations
+  ai: {
+    testConnection: async (
+      provider: 'ollama' | 'lmstudio',
+      baseUrl?: string
+    ): Promise<{ success: boolean; message: string; models?: string[] }> => {
+      return window.electron.ipcRenderer.invoke(
+        'local:test-ai-provider-connection',
+        provider,
+        baseUrl
+      );
+    },
+    listModels: async (): Promise<string[]> => {
+      return window.electron.ipcRenderer.invoke('local:list-ai-models');
+    },
+    listProviderModels: async (provider: 'ollama' | 'lmstudio'): Promise<string[]> => {
+      return window.electron.ipcRenderer.invoke('local:list-provider-models', provider);
+    },
+    clearAvailabilityCache: async (): Promise<void> => {
+      return window.electron.ipcRenderer.invoke('local:clear-ai-availability-cache');
     }
   }
 };
