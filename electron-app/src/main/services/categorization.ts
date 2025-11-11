@@ -53,90 +53,42 @@ function buildCategoryChoicePrompt(
 
   return [
     {
-      role: 'system' as const,
-      content: `You are an AI assistant that categorizes activities based on CONTENT and PURPOSE, not just the platform or application being used.
-
-CRITICAL RULES FOR CATEGORIZATION:
-
-1. PROFESSIONAL TOOLS = WORK:
-   - IDEs (IntelliJ IDEA, VS Code, PyCharm, Xcode, Android Studio) → Always Work
-   - Code editors (Sublime Text, Vim, Emacs) → Always Work
-   - Developer tools (GitHub Desktop, Terminal, Postman, Docker) → Always Work
-   - Design tools (Figma, Photoshop, Sketch) → Always Work if user is designer/developer
-   - Database tools (MySQL Workbench, pgAdmin, MongoDB Compass) → Always Work
-   - Microsoft Office (Word, Excel, PowerPoint, Outlook, Teams) → Always Work
-   - Professional communication (Slack, Teams, Zoom for meetings) → Always Work
-
-2. SOCIAL MEDIA/ENTERTAINMENT = STRICT:
-   - Social media (Facebook, Reddit, Twitter, Instagram, TikTok) → Entertainment UNLESS:
-     * URL/content shows clear work purpose (e.g., company page management)
-     * User explicitly states "social media management" in goals
-   - YouTube → Entertainment UNLESS clearly educational/tutorial AND related to goals
-   - Shopping sites → Entertainment UNLESS buying work equipment mentioned in goals
-   - News sites → Entertainment (passive consumption)
-
-3. AMBIGUOUS CASES:
-   - When in doubt between Work categories → choose the most relevant
-   - When in doubt between Work and Entertainment → look at URL and content first
-   - No URL/content for professional tools → assume Work
-   - No URL/content for browsers/social media → assume Entertainment
-
-4. DECISION PROCESS:
-   - First check: Is this a professional development/productivity tool? → Work
-   - Then check: Is URL/content clearly work-related? → Work
-   - Finally: Does it directly support stated goals? → Work
-   - Otherwise → Entertainment
-
-Based on the user's goals, their current activity, and their list of personal categories, choose the category name that best fits the activity.
-${
-  truncatedContent
-    ? 'Note that the page content is fetched via the accessibility API and might include noise (e.g., sidebars).'
-    : ''
-}
-
-You must respond in JSON format with this exact structure:
-{
-  "chosenCategoryName": "the category name",
-  "summary": "short summary of what the user is doing (max 10 words)",
-  "reasoning": "why this category was chosen (max 20 words)"
-}`
-    },
-    {
       role: 'user' as const,
-      content: `
-USER'S PROJECTS AND GOALS:
-${userProjectsAndGoals || 'Not set'}
+      content: `You categorize user activities into categories. Here is the current activity:
 
-USER'S CATEGORIES:
-${categoryListForPrompt}
-
-CURRENT ACTIVITY:
+ACTIVITY:
 ${activityDetailsString}
 
-EXAMPLES OF CORRECT CATEGORIZATION:
-- App: "IntelliJ IDEA" (no URL/content). Goal: "Software Developer". → CORRECT: "Work" (professional IDE)
-- App: "VS Code" (no URL/content). Goal: "Software Developer". → CORRECT: "Work" (professional editor)
-- App: "Microsoft Teams" (no URL/content). Goal: "Software Developer". → CORRECT: "Work" or "Communication" (work tool)
-- App: "Arc", URL: "facebook.com/jewelry". Goal: "Software Developer". → CORRECT: "Entertainment" (personal shopping)
-- App: "Arc", URL: "reddit.com/r/funny". Goal: "Software Developer". → CORRECT: "Entertainment" (memes)
-- App: "Arc", URL: "stackoverflow.com/questions/react-bug". Goal: "Software Developer". → CORRECT: "Work" (solving work problem)
-- App: "Chrome", URL: "youtube.com/watch?v=react-tutorial". Goal: "Learning React". → CORRECT: "Work" (directly related)
-- App: "Chrome", URL: "youtube.com/watch?v=cat-video". Goal: "Learning React". → CORRECT: "Entertainment" (unrelated)
-- App: "Figma" (no URL/content). Goal: "UI Designer". → CORRECT: "Work" (professional tool)
-- App: "Slack" (no URL/content). Goal: "Any professional". → CORRECT: "Work" or "Communication" (work chat)
+USER CATEGORIES:
+${categoryListForPrompt}
 
-TASK:
-1. Check if Application is a known professional tool (IDE, code editor, Office suite, etc.)
-   - If YES and user is a professional → Categorize as Work
-2. If it's a browser, check URL and content:
-   - Social media/shopping/entertainment sites → Entertainment (unless explicit work evidence)
-   - Technical sites (StackOverflow, GitHub, documentation) → Work
-   - Educational content directly related to goals → Work
-3. When in doubt between Work categories → choose most specific
-4. When in doubt between Work and Entertainment for browsers → prefer Entertainment UNLESS clear evidence
+USER GOALS:
+${userProjectsAndGoals || 'Not set'}
 
-Respond in JSON format with the category name and your reasoning.
-`
+CATEGORIZATION RULES:
+
+1. Professional tools (IDE, code editor, Office apps, Slack, Teams) → Work
+
+2. For browsers (Arc, Chrome, Safari, Firefox, Edge):
+   - Check the URL domain to determine category
+   - Work domains: github.com, gitlab.com, stackoverflow.com, atlassian.net, jira, linear.app, docs.
+   - Entertainment domains: facebook.com, instagram.com, reddit.com, twitter.com, tiktok.com, youtube.com, amazon.com, ebay.com, kickstarter.com, netflix.com
+   - If URL matches work domain → Work
+   - If URL matches entertainment domain → Entertainment
+
+3. Examples:
+   - Arc + github.com/repo → Work
+   - Arc + facebook.com → Entertainment
+   - VS Code → Work
+   - Chrome + stackoverflow.com → Work
+   - Chrome + kickstarter.com → Entertainment
+
+Respond ONLY with JSON, no markdown, no explanations:
+{
+  "chosenCategoryName": "category name",
+  "summary": "brief activity summary (max 10 words)",
+  "reasoning": "why this category (max 20 words)"
+}`
     }
   ];
 }
@@ -186,7 +138,7 @@ export async function getAICategoryChoice(
 
   try {
     const response = await provider.generateChatCompletion(messages, {
-      temperature: 0,
+      temperature: 0.2,
       format: 'json'
     });
 
@@ -202,7 +154,24 @@ export async function getAICategoryChoice(
       return null;
     }
 
-    const parsed = JSON.parse(response) as CategoryChoice;
+    // Clean up markdown code blocks and extra explanations
+    let cleanedResponse = response.trim();
+
+    // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+    if (cleanedResponse.startsWith('```')) {
+      cleanedResponse = cleanedResponse
+        .replace(/^```(?:json)?\s*\n?/i, '')  // Remove opening ```json or ```
+        .replace(/\n?```\s*$/m, '')            // Remove closing ```
+        .trim();
+    }
+
+    // Remove any text after the closing brace (explanations, notes, etc.)
+    const jsonMatch = cleanedResponse.match(/^(\{[\s\S]*?\})/);
+    if (jsonMatch) {
+      cleanedResponse = jsonMatch[1];
+    }
+
+    const parsed = JSON.parse(cleanedResponse) as CategoryChoice;
     console.log('✅ Chosen Category:', parsed.chosenCategoryName);
     console.log('📝 Summary:', parsed.summary);
     console.log('💭 Reasoning:', parsed.reasoning);
