@@ -8,6 +8,7 @@ import { getAICategoryChoice, getAISummaryForBlock, CategoryChoice } from './cat
 import { getRuleBasedCategoryChoice } from './ruleBasedCategorization';
 import { getBooleanSetting } from '../database/services/settings';
 import { isAIEnabled } from './ollama';
+import { aiRequestQueue } from './aiRequestQueue';
 
 export interface WindowEventDetails {
   windowId: string;
@@ -61,10 +62,14 @@ export async function processWindowEvent(eventDetails: WindowEventDetails): Prom
       startTime: eventDetails.timestamp
     });
 
-    // Categorize asynchronously (don't block the response)
+    // Categorize asynchronously using request queue (prevents overwhelming AI provider)
     if (categorizationEnabled) {
-      categorizeEventAsync(createdEvent.id, eventDetails, user.id).catch(err => {
-        console.error('Error categorizing event:', err);
+      aiRequestQueue.add(createdEvent.id, async () => {
+        try {
+          await categorizeEventAsync(createdEvent.id, eventDetails, user.id);
+        } catch (err) {
+          console.error('Error categorizing event:', err);
+        }
       });
     }
 

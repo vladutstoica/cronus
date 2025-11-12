@@ -1,6 +1,7 @@
 import { getActiveProvider, isActiveProviderAvailable } from './aiProvider';
 import { isAIEnabled } from './ollama';
 import { Category } from '../database/services/categories';
+import crypto from 'crypto';
 
 export interface ActivityDetails {
   ownerName?: string;
@@ -15,6 +16,56 @@ export interface CategoryChoice {
   chosenCategoryName: string;
   summary: string;
   reasoning: string;
+}
+
+// OPTIMIZATION: Request deduplication cache
+// Prevents categorizing the same activity multiple times
+interface CachedCategorization {
+  result: CategoryChoice;
+  timestamp: number;
+}
+
+const categorizationCache = new Map<string, CachedCategorization>();
+const CATEGORIZATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Generate a hash for an activity to detect duplicates
+ */
+function generateActivityHash(activityDetails: ActivityDetails): string {
+  const key = `${activityDetails.ownerName || ''}_${activityDetails.url || ''}_${activityDetails.title || ''}`;
+  return crypto.createHash('md5').update(key).digest('hex');
+}
+
+/**
+ * Check if we recently categorized this exact activity
+ */
+function getCachedCategorization(activityDetails: ActivityDetails): CategoryChoice | null {
+  const hash = generateActivityHash(activityDetails);
+  const cached = categorizationCache.get(hash);
+
+  if (!cached) {
+    return null;
+  }
+
+  // Check if cache is still valid
+  const now = Date.now();
+  if (now - cached.timestamp > CATEGORIZATION_CACHE_DURATION) {
+    categorizationCache.delete(hash);
+    return null;
+  }
+
+  return cached.result;
+}
+
+/**
+ * Cache a categorization result
+ */
+function cacheCategorization(activityDetails: ActivityDetails, result: CategoryChoice): void {
+  const hash = generateActivityHash(activityDetails);
+  categorizationCache.set(hash, {
+    result,
+    timestamp: Date.now()
+  });
 }
 
 /**
@@ -101,6 +152,13 @@ export async function getAICategoryChoice(
   userCategories: Pick<Category, 'name' | 'description'>[],
   activityDetails: ActivityDetails
 ): Promise<CategoryChoice | null> {
+  // OPTIMIZATION: Check cache first - reuse AI's previous decision for identical activities
+  const cachedResult = getCachedCategorization(activityDetails);
+  if (cachedResult) {
+    console.log(`💾 CACHED: ${activityDetails.ownerName || activityDetails.url} → ${cachedResult.chosenCategoryName} (reusing AI decision from cache)`);
+    return cachedResult;
+  }
+
   if (!isAIEnabled()) {
     return null;
   }
@@ -176,6 +234,9 @@ export async function getAICategoryChoice(
     console.log('📝 Summary:', parsed.summary);
     console.log('💭 Reasoning:', parsed.reasoning);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+    // Cache the AI result for future requests
+    cacheCategorization(activityDetails, parsed);
 
     return parsed;
   } catch (error) {
