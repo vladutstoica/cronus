@@ -27,15 +27,6 @@ if (squirrelStartup) {
 // NODE_ENV set in build isn't present in the run-time app
 dotenv.config({ path: is.dev ? '.env.development' : '.env.production' })
 
-// Initialize Sentry
-// if (!is.dev) {
-//   Sentry.init({
-//     dsn: 'https://771e73ad5ad9618684204fb0513a3298@o4509521859051520.ingest.us.sentry.io/4509521865015296',
-//     integrations: [],
-//     defaultIntegrations: false
-//   })
-// }
-
 let mainWindow: BrowserWindow | null = null
 let floatingWindow: BrowserWindow | null = null
 
@@ -178,7 +169,7 @@ function App() {
   function setupCsp() {
     const devServerURL = 'http://localhost:5173'
     const serverUrl = import.meta.env.MAIN_VITE_SERVER_URL || 'http://localhost:3001'
-    const csp = `default-src 'self'; script-src 'self' 'unsafe-eval' https://accounts.google.com https://*.googleusercontent.com https://us-assets.i.posthog.com https://eu-assets.i.posthog.com https://*.loom.com https://*.prod-east.frontend.public.atl-paas.net https://cdn.segment.com ${is.dev ? "'unsafe-inline' " + devServerURL : ''}; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.gstatic.com https://*.loom.com https://*.prod-east.frontend.public.atl-paas.net; font-src 'self' https://fonts.gstatic.com https://*.loom.com https://*.prod-east.frontend.public.atl-paas.net; media-src 'self' data: blob: https://cdn.loom.com https://*.loom.com; img-src * data:; frame-src https://accounts.google.com https://*.googleusercontent.com https://accounts.youtube.com https://*.loom.com; connect-src 'self' https://cdn.jsdelivr.net http://localhost:3001 http://127.0.0.1:3001 https://play.google.com https://accounts.google.com https://*.googleusercontent.com https://accounts.youtube.com https://*.loom.com https://api-private.atlassian.com https://as.atlassian.com https://*.sentry.io https://api.segment.io https://cdn.segment.com https://*.prod-east.frontend.public.atl-paas.net https://whatdidyougetdonetoday.s3.us-east-1.amazonaws.com https://whatdidyougetdonetoday.s3.amazonaws.com https://us.i.posthog.com https://eu.i.posthog.com https://us-assets.i.posthog.com https://eu-assets.i.posthog.com https://whatdidyougetdonetoday-ai-server.onrender.com ${is.dev ? devServerURL : ''}; worker-src 'self' blob:`
+    const csp = `default-src 'self'; script-src 'self' 'unsafe-eval' https://accounts.google.com https://*.googleusercontent.com https://*.loom.com https://*.prod-east.frontend.public.atl-paas.net ${is.dev ? "'unsafe-inline' " + devServerURL : ''}; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.gstatic.com https://*.loom.com https://*.prod-east.frontend.public.atl-paas.net; font-src 'self' https://fonts.gstatic.com https://*.loom.com https://*.prod-east.frontend.public.atl-paas.net; media-src 'self' data: blob: https://cdn.loom.com https://*.loom.com; img-src * data:; frame-src https://accounts.google.com https://*.googleusercontent.com https://accounts.youtube.com https://*.loom.com; connect-src 'self' https://cdn.jsdelivr.net http://localhost:3001 http://127.0.0.1:3001 https://play.google.com https://accounts.google.com https://*.googleusercontent.com https://accounts.youtube.com https://*.loom.com https://api-private.atlassian.com https://as.atlassian.com https://*.prod-east.frontend.public.atl-paas.net https://whatdidyougetdonetoday.s3.us-east-1.amazonaws.com https://whatdidyougetdonetoday.s3.amazonaws.com https://whatdidyougetdonetoday-ai-server.onrender.com ${is.dev ? devServerURL : ''}; worker-src 'self' blob:`
 
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       callback({

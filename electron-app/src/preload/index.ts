@@ -93,9 +93,6 @@ const api = {
     ipcRenderer.invoke('get-app-icon-path', appName),
   redactSensitiveContent: (content: string) =>
     ipcRenderer.invoke('redact-sensitive-content', content),
-  // setSentryUser: (
-  //   userData: { id: string; email: string; username: string; subscription: boolean } | null
-  // ) => ipcRenderer.invoke('set-sentry-user', userData)
 
   // Add these two methods for quit confirmation
   confirmQuit: () => ipcRenderer.invoke('confirm-quit')
