@@ -84,7 +84,7 @@ const StatusBox: React.FC<StatusBoxProps> = ({
                     onCategoryClick?.()
                   }
                 }}
-                size={14}
+                size={12}
                 className="text-muted-foreground cursor-pointer hover:text-primary"
               />
             </span>
