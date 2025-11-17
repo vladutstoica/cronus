@@ -1,5 +1,5 @@
 import { PlusCircle } from 'lucide-react'
-import { Category as SharedCategory } from 'shared'
+import { Category as SharedCategory } from '@shared/types'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,

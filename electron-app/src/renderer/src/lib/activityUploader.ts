@@ -1,4 +1,4 @@
-import { ActiveWindowDetails } from 'shared/dist/types.js'
+import { ActiveWindowDetails } from '@shared/types'
 import { SYSTEM_EVENT_NAMES } from './constants'
 import { deleteLocalFile } from './s3Uploader'
 

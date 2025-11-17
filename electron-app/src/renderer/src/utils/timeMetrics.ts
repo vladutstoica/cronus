@@ -1,4 +1,4 @@
-import { ActiveWindowEvent, Category } from 'shared'
+import { ActiveWindowEvent, Category } from '@shared/types'
 import { generateProcessedEventBlocks } from './eventProcessing'
 
 interface ProductivityMetrics {

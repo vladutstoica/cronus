@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { AppWindowMac, Pause, X } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Category } from 'shared'
+import { Category } from '@shared/types'
 import { Button } from './components/ui/button'
 import StatusBox from './components/ui/StatusBox'
 

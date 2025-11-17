@@ -1,4 +1,4 @@
-import { ActiveWindowEvent, Category } from 'shared'
+import { ActiveWindowEvent, Category } from '@shared/types'
 import type { ActivityToRecategorize } from '../App'
 import { DisplayWindowInfo, getIdentifierFromUrl } from '../utils/distractionStatusBarUIHelpers'
 

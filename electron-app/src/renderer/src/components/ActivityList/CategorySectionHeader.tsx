@@ -1,7 +1,7 @@
 import { formatDuration } from '@renderer/lib/timeFormatting'
 import { XIcon } from 'lucide-react'
 import React from 'react'
-import { Category as SharedCategory } from 'shared'
+import { Category as SharedCategory } from '@shared/types'
 import { useDarkMode } from '../../hooks/useDarkMode'
 import type { ProcessedCategory } from '../../lib/activityProcessing'
 import { getDarkerColor, getLighterColor, hexToRgba } from '../../lib/colors'

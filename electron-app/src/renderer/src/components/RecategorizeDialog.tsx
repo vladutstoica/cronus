@@ -1,6 +1,6 @@
 import { Info, PlusCircle } from 'lucide-react'
 import React from 'react'
-import { Category } from 'shared'
+import { Category } from '@shared/types'
 import type { ActivityToRecategorize } from '../App'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { getDarkerColor, getLighterColor, hexToRgba } from '../lib/colors'

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ActiveWindowDetails, Category } from 'shared'
+import { ActiveWindowDetails, Category } from '@shared/types'
 import { useAuth } from '../contexts/AuthContext'
 import { localApi } from '../lib/localApi'
 

@@ -16,7 +16,6 @@ export interface User {
     distractionSoundInterval?: number;
     showDistractionNotifications?: boolean;
     distractionNotificationInterval?: number;
-    optedOutOfPosthogTracking?: boolean;
   };
   userProjectsAndGoals?: string;
 }

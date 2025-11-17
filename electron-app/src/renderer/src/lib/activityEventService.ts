@@ -1,5 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import { ActiveWindowEvent } from 'shared';
+import { ActiveWindowEvent } from '@shared/types';
 
 class ActivityEventService {
   private readonly _events = new BehaviorSubject<ActiveWindowEvent[]>([]);

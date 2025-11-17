@@ -7,7 +7,6 @@ interface UseOnboardingCompletionProps {
 
 export function useOnboardingCompletion({ steps }: UseOnboardingCompletionProps) {
   const [isCompleting, setIsCompleting] = useState(false)
-  const [hasOptedInToPosthog, setHasOptedInToPosthog] = useState(false)
 
   const handleComplete = async (referralSource: string, onComplete: () => void) => {
     console.log('🔍 [ONBOARDING MODAL DEBUG] handleComplete called - starting onboarding completion')
@@ -47,8 +46,6 @@ export function useOnboardingCompletion({ steps }: UseOnboardingCompletionProps)
 
   return {
     isCompleting,
-    hasOptedInToPosthog,
-    setHasOptedInToPosthog,
     handleComplete
   }
 }

@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import { ActiveWindowEvent, Category } from 'shared'
+import { ActiveWindowEvent, Category } from '@shared/types'
 import { useAuth } from '../contexts/AuthContext'
 import { useWindowFocus } from '../hooks/useWindowFocus'
 import { REFRESH_EVENTS_INTERVAL_MS } from '../lib/constants'

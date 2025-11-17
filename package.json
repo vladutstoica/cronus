@@ -1,60 +1,30 @@
 {
-  "name": "saas-template-may-2025",
-  "version": "1.0.0",
+  "name": "cronus",
+  "version": "2.0.0",
   "private": true,
+  "description": "Privacy-first local time tracking desktop app",
   "workspaces": [
-    "electron-app",
-    "shared"
+    "electron-app"
   ],
   "scripts": {
-    "dev": "bun --filter '*' dev",
-    "dev:electron": "bun --filter cronus-electron-app dev",
-    "dev:electron-server": "NO_ELIDE_LOGS=1 bun --filter cronus-electron-app --filter server dev",
+    "dev": "bun --filter cronus-electron-app dev",
     "rebuild:electron:arm": "bun --filter cronus-electron-app native-modules:rebuild:arm",
-    "build:shared": "cd shared && bun run build",
-    "build:server": "bun run build:shared && cd server && bun run build",
-    "build:client": "cd client && bun run build",
-    "build:electron": "cd electron-app && bun run build",
-    "build": "bun run build:shared && bun run build:server && bun run build:client && bun run build:electron",
-    "start": "bun --filter '*' start",
+    "build": "cd electron-app && bun run build",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "devDependencies": {
-    "@babel/parser": "^7.27.5",
-    "@babel/types": "^7.27.6",
     "@types/bun": "^1.2.5",
-    "@types/cookie": "^0.6.0",
     "@types/node": "^24.0.0",
-    "@types/node-fetch": "^2.6.12",
-    "@types/plist": "^3.0.5",
-    "@types/react": "^19.1.8",
-    "@types/trusted-types": "^2.0.7",
-    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
-    "concurrently": "^9.1.2",
-    "csstype": "^3.1.3",
     "electron": "35.1.5",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
-    "form-data": "^4.0.3",
-    "mongodb-memory-server": "^10.1.4",
-    "prettier": "^3.5.3",
-    "undici-types": "^7.10.0",
-    "xmlbuilder": "^15.1.1"
+    "prettier": "^3.5.3"
   },
-  "dependencies": {
-    "@types/papaparse": "^5.3.15",
-    "@zapier/secret-scrubber": "^1.1.2",
-    "cheerio": "^1.0.0",
-    "dotenv": "^17.2.1",
-    "lucide-react": "^0.483.0",
-    "moment": "^2.30.1",
-    "papaparse": "^5.5.2",
-    "react-markdown": "^10.1.0"
-  },
+  "dependencies": {},
   "resolutions": {},
   "overrides": {
     "@typescript-eslint/eslint-plugin": "^8.35.0",

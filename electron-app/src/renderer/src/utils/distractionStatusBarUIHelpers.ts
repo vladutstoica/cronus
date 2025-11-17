@@ -1,4 +1,4 @@
-import { ActiveWindowDetails, ActiveWindowEvent, Category } from 'shared'
+import { ActiveWindowDetails, ActiveWindowEvent, Category } from '@shared/types'
 
 export interface DisplayWindowInfo {
   ownerName: string

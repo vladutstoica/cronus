@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ActiveWindowDetails, Category } from 'shared'
+import { ActiveWindowDetails, Category } from '@shared/types'
 import { localApi } from '../lib/localApi'
 import { uploadActiveWindowEvent } from '../lib/activityUploader'
 import { showActivityMovedToast } from '../lib/custom-toasts'

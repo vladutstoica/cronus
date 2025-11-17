@@ -1,5 +1,5 @@
 import { createContext, JSX, ReactNode, useContext, useEffect, useState } from 'react'
-import { User } from 'shared/dist/types.js'
+import { User } from '@shared/types'
 import { localApi } from '../lib/localApi'
 
 interface AuthContextType {

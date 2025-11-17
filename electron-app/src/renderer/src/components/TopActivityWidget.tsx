@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import React, { useEffect, useState } from 'react'
 import { Card } from '../components/ui/card'
-// import { ActiveWindowEvent } from 'shared' // No longer directly needed for props
+// import { ActiveWindowEvent } from '@shared/types' // No longer directly needed for props
 import { formatDuration } from '../lib/timeFormatting'
 import { getFaviconURL, getGoogleFaviconURL } from '../utils/favicon'
 import AppIcon from './AppIcon'

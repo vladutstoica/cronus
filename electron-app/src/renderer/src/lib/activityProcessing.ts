@@ -1,4 +1,4 @@
-import { ActiveWindowEvent, Category as SharedCategory } from 'shared'
+import { ActiveWindowEvent, Category as SharedCategory } from '@shared/types'
 import type { ProcessedEventBlock } from '../components/DashboardView'
 import { extractWebsiteInfo } from './activityByCategoryWidgetHelpers'
 

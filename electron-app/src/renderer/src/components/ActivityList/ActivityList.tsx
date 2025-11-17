@@ -1,7 +1,7 @@
 import { ChevronDownIcon } from '@radix-ui/react-icons'
 import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
-import { Category as SharedCategory } from 'shared'
+import { Category as SharedCategory } from '@shared/types'
 import { ActivityItem, ProcessedCategory } from '../../lib/activityProcessing'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'

@@ -1,5 +1,4 @@
 import { Loader2 } from 'lucide-react'
-import { usePostHog } from 'posthog-js/react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useOnboardingCompletion } from '../hooks/useOnboardingCompletion'
@@ -25,7 +24,6 @@ interface OnboardingModalProps {
 export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [showSkipConfirmDialog, setShowSkipConfirmDialog] = useState(false)
   const { user } = useAuth()
-  const posthog = usePostHog()
 
   const {
     isDev,
@@ -75,7 +73,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     isAccessibilityStep,
     isScreenRecordingStep,
     isWelcomeStep,
-    isPosthogOptInStep,
     handleNext: handleStepNext,
     handleBack,
     handleSkipToEnd
@@ -97,7 +94,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     onAiCategoriesLoadingChange: setIsAiCategoriesLoading
   })
 
-  const { isCompleting, setHasOptedInToPosthog, handleComplete } = useOnboardingCompletion({
+  const { isCompleting, handleComplete } = useOnboardingCompletion({
     steps
   })
 
@@ -110,7 +107,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
   useEffect(() => {
     if (currentStepData?.id) {
-      posthog?.capture('viewed_onboarding_step', { step: currentStepData.id })
+      // Analytics removed
     }
   }, [currentStepData?.id])
 
@@ -122,7 +119,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
   const handleNext = () => {
     if (isLastStep) {
-      posthog?.capture('completed_onboarding')
+      // Analytics removed
       handleComplete(referralSource, onComplete)
     } else {
       handleStepNext()
@@ -204,31 +201,10 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 )}
 
                 {/* Main action button */}
-                {isPosthogOptInStep ? (
-                  <>
-                    <Button
-                      onClick={() => {
-                        setHasOptedInToPosthog(false)
-                        handleNext()
-                      }}
-                      variant="outline"
-                    >
-                      Decline
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setHasOptedInToPosthog(true)
-                        handleNext()
-                      }}
-                      variant="default"
-                    >
-                      Accept
-                    </Button>
-                  </>
-                ) : isAccessibilityStep && !hasRequestedPermission ? (
+                {isAccessibilityStep && !hasRequestedPermission ? (
                   <Button
                     onClick={() => {
-                      posthog?.capture('clicked_grant_accessibility_permission')
+                      // Analytics removed
                       handleRequestAccessibilityPermission()
                     }}
                     disabled={isRequestingPermission}
@@ -249,7 +225,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   <>
                     <Button
                       onClick={() => {
-                        posthog?.capture('clicked_skip_screen_recording_permission')
+                        // Analytics removed
                         setShowSkipConfirmDialog(true)
                       }}
                       variant="outline"
@@ -260,7 +236,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     </Button>
                     <Button
                       onClick={() => {
-                        posthog?.capture('clicked_grant_screen_recording_permission')
+                        // Analytics removed
                         handleRequestScreenRecordingPermission()
                       }}
                       disabled={isRequestingScreenRecording}

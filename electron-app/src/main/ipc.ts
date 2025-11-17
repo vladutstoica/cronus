@@ -2,7 +2,7 @@ import { is } from '@electron-toolkit/utils'
 import { app, BrowserWindow, ipcMain, Notification, shell } from 'electron'
 import fs from 'fs/promises'
 import { join } from 'path'
-import { Category } from 'shared/dist/types'
+import { Category } from '@shared/types'
 import icon from '../../resources/icon.png?asset'
 import { nativeWindows, PermissionType } from '../native-modules/native-windows'
 import { logMainToFile } from './logging'
@@ -199,9 +199,7 @@ export function registerIpcHandlers(
       isDev: is.dev,
       GOOGLE_CLIENT_ID:
         process.env.MAIN_VITE_GOOGLE_CLIENT_ID || import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID,
-      POSTHOG_KEY: process.env.MAIN_VITE_POSTHOG_KEY || import.meta.env.MAIN_VITE_POSTHOG_KEY,
       CLIENT_URL: process.env.MAIN_VITE_CLIENT_URL || import.meta.env.MAIN_VITE_CLIENT_URL,
-      POSTHOG_HOST: process.env.MAIN_VITE_POSTHOG_HOST || import.meta.env.MAIN_VITE_POSTHOG_HOST,
       GOOGLE_CLIENT_SECRET:
         process.env.MAIN_VITE_GOOGLE_CLIENT_SECRET || import.meta.env.MAIN_VITE_GOOGLE_CLIENT_SECRET
     }

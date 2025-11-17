@@ -107,8 +107,8 @@ export function useOnboardingQueries() {
     }
   }
 
-  const hasExistingGoals = userProjectsAndGoals && userProjectsAndGoals.trim().length > 0
-  const hasExistingReferral = !!existingReferralSource && existingReferralSource.trim().length > 0
+  const hasExistingGoals = typeof userProjectsAndGoals === 'string' && userProjectsAndGoals.trim().length > 0
+  const hasExistingReferral = typeof existingReferralSource === 'string' && existingReferralSource.trim().length > 0
 
   const isLoading = isLoadingGoals || isLoadingHasCategories || isLoadingReferral
 

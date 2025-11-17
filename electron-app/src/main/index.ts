@@ -1,7 +1,8 @@
 import { is, optimizer } from '@electron-toolkit/utils'
 import dotenv from 'dotenv'
 import { app, BrowserWindow, session } from 'electron'
-import { ActiveWindowDetails } from 'shared/dist/types.js'
+import squirrelStartup from 'electron-squirrel-startup'
+import { ActiveWindowDetails } from '@shared/types'
 import { nativeWindows } from '../native-modules/native-windows'
 import { initializeAutoUpdater, registerAutoUpdaterHandlers } from './auto-updater'
 import { initDatabase, closeDatabase } from './database'
@@ -16,6 +17,11 @@ import {
   setupSingleInstanceLock
 } from './protocol'
 import { createFloatingWindow, createMainWindow, setIsAppQuitting } from './windows'
+
+// Handle Squirrel.Windows events
+if (squirrelStartup) {
+  app.quit()
+}
 
 // Explicitly load .env files to ensure production run-time app uses the correct .env file
 // NODE_ENV set in build isn't present in the run-time app

@@ -1,4 +1,4 @@
-import { ActiveWindowEvent, Category } from 'shared'
+import { ActiveWindowEvent, Category } from '@shared/types'
 import type { ProcessedEventBlock } from '../components/DashboardView'
 import { MAX_GAP_BETWEEN_EVENTS_MS, SYSTEM_EVENT_NAMES } from '../lib/constants'
 

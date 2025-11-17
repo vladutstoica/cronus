@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { EditIcon } from 'lucide-react'
 import React, { useState } from 'react'
-import { Category } from 'shared'
+import { Category } from '@shared/types'
 
 interface StatusBoxProps {
   label: string

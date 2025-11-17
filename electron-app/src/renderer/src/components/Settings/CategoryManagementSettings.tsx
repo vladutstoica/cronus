@@ -1,6 +1,6 @@
 import { ChevronDown, FolderPlus, MoreHorizontal, PlusCircle, Rows } from 'lucide-react'
 import { JSX, memo, useEffect, useMemo, useState } from 'react'
-import { Category } from 'shared/dist/types.js'
+import { Category } from '@shared/types'
 import { useAuth } from '../../contexts/AuthContext'
 import { localApi } from '../../lib/localApi'
 import { Button } from '../ui/button'

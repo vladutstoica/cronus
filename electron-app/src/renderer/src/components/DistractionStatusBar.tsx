@@ -14,7 +14,7 @@ import {
   Youtube
 } from 'lucide-react'
 import React, { JSX, useEffect, useMemo, useRef, useState } from 'react'
-import { ActiveWindowDetails, ActiveWindowEvent, Category } from 'shared'
+import { ActiveWindowDetails, ActiveWindowEvent, Category } from '@shared/types'
 import { useAuth } from '../contexts/AuthContext'
 import { useDistractionNotification } from '../hooks/useDistractionNotification'
 import { useDistractionSound } from '../hooks/useDistractionSound'

@@ -7,7 +7,7 @@ import {
   ToggleRight
 } from 'lucide-react'
 import { JSX } from 'react'
-import { Category } from 'shared/types'
+import { Category } from '@shared/types'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,

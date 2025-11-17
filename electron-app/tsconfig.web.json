@@ -7,7 +7,7 @@
     "src/renderer/src/**/*.ts",
     "src/preload/*.d.ts",
     "src/native-modules/**/*",
-    "src/shared/update.ts"
+    "src/shared/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -15,12 +15,13 @@
     "baseUrl": ".",
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
-      "src/*": ["src/renderer/src/*"]
+      "src/*": ["src/renderer/src/*"],
+      "@shared/*": ["src/shared/*"],
+      "@shared": ["src/shared"]
     },
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,
     "noEmit": true
-  },
-  "references": [{ "path": "../shared" }, { "path": "../server" }]
+  }
 }

@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react'
-import { User } from 'shared/dist/types.js'
+import { User } from '@shared/types'
 import { AccessibilityStep } from '../components/Onboarding/AccessibilityStep'
 import { CompleteStep } from '../components/Onboarding/CompleteStep'
-import { PostHogOptInEuStep } from '../components/Onboarding/PostHogOptInEuStep'
 import { ScreenRecordingStep } from '../components/Onboarding/ScreenRecordingStep'
 import { WelcomeStep } from '../components/Onboarding/WelcomeStep'
 import { AiCategoryCustomization } from '../components/Settings/AiCategoryCustomization'
@@ -50,11 +49,6 @@ export function useOnboardingSteps({
       id: 'welcome',
       title: 'We care about your privacy',
       content: <WelcomeStep />
-    },
-    {
-      id: 'posthog-opt-in-eu',
-      title: 'PostHog Usage Analytics',
-      content: <PostHogOptInEuStep />
     },
     {
       id: 'goals',
@@ -121,10 +115,6 @@ export function useOnboardingSteps({
 
   const steps = useMemo(() => {
     return baseSteps.filter((step) => {
-      if (step.id === 'posthog-opt-in-eu') {
-        return user?.isInEU
-      }
-
       if (step.id === 'goals' && hasExistingGoals) {
         return false
       }
@@ -135,7 +125,7 @@ export function useOnboardingSteps({
 
       return true
     })
-  }, [baseSteps, user?.isInEU, hasExistingGoals, hasCategories])
+  }, [baseSteps, hasExistingGoals, hasCategories])
 
   const handleNext = () => {
     console.log('🚀 User clicked Next. Proceeding to next step, currentStep:', currentStep)
@@ -164,7 +154,6 @@ export function useOnboardingSteps({
   const isAccessibilityStep = currentStepData?.id === 'accessibility'
   const isScreenRecordingStep = currentStepData?.id === 'screen-recording'
   const isWelcomeStep = currentStepData?.id === 'welcome'
-  const isPosthogOptInStep = currentStepData?.id === 'posthog-opt-in-eu'
 
   return {
     currentStep,
@@ -177,7 +166,6 @@ export function useOnboardingSteps({
     isAccessibilityStep,
     isScreenRecordingStep,
     isWelcomeStep,
-    isPosthogOptInStep,
     handleNext,
     handleBack,
     handleSkipToEnd

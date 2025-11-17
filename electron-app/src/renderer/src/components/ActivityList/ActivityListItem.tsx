@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import React, { useState } from 'react'
-import { Category as SharedCategory } from 'shared'
+import { Category as SharedCategory } from '@shared/types'
 import { useAuth } from '../../contexts/AuthContext'
 import { toast } from '../../hooks/use-toast'
 import {
