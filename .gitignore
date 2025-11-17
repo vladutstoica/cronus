@@ -16,7 +16,8 @@ template/src/__tests__/__snapshots__/
 
 # production
 /build
-client/build
+/dist
+/out
 
 # misc
 .DS_Store
@@ -32,6 +33,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log
+*.log*
 
 # IDE
 .idea/
@@ -42,35 +44,15 @@ my-app*
 /.changelog
 
 # environment variables
-*.env
-
-# Electron app specific
-electron-app/dist/
-electron-app/out/
-electron-app/node_modules/
+.env
 
 **/.eslintcache
-electron-app/src/native-modules/**/bin/
-electron-app/src/native-modules/**/build/
 
-# Server specific build artifacts
-server/dist/
-server/dist_tsc/
+# Native modules build output
+src/native-modules/**/bin/
+src/native-modules/**/build/
 
-# Shared package specific build artifacts
-shared/dist/
-shared/dist_tsc/
-
-# TypeScript build info files (can be in various locations)
+# TypeScript build info files
 **/*.tsbuildinfo
-server/server.log
-
 
 build-assets/
-
-.next
-*.tsbuildinfo
-next-env.d.ts
-
-# NextJS client build output
-nextjs-client/out/

@@ -44,7 +44,6 @@ Cronus is a privacy-first, local-only desktop time tracking application that aut
 
 2. **Install dependencies**
    ```bash
-   cd electron-app
    bun install
    ```
 
@@ -289,55 +288,273 @@ These permissions are **only used locally** - no data leaves your machine.
 
 ```
 cronus/
-├── electron-app/          # Main Electron application
-│   ├── src/
-│   │   ├── main/          # Main process (Node.js)
-│   │   │   ├── database/  # SQLite database layer
-│   │   │   ├── services/  # Business logic
-│   │   │   │   ├── categorization.ts      # AI categorization
-│   │   │   │   ├── ollama.ts             # Ollama client
-│   │   │   │   ├── ruleBasedCategorization.ts  # Fallback rules
-│   │   │   │   └── windowTracking.ts     # Event processing
-│   │   │   ├── index.ts   # App entry point
-│   │   │   └── ipc.ts     # IPC handlers
-│   │   ├── renderer/      # Renderer process (React)
-│   │   │   ├── src/
-│   │   │   │   ├── components/
-│   │   │   │   ├── contexts/
-│   │   │   │   ├── lib/
-│   │   │   │   │   └── localApi.ts  # Local API client
-│   │   │   │   └── main.tsx
-│   │   │   └── ...
-│   │   ├── preload/       # Preload scripts
-│   │   └── native-modules/ # Native window tracking
-│   └── package.json
-├── shared/                # Shared TypeScript types
+├── src/
+│   ├── main/              # Main process (Node.js)
+│   │   ├── database/      # SQLite database layer
+│   │   ├── services/      # Business logic
+│   │   │   ├── categorization.ts      # AI categorization
+│   │   │   ├── ollama.ts             # Ollama client
+│   │   │   ├── ruleBasedCategorization.ts  # Fallback rules
+│   │   │   └── windowTracking.ts     # Event processing
+│   │   ├── index.ts       # App entry point
+│   │   └── ipc.ts         # IPC handlers
+│   ├── renderer/          # Renderer process (React)
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   ├── contexts/
+│   │   │   ├── lib/
+│   │   │   │   └── localApi.ts  # Local API client
+│   │   │   └── main.tsx
+│   │   └── ...
+│   ├── preload/           # Preload scripts
+│   ├── shared/            # Shared TypeScript types
+│   └── native-modules/    # Native window tracking
+├── package.json
 └── README.md              # This file
 ```
 
 ### Build Commands
 
 ```bash
-# Development
+# Development (run from source)
 bun run dev
 
 # Type checking
 bun run typecheck
 
-# Build for production
-bun run build
+# Build for production (creates distributable app)
+bun run build                 # Compiles code to out/ directory
+bun run build:local           # electron-builder --mac --dir
+bun run build:win             # electron-builder --win
+bun run build:linux           # electron-builder --linux
+```
 
-# Build for specific platform
-bun run build:mac
-bun run build:win
-bun run build:linux
+## 📦 Building & Deployment
+
+### Quick Local Build (For Personal Use)
+
+Build an unsigned macOS app for personal use:
+
+```bash
+# For Apple Silicon (M1/M2/M3)
+bun run quick-build
+
+# The DMG will open automatically, or find it at:
+# dist/Cronus-2.0.0-arm64.dmg
+```
+
+**What this produces:**
+- Unsigned `.dmg` installer in `dist/`
+- Unsigned `.app` bundle in `dist/mac-arm64/Cronus.app`
+- Fast build (~2-3 minutes)
+- **Can only be used locally** (not for distribution)
+
+### Installing the Built App
+
+1. **From DMG** (recommended):
+   ```bash
+   # DMG opens automatically after build, or:
+   open dist/Cronus-*.dmg
+   ```
+   - Drag Cronus.app to Applications folder
+   - Launch from Applications
+
+2. **Direct from build folder**:
+   ```bash
+   open dist/mac-arm64/Cronus.app
+   ```
+
+### First Launch Setup
+
+After installing, Cronus needs macOS permissions:
+
+1. **Launch Cronus** from Applications
+2. **Grant Accessibility permission** when prompted:
+   - System Settings → Privacy & Security → Accessibility
+   - Click the lock to make changes
+   - Enable **Cronus**
+3. **Restart Cronus** for permissions to take effect
+
+**Optional permissions:**
+- **Screen Recording** - Enable if you want screenshot features
+  - System Settings → Privacy & Security → Screen Recording
+  - Enable Cronus
+
+### Architecture Support
+
+```bash
+# Apple Silicon (M1/M2/M3) - Default
+bun run quick-build
+
+# Intel Macs (x64)
+NODE_ENV=production bun run build && \
+npx electron-builder --mac --x64 \
+  -c.mac.forceCodeSigning=false \
+  -c.mac.notarize=false \
+  -c.dmg.sign=false
+
+# Universal Binary (both architectures)
+NODE_ENV=production bun run build && \
+npx electron-builder --mac --universal \
+  -c.mac.forceCodeSigning=false \
+  -c.mac.notarize=false
+```
+
+### Production Build (For Distribution)
+
+To distribute Cronus to others (requires **Apple Developer account**, $99/year):
+
+```bash
+# 1. Set up code signing certificate in Keychain
+# 2. Create .env.production with:
+#    APPLE_ID=your@email.com
+#    APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx
+#    APPLE_TEAM_ID=XXXXXXXXXX
+
+# 3. Build and sign for ARM64
+bun run build:for-publish:arm64
+
+# 4. Build and sign for Intel
+bun run build:for-publish:x64
+
+# Output: dist/Cronus-2.0.0-{arch}.dmg (signed & notarized)
+```
+
+**What this produces:**
+- Code-signed DMG
+- Notarized by Apple
+- Users can install without security warnings
+- Required for public distribution
+
+### Versioning
+
+The app version is defined in `package.json`:
+
+```json
+{
+  "name": "Cronus",
+  "version": "2.0.0"
+}
+```
+
+**To update the version:**
+
+1. **Update package.json**:
+   ```bash
+   # Manually edit package.json or use npm:
+   npm version patch  # 2.0.0 → 2.0.1
+   npm version minor  # 2.0.0 → 2.1.0
+   npm version major  # 2.0.0 → 3.0.0
+   ```
+
+2. **Rebuild**:
+   ```bash
+   bun run quick-build
+   ```
+
+3. **New DMG will include updated version**:
+   ```
+   dist/Cronus-2.0.1-arm64.dmg
+   ```
+
+**Versioning best practices:**
+- **Patch** (2.0.x) - Bug fixes, small changes
+- **Minor** (2.x.0) - New features, backward compatible
+- **Major** (x.0.0) - Breaking changes
+
+### Distribution Options
+
+**1. Local Distribution** (friends, team, testing):
+```bash
+# Build unsigned DMG
+bun run quick-build
+
+# Share the DMG file
+# Recipients must right-click → Open (bypass Gatekeeper)
+```
+
+**2. Public Distribution** (requires Apple Developer account):
+```bash
+# Build signed & notarized DMG
+bun run build:for-publish:arm64
+
+# Upload to your website or GitHub Releases
+# Users can install normally (no security warnings)
+```
+
+**3. GitHub Releases** (recommended):
+```bash
+# 1. Tag the version
+git tag v2.0.0
+git push --tags
+
+# 2. Build
+bun run build:for-publish:arm64
+
+# 3. Create GitHub Release
+# - Go to https://github.com/yourusername/cronus/releases/new
+# - Select tag: v2.0.0
+# - Upload: dist/Cronus-2.0.0-arm64.dmg
+# - Add release notes
+# - Publish
+```
+
+### Auto-Updates (Optional)
+
+Cronus has electron-updater configured for auto-updates.
+
+**Setup auto-updates:**
+
+1. **Configure S3 bucket** (or GitHub Releases):
+   - See `package.json` → `"publish"` section
+   - Currently configured for S3: `cronusnewupdates` bucket
+
+2. **Enable auto-updates in code**:
+   - Updates are checked on app launch
+   - See `src/main/index.ts` for update logic
+
+3. **Publish updates**:
+   ```bash
+   # Publishes to S3 bucket
+   bun run publish:with-links:arm64
+   ```
+
+### Build Output Structure
+
+After running `bun run quick-build`:
+
+```
+cronus/
+├── dist/
+│   ├── Cronus-2.0.0-arm64.dmg          # DMG installer
+│   ├── mac-arm64/
+│   │   └── Cronus.app                   # App bundle
+│   ├── builder-effective-config.yaml    # Build config
+│   └── latest-mac.yml                   # Auto-update metadata
+└── out/
+    ├── main/                            # Compiled main process
+    ├── preload/                         # Compiled preload scripts
+    └── renderer/                        # Compiled React app
+```
+
+### Cleaning Build Artifacts
+
+```bash
+# Clean all build outputs
+rm -rf dist/ out/
+
+# Clean app data (removes database, settings)
+bun run clean:cronus-installation
+
+# Full clean + rebuild
+bun run clean-and-quick-build
 ```
 
 ### Adding Features
 
 1. **New IPC Handler** (main process)
    ```typescript
-   // electron-app/src/main/ipc.ts
+   // src/main/ipc.ts
    ipcMain.handle('local:your-feature', async (_event, ...args) => {
      // Your logic here
      return result
@@ -346,7 +563,7 @@ bun run build:linux
 
 2. **New API Method** (renderer)
    ```typescript
-   // electron-app/src/renderer/src/lib/localApi.ts
+   // src/renderer/src/lib/localApi.ts
    export const localApi = {
      yourFeature: {
        doSomething: async (data: any) => {
