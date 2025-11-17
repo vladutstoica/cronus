@@ -4,11 +4,11 @@
   "private": true,
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://www.whatdidyougetdonetoday.ai",
+  "author": "Cronus Team",
+  "homepage": "https://github.com/moritzWa/cronus",
   "repository": {
     "type": "git",
-    "url": "https://github.com/moritzWa/whatdidyougetdonetoday-ai.git"
+    "url": "https://github.com/moritzWa/cronus.git"
   },
   "scripts": {
     "------ DEVELOPMENT ---------": "echo '------ DEVELOPMENT ---------'",
@@ -34,10 +34,6 @@
     "native-modules:rebuild:x64": "bun run native-modules:rebuild -- --arch x64",
     "native-modules:rebuild:all": "bun run native-modules:rebuild:arm && bun run native-modules:rebuild:x64",
     "native-modules:clean": "rimraf src/native-modules/**/bin && rimraf src/native-modules/**/build",
-    "------ ELECTRON FORGE (PACKAGING) ---------": "echo '------ ELECTRON FORGE (PACKAGING) ---------'",
-    "forge:package": "bun run build && electron-forge package",
-    "forge:make": "bun run build && electron-forge make",
-    "forge:publish": "bun run build && electron-forge publish",
     "------ PUBLISHING & DEPLOYMENT ---------": "echo '------ PUBLISHING & DEPLOYMENT ---------'",
     "check-latest-version-published": "bash check-latest-version-published.sh",
     "create-latest-links": "bash create-latest-links.sh",
@@ -103,66 +99,6 @@
       }
     ]
   },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "name": "Cronus",
-        "executableName": "Cronus",
-        "icon": "build/icon",
-        "appBundleId": "com.cronus.app",
-        "appCategoryType": "public.app-category.productivity",
-        "protocols": [
-          {
-            "name": "Cronus Auth",
-            "schemes": ["cronus"]
-          }
-        ],
-        "extraResource": [
-          "src/native-modules/native-windows/build/Release/nativeWindows.node"
-        ],
-        "osxSign": {
-          "entitlements": "build/entitlements.mac.plist",
-          "entitlements-inherit": "build/entitlements.mac.plist",
-          "hardenedRuntime": true
-        },
-        "osxNotarize": {
-          "tool": "notarytool"
-        }
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "Cronus"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": ["darwin"]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {
-            "options": {
-              "name": "cronus",
-              "productName": "Cronus",
-              "categories": ["Productivity"]
-            }
-          }
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {
-            "options": {
-              "name": "cronus",
-              "productName": "Cronus",
-              "categories": ["Productivity"]
-            }
-          }
-        }
-      ]
-    }
-  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -183,52 +119,16 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tanstack/react-query": "^4.29.19",
     "@types/color": "^4.2.0",
-    "agent-base": "^6.0.2",
-    "app-builder-lib": "^26.0.12",
     "better-sqlite3": "^11.8.1",
-    "builder-util": "^26.0.11",
-    "builder-util-runtime": "^9.3.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cmdk": "^1.1.1",
     "color": "^5.0.0",
-    "cookie": "^0.4.1",
-    "crc": "^4.3.2",
     "date-fns": "^4.1.0",
-    "dayjs": "^1.11.13",
-    "debug": "^4.4.1",
-    "deepmerge": "4.3.1",
-    "electron-app": "^1.0.0",
     "electron-log": "^5.4.1",
     "electron-squirrel-startup": "^1.0.1",
     "electron-updater": "^6.6.2",
-    "emoji-picker-react": "^4.13.2",
     "framer-motion": "^12.12.2",
-    "frimousse": "^0.3.0",
-    "fs-extra": "^11.3.0",
-    "graceful-fs": "^4.2.11",
-    "https-proxy-agent": "^5.0.0",
-    "js-yaml": "^4.1.0",
-    "jsonfile": "^6.1.0",
-    "lazy-val": "^1.0.5",
-    "lodash": "^4.17.21",
-    "lodash.clone": "^4.5.0",
-    "lodash.clonedeep": "^4.5.0",
-    "lodash.difference": "^4.5.0",
-    "lodash.escaperegexp": "^4.1.2",
-    "lodash.flatten": "^4.4.0",
-    "lodash.get": "^4.4.2",
-    "lodash.includes": "^4.3.0",
-    "lodash.isempty": "^4.4.0",
-    "lodash.isequal": "^4.5.0",
-    "lodash.merge": "^4.6.2",
-    "lodash.omit": "^4.5.0",
-    "lodash.pick": "^4.4.0",
-    "lodash.set": "^4.3.2",
-    "lodash.uniq": "^4.5.0",
-    "lru_map": "^0.3.3",
     "lucide-react": "^0.526.0",
-    "ms": "^2.1.3",
     "node-addon-api": "^4.3.0",
     "ollama": "^0.5.12",
     "openai": "^6.8.1",
@@ -237,21 +137,10 @@
     "react-router-dom": "^7.6.1",
     "recharts": "^3.0.2",
     "rxjs": "^7.8.2",
-    "sax": "^1.4.1",
-    "semver": "^7.7.2",
     "tailwind-merge": "^3.3.1",
-    "tslib": "^1.9.3",
-    "universalify": "^2.0.1",
-    "xml2js": "^0.6.2",
-    "xmlbuilder": "^15.1.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.10.2",
-    "@electron-forge/maker-deb": "^7.10.2",
-    "@electron-forge/maker-rpm": "^7.10.2",
-    "@electron-forge/maker-squirrel": "^7.10.2",
-    "@electron-forge/maker-zip": "^7.10.2",
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/preload": "^3.0.1",
