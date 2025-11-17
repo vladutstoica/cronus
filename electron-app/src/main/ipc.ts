@@ -191,17 +191,8 @@ export function registerIpcHandlers(
   })
 
   ipcMain.handle('get-env-vars', () => {
-    console.log('DEBUG: process.env.MAIN_VITE_GOOGLE_CLIENT_ID:', process.env.MAIN_VITE_GOOGLE_CLIENT_ID)
-    console.log('DEBUG: import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID:', import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID)
-    console.log('DEBUG: All process.env keys with VITE:', Object.keys(process.env).filter(k => k.includes('VITE')))
-
     return {
-      isDev: is.dev,
-      GOOGLE_CLIENT_ID:
-        process.env.MAIN_VITE_GOOGLE_CLIENT_ID || import.meta.env.MAIN_VITE_GOOGLE_CLIENT_ID,
-      CLIENT_URL: process.env.MAIN_VITE_CLIENT_URL || import.meta.env.MAIN_VITE_CLIENT_URL,
-      GOOGLE_CLIENT_SECRET:
-        process.env.MAIN_VITE_GOOGLE_CLIENT_SECRET || import.meta.env.MAIN_VITE_GOOGLE_CLIENT_SECRET
+      isDev: is.dev
     }
   })
 

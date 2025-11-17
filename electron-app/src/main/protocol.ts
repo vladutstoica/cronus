@@ -8,19 +8,6 @@ let urlToHandleOnReady: string | null = null
 export function handleAppUrl(url: string, mainWindow: BrowserWindow | null): void {
   logMainToFile('Processing deep link URL', { url })
 
-  let code: string | null = null
-  try {
-    const parsedUrl = new URL(url)
-    code = parsedUrl.searchParams.get('code')
-  } catch (e) {
-    logMainToFile('Failed to parse deep link URL', { url, error: e })
-  }
-
-  // new Notification({
-  //   title: 'URL Received',
-  //   body: `App received URL: ${url}`
-  // }).show()
-
   if (!mainWindow || mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
     urlToHandleOnReady = url
     return
@@ -30,10 +17,6 @@ export function handleAppUrl(url: string, mainWindow: BrowserWindow | null): voi
     mainWindow.restore()
   }
   mainWindow.focus()
-
-  if (code) {
-    mainWindow.webContents.send('auth-code-received', code)
-  }
 }
 
 export function setupProtocolHandlers(getMainWindow: () => BrowserWindow | null): void {

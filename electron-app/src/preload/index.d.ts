@@ -50,10 +50,9 @@ declare global {
       ipcRenderer: Electron.IpcRenderer
     }
     api: {
-      onAuthCodeReceived: (callback: (code: string) => void) => () => void // Return type for cleanup function
       onActiveWindowChanged: (callback: (details: ActiveWindowDetails) => void) => () => void // Return type for cleanup function
       // Add the new function's type signature here
-      getEnvVariables: () => Promise<{ GOOGLE_CLIENT_ID?: string; [key: string]: any }>
+      getEnvVariables: () => Promise<{ isDev: boolean }>
 
       readFile: (filePath: string) => Promise<ArrayBuffer>
       deleteFile: (filePath: string) => Promise<void>
