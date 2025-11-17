@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { AppWindowMac, Pause, X } from 'lucide-react'
+import { AppWindowMac, Clock, Pause, X } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Category } from '@shared/types'
 import { Button } from './components/ui/button'
@@ -46,6 +46,11 @@ const FloatingDisplay: React.FC = () => {
     categoryReasoning?: string
   }>({})
 
+  // State for handling "maybe" pending state
+  const [frozenProductiveTimeMs, setFrozenProductiveTimeMs] = useState<number>(0)
+  const [frozenUnproductiveTimeMs, setFrozenUnproductiveTimeMs] = useState<number>(0)
+  const [pendingStartTime, setPendingStartTime] = useState<number | null>(null)
+
   const draggableRef = useRef<HTMLDivElement>(null)
   const dragStartInfoRef = useRef<{ initialMouseX: number; initialMouseY: number } | null>(null)
 
@@ -71,17 +76,41 @@ const FloatingDisplay: React.FC = () => {
     return () => {}
   }, [])
 
+  // Handle state transitions and freeze/unfreeze timers
+  useEffect(() => {
+    if (latestStatus === 'maybe') {
+      // Entering "maybe" state - freeze both timers
+      if (pendingStartTime === null) {
+        setFrozenProductiveTimeMs(displayedProductiveTimeMs)
+        setFrozenUnproductiveTimeMs(dailyUnproductiveMs)
+        setPendingStartTime(Date.now())
+      }
+    } else if (pendingStartTime !== null) {
+      // Exiting "maybe" state - allocate pending time to the correct category
+      const pendingTime = Date.now() - pendingStartTime
+
+      if (latestStatus === 'productive') {
+        setDisplayedProductiveTimeMs((prev) => prev + pendingTime)
+      } else if (latestStatus === 'unproductive') {
+        setDailyUnproductiveMs((prev) => prev + pendingTime)
+      }
+
+      // Reset pending tracking
+      setPendingStartTime(null)
+    }
+  }, [latestStatus, pendingStartTime, displayedProductiveTimeMs, dailyUnproductiveMs])
+
+  // Timer counting effect
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined
 
-    // Only count time if tracking is not paused
-    if (!isTrackingPaused) {
-      // Add this condition
+    // Only count time if tracking is not paused and not in "maybe" state
+    if (!isTrackingPaused && latestStatus !== 'maybe') {
       if (latestStatus === 'productive') {
         intervalId = setInterval(() => {
           setDisplayedProductiveTimeMs((prevMs) => prevMs + 1000)
         }, 1000)
-      } else if (latestStatus === 'unproductive' || latestStatus === 'maybe') {
+      } else if (latestStatus === 'unproductive') {
         intervalId = setInterval(() => {
           setDailyUnproductiveMs((prevMs) => prevMs + 1000)
         }, 1000)
@@ -189,8 +218,13 @@ const FloatingDisplay: React.FC = () => {
   let unproductiveHighlightColor: 'green' | 'red' | 'orange' | undefined = 'red'
   let unproductiveLabel = 'Distractions'
 
-  const productiveTimeFormatted = formatMsToTime(displayedProductiveTimeMs)
-  const unproductiveTimeFormatted = formatMsToTime(dailyUnproductiveMs)
+  // Use frozen times when in "maybe" state, otherwise use current times
+  const productiveTimeFormatted = formatMsToTime(
+    latestStatus === 'maybe' ? frozenProductiveTimeMs : displayedProductiveTimeMs
+  )
+  const unproductiveTimeFormatted = formatMsToTime(
+    latestStatus === 'maybe' ? frozenUnproductiveTimeMs : dailyUnproductiveMs
+  )
 
   let productiveBoxCategoryDetails: Category | undefined = undefined
   let unproductiveBoxCategoryDetails: Category | undefined = undefined
@@ -204,11 +238,12 @@ const FloatingDisplay: React.FC = () => {
     unproductiveIsEnlarged = true
     unproductiveBoxCategoryDetails = currentCategoryDetails
   } else if (latestStatus === 'maybe') {
-    unproductiveLabel = 'Distractions'
-    unproductiveIsHighlighted = true
-    unproductiveIsEnlarged = true
-    unproductiveHighlightColor = 'orange'
-    unproductiveBoxCategoryDetails = currentCategoryDetails
+    // In "maybe" state, don't highlight either box - they'll both be small
+    // The pending icon in the center will be emphasized
+    productiveIsHighlighted = false
+    productiveIsEnlarged = false
+    unproductiveIsHighlighted = false
+    unproductiveIsEnlarged = false
   }
 
   // visual indication when tracking is paused
@@ -262,26 +297,63 @@ const FloatingDisplay: React.FC = () => {
       </div>
 
       <div className="flex-grow flex items-stretch gap-1 h-full">
-        <StatusBox
-          label="Productive"
-          time={productiveTimeFormatted}
-          isHighlighted={productiveIsHighlighted}
-          highlightColor={productiveHighlightColor}
-          isEnlarged={productiveIsEnlarged}
-          categoryDetails={productiveBoxCategoryDetails}
-          onCategoryClick={handleCategoryNameClick}
-          disabled={!currentCategoryDetails}
-        />
-        <StatusBox
-          label={unproductiveLabel}
-          time={unproductiveTimeFormatted}
-          isHighlighted={unproductiveIsHighlighted}
-          highlightColor={unproductiveHighlightColor}
-          isEnlarged={unproductiveIsEnlarged}
-          categoryDetails={unproductiveBoxCategoryDetails}
-          onCategoryClick={handleCategoryNameClick}
-          disabled={!currentCategoryDetails}
-        />
+        {latestStatus === 'maybe' ? (
+          // 3-section layout for "maybe" state: Small Productive | Large Pending Icon | Small Distractions
+          <>
+            <div className="flex-1 min-w-0 h-full [&>div]:!w-full">
+              <StatusBox
+                label="Productive"
+                time={productiveTimeFormatted}
+                isHighlighted={false}
+                highlightColor={productiveHighlightColor}
+                isEnlarged={false}
+                categoryDetails={undefined}
+                onCategoryClick={handleCategoryNameClick}
+                disabled={true}
+              />
+            </div>
+            {/* Pending state indicator - compact orange clock icon */}
+            <div className="w-12 flex items-center justify-center bg-background/50 rounded-lg border-2 border-orange-300">
+              <Clock className="w-6 h-6 text-orange-300 animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0 h-full [&>div]:!w-full">
+              <StatusBox
+                label={unproductiveLabel}
+                time={unproductiveTimeFormatted}
+                isHighlighted={false}
+                highlightColor={unproductiveHighlightColor}
+                isEnlarged={false}
+                categoryDetails={undefined}
+                onCategoryClick={handleCategoryNameClick}
+                disabled={true}
+              />
+            </div>
+          </>
+        ) : (
+          // 2-section layout for normal states
+          <>
+            <StatusBox
+              label="Productive"
+              time={productiveTimeFormatted}
+              isHighlighted={productiveIsHighlighted}
+              highlightColor={productiveHighlightColor}
+              isEnlarged={productiveIsEnlarged}
+              categoryDetails={productiveBoxCategoryDetails}
+              onCategoryClick={handleCategoryNameClick}
+              disabled={!currentCategoryDetails}
+            />
+            <StatusBox
+              label={unproductiveLabel}
+              time={unproductiveTimeFormatted}
+              isHighlighted={unproductiveIsHighlighted}
+              highlightColor={unproductiveHighlightColor}
+              isEnlarged={unproductiveIsEnlarged}
+              categoryDetails={unproductiveBoxCategoryDetails}
+              onCategoryClick={handleCategoryNameClick}
+              disabled={!currentCategoryDetails}
+            />
+          </>
+        )}
       </div>
     </div>
   )
