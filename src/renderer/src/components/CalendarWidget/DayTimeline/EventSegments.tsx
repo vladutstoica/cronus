@@ -1,8 +1,8 @@
 import React from "react";
+import Color from "color";
 import {
   getDarkerColor,
   getLighterColor,
-  hexToRgba,
 } from "../../../lib/colors";
 import { type DaySegment } from "../../../lib/dayTimelineHelpers";
 import TimelineSegmentContent from "./TimelineSegmentContent";
@@ -28,11 +28,18 @@ export const EventSegments: React.FC<EventSegmentsProps> = ({
 
   const segmentBackgroundColor = (segment: DaySegment) => {
     if (!segment.categoryColor) {
+      console.warn('[EventSegments] No categoryColor for segment:', segment.name, segment);
       return isDarkMode ? "#374151" : "#e5e7eb";
     }
-    return isDarkMode
-      ? hexToRgba(getDarkerColor(segment.categoryColor, 0.3), 0.9)
-      : hexToRgba(getLighterColor(segment.categoryColor, 0.8), 0.9);
+    // getDarkerColor and getLighterColor already return color strings, don't pass through hexToRgba
+    const baseColor = isDarkMode
+      ? getDarkerColor(segment.categoryColor, 0.3)
+      : getLighterColor(segment.categoryColor, 0.8);
+
+    // Apply opacity using Color library
+    const color = Color(baseColor).alpha(0.9).string();
+    console.log('[EventSegments] Segment color:', segment.name, 'categoryColor:', segment.categoryColor, 'computed:', color);
+    return color;
   };
 
   const getTopPosition = (segment: DaySegment) => {
@@ -71,8 +78,8 @@ export const EventSegments: React.FC<EventSegmentsProps> = ({
             style={{
               top: `${top}rem`,
               height: `${height}rem`,
-              left: isCalendarEvent ? "0%" : "50%",
-              width: "50%",
+              left: "4rem",
+              width: "calc(100% - 4rem)",
               backgroundColor: segmentBackgroundColor(segment),
               borderLeft: `3px solid ${segment.categoryColor || (isDarkMode ? "#6b7280" : "#9ca3af")}`,
               paddingTop: `${SEGMENT_TOP_OFFSET_PX}px`,
