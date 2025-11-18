@@ -86,9 +86,15 @@ export function useActivityTracking({
     }) => {
       setIsUpdating(true);
       try {
-        // Update events in date range by recategorizing them
-        // For now, we'll just show the toast - full implementation would need
-        // a new IPC handler to batch update events
+        // Actually recategorize the events in the database
+        const updatedCount = await localApi.events.recategorizeByIdentifier(
+          variables.activityIdentifier,
+          variables.itemType,
+          variables.startDateMs,
+          variables.endDateMs,
+          variables.newCategoryId
+        );
+
         const targetCategory = allCategories?.find(
           (cat) => cat._id === variables.newCategoryId,
         );
@@ -99,7 +105,7 @@ export function useActivityTracking({
         showActivityMovedToast({
           activityIdentifier: variables.activityIdentifier,
           targetCategoryName,
-          timeRangeDescription: "for the selected period",
+          timeRangeDescription: `for the selected period (${updatedCount} events updated)`,
           setIsSettingsOpen,
           setFocusOn,
         });
