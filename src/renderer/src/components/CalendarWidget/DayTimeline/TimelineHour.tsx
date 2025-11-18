@@ -38,7 +38,7 @@ export const TimelineHour = memo(
       <div
         key={hour}
         className={clsx(
-          "group relative pl-2 flex border-slate-300 dark:border-slate-600",
+          "group relative pl-2 flex border-border",
           selectedHour === hour && selectedHour !== null
             ? "bg-blue-200/20 dark:bg-blue-800/30 cursor-pointer"
             : "",
@@ -77,12 +77,12 @@ export const TimelineHour = memo(
           )}
         </div>
 
-        <div className="flex-1 border-l relative">
+        <div className="flex-1 border-l border-border relative">
           <div className="absolute inset-0 flex flex-col">
             {Array.from({ length: 4 }).map((_, quarter) => (
               <div
                 key={quarter}
-                className="flex-1 border-b border-slate-200 dark:border-slate-700 last:border-b-0"
+                className="flex-1 border-b border-border last:border-b-0"
               />
             ))}
           </div>
