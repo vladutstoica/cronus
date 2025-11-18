@@ -243,7 +243,7 @@ const CalendarWidget = ({
 
   return (
     <div
-      className={`relative flex select-none flex-col bg-card ${
+      className={`relative flex select-none flex-col bg-card border border-border rounded-lg ${
         viewMode === "week" ? "" : "h-full"
       }`}
     >
