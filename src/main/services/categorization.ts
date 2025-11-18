@@ -23,6 +23,8 @@ export interface CategoryChoice {
 interface CachedCategorization {
   result: CategoryChoice;
   timestamp: number;
+  identifier: string; // Store the identifier (ownerName or url) for efficient clearing
+  itemType: 'app' | 'website';
 }
 
 const categorizationCache = new Map<string, CachedCategorization>();
@@ -34,6 +36,18 @@ const CATEGORIZATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 function generateActivityHash(activityDetails: ActivityDetails): string {
   const key = `${activityDetails.ownerName || ''}_${activityDetails.url || ''}_${activityDetails.title || ''}`;
   return crypto.createHash('md5').update(key).digest('hex');
+}
+
+/**
+ * Extract identifier from activity details
+ */
+function getActivityIdentifier(activityDetails: ActivityDetails): { identifier: string; itemType: 'app' | 'website' } | null {
+  if (activityDetails.url) {
+    return { identifier: activityDetails.url, itemType: 'website' };
+  } else if (activityDetails.ownerName) {
+    return { identifier: activityDetails.ownerName, itemType: 'app' };
+  }
+  return null;
 }
 
 /**
@@ -62,10 +76,35 @@ function getCachedCategorization(activityDetails: ActivityDetails): CategoryChoi
  */
 function cacheCategorization(activityDetails: ActivityDetails, result: CategoryChoice): void {
   const hash = generateActivityHash(activityDetails);
-  categorizationCache.set(hash, {
-    result,
-    timestamp: Date.now()
-  });
+  const identifierInfo = getActivityIdentifier(activityDetails);
+
+  if (identifierInfo) {
+    categorizationCache.set(hash, {
+      result,
+      timestamp: Date.now(),
+      identifier: identifierInfo.identifier,
+      itemType: identifierInfo.itemType
+    });
+  }
+}
+
+/**
+ * Clear cache entries for a specific activity identifier
+ * Used when activities are manually recategorized
+ */
+export function clearCategorizationCacheForIdentifier(identifier: string, itemType: 'app' | 'website'): number {
+  let clearedCount = 0;
+
+  // Iterate through cache and remove entries matching the identifier
+  for (const [hash, cached] of categorizationCache.entries()) {
+    if (cached.identifier === identifier && cached.itemType === itemType) {
+      categorizationCache.delete(hash);
+      clearedCount++;
+    }
+  }
+
+  console.log(`Cleared ${clearedCount} categorization cache entries for ${itemType} "${identifier}"`);
+  return clearedCount;
 }
 
 /**

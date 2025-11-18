@@ -12,7 +12,7 @@ import { getOrCreateLocalUser, getUserById, updateUser } from './database/servic
 import { getCategoriesByUserId, getCategoryById, createCategory, updateCategory, deleteCategory, deleteRecentlyCreatedCategories } from './database/services/categories'
 import { getEventsByUserId, getEventsByUserAndTimeRange, getEventById, getUserStatistics, updateActiveWindowEvent } from './database/services/activeWindowEvents'
 import { getAllSettings, getSetting, setSetting, updateSettings } from './database/services/settings'
-import { processWindowEvent, updateEventDuration, endWindowEvent, recategorizeEvent } from './services/windowTracking'
+import { processWindowEvent, updateEventDuration, endWindowEvent, recategorizeEvent, recategorizeEventsByIdentifierService } from './services/windowTracking'
 import { listOllamaModels, pullOllamaModel } from './services/ollama'
 import { generateCategorySuggestions } from './services/categorization'
 
@@ -599,6 +599,13 @@ export function registerIpcHandlers(
   ipcMain.handle('local:recategorize-event', (_event, eventId: string, categoryId: string) => {
     return recategorizeEvent(eventId, categoryId)
   })
+
+  ipcMain.handle(
+    'local:recategorize-events-by-identifier',
+    (_event, identifier: string, itemType: 'app' | 'website', startDateMs: number, endDateMs: number, newCategoryId: string) => {
+      return recategorizeEventsByIdentifierService(identifier, itemType, startDateMs, endDateMs, newCategoryId)
+    }
+  )
 
   // Window tracking handlers
   ipcMain.handle('local:process-window-event', (_event, eventDetails: any) => {

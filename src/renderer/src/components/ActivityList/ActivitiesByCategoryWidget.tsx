@@ -118,9 +118,23 @@ const ActivitiesByCategoryWidget = ({
       // Perform update asynchronously
       ;(async () => {
         try {
-          // Update events by recategorizing them in the date range
-          // For now we'll just show the toast - full implementation would need a batch update handler
-          refetchEvents()
+          // Update events by recategorizing them in the database
+          const updatedCount = await localApi.events.recategorizeByIdentifier(
+            variables.activityIdentifier,
+            variables.itemType,
+            variables.startDateMs,
+            variables.endDateMs,
+            variables.newCategoryId
+          )
+
+          console.log(`Successfully recategorized ${updatedCount} events`)
+
+          // Refetch events to show updated data
+          await refetchEvents()
+
+          // Notify DistractionStatusBar to refresh today's events for floating window update
+          window.dispatchEvent(new CustomEvent('refresh-today-events'))
+
           const targetCategory = categories?.find((cat) => cat._id === variables.newCategoryId)
           const targetCategoryName = targetCategory ? targetCategory.name : 'Unknown Category'
           const timeRangeDescription = getTimeRangeDescription(
@@ -140,6 +154,12 @@ const ActivitiesByCategoryWidget = ({
           })
         } catch (error) {
           console.error('Error updating category:', error)
+          toast({
+            title: 'Error',
+            description: 'Failed to move activity. Please try again.',
+            variant: 'destructive',
+            duration: 3000
+          })
         } finally {
           setIsUpdatingCategory(false)
         }
@@ -154,9 +174,23 @@ const ActivitiesByCategoryWidget = ({
     }) => {
       setIsUpdatingCategory(true)
       try {
-        // Update events by recategorizing them in the date range
-        // For now we'll just show the toast - full implementation would need a batch update handler
-        refetchEvents()
+        // Update events by recategorizing them in the database
+        const updatedCount = await localApi.events.recategorizeByIdentifier(
+          variables.activityIdentifier,
+          variables.itemType,
+          variables.startDateMs,
+          variables.endDateMs,
+          variables.newCategoryId
+        )
+
+        console.log(`Successfully recategorized ${updatedCount} events`)
+
+        // Refetch events to show updated data
+        await refetchEvents()
+
+        // Notify DistractionStatusBar to refresh today's events for floating window update
+        window.dispatchEvent(new CustomEvent('refresh-today-events'))
+
         const targetCategory = categories?.find((cat) => cat._id === variables.newCategoryId)
         const targetCategoryName = targetCategory ? targetCategory.name : 'Unknown Category'
         const timeRangeDescription = getTimeRangeDescription(
@@ -176,6 +210,12 @@ const ActivitiesByCategoryWidget = ({
         })
       } catch (error) {
         console.error('Error updating category:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to move activity. Please try again.',
+          variant: 'destructive',
+          duration: 3000
+        })
         throw error
       } finally {
         setIsUpdatingCategory(false)

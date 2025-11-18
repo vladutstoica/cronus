@@ -3,8 +3,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import { getOrCreateLocalUser } from '../database/services/users';
 import { getCategoriesByUserId } from '../database/services/categories';
-import { createActiveWindowEvent, updateActiveWindowEvent } from '../database/services/activeWindowEvents';
-import { getAICategoryChoice, getAISummaryForBlock, CategoryChoice } from './categorization';
+import { createActiveWindowEvent, updateActiveWindowEvent, recategorizeEventsByIdentifier } from '../database/services/activeWindowEvents';
+import { getAICategoryChoice, getAISummaryForBlock, CategoryChoice, clearCategorizationCacheForIdentifier } from './categorization';
 import { getRuleBasedCategoryChoice } from './ruleBasedCategorization';
 import { getBooleanSetting } from '../database/services/settings';
 import { isAIEnabled } from './ollama';
@@ -268,5 +268,42 @@ export async function recategorizeEvent(
   } catch (error) {
     console.error('Error recategorizing event:', error);
     return false;
+  }
+}
+
+/**
+ * Recategorize multiple events by identifier within a time range
+ */
+export async function recategorizeEventsByIdentifierService(
+  identifier: string,
+  itemType: 'app' | 'website',
+  startDateMs: number,
+  endDateMs: number,
+  newCategoryId: string
+): Promise<number> {
+  try {
+    const user = getOrCreateLocalUser();
+    const startDate = new Date(startDateMs);
+    const endDate = new Date(endDateMs);
+
+    const updatedCount = recategorizeEventsByIdentifier(
+      user.id,
+      identifier,
+      itemType,
+      startDate,
+      endDate,
+      newCategoryId
+    );
+
+    console.log(`Recategorized ${updatedCount} events with identifier "${identifier}" to category ${newCategoryId}`);
+
+    // Clear categorization cache for this identifier so future events use the new category
+    const cacheCleared = clearCategorizationCacheForIdentifier(identifier, itemType);
+    console.log(`Cleared ${cacheCleared} cache entries for "${identifier}"`);
+
+    return updatedCount;
+  } catch (error) {
+    console.error('Error recategorizing events by identifier:', error);
+    throw error;
   }
 }

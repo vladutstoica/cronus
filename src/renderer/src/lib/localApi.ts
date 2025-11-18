@@ -58,6 +58,22 @@ export const localApi = {
     },
     recategorize: async (eventId: string, categoryId: string) => {
       return window.electron.ipcRenderer.invoke('local:recategorize-event', eventId, categoryId);
+    },
+    recategorizeByIdentifier: async (
+      identifier: string,
+      itemType: 'app' | 'website',
+      startDateMs: number,
+      endDateMs: number,
+      newCategoryId: string
+    ): Promise<number> => {
+      return window.electron.ipcRenderer.invoke(
+        'local:recategorize-events-by-identifier',
+        identifier,
+        itemType,
+        startDateMs,
+        endDateMs,
+        newCategoryId
+      );
     }
   },
 

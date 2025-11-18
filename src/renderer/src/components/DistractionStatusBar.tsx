@@ -271,7 +271,18 @@ const DistractionStatusBar = ({
 
     loadTodayEvents()
     const interval = setInterval(loadTodayEvents, 30000)
-    return () => clearInterval(interval)
+
+    // Listen for manual refresh events (e.g., after bulk recategorization)
+    const handleRefreshEvents = () => {
+      console.log('Received refresh-today-events event, reloading...')
+      loadTodayEvents()
+    }
+    window.addEventListener('refresh-today-events', handleRefreshEvents)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('refresh-today-events', handleRefreshEvents)
+    }
   }, [isAuthenticated, currentDayStartDateMs, currentDayEndDateMs])
 
   useDistractionSound(categoryDetails as Category | null | undefined)

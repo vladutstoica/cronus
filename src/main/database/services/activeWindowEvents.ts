@@ -259,3 +259,49 @@ export function getUserStatistics(userId: string, startDate: Date, endDate: Date
     uncategorizedEvents: totalEvents.count - categorizedEvents.count
   };
 }
+
+/**
+ * Recategorize events by identifier (owner_name or url) within a time range
+ */
+export function recategorizeEventsByIdentifier(
+  userId: string,
+  identifier: string,
+  itemType: 'app' | 'website',
+  startDate: Date,
+  endDate: Date,
+  newCategoryId: string
+): number {
+  const db = getDatabase();
+  const now = new Date().toISOString();
+
+  // For apps, match by owner_name; for websites, match by url
+  // Build the query with the correct field name
+  const query = itemType === 'app'
+    ? `UPDATE active_window_events
+       SET category_id = ?,
+           updated_at = ?
+       WHERE user_id = ?
+         AND owner_name = ?
+         AND timestamp >= ?
+         AND timestamp <= ?`
+    : `UPDATE active_window_events
+       SET category_id = ?,
+           updated_at = ?
+       WHERE user_id = ?
+         AND url = ?
+         AND timestamp >= ?
+         AND timestamp <= ?`;
+
+  const stmt = db.prepare(query);
+
+  const result = stmt.run(
+    newCategoryId,
+    now,
+    userId,
+    identifier,
+    startDate.toISOString(),
+    endDate.toISOString()
+  );
+
+  return result.changes;
+}
