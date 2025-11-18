@@ -1,5 +1,5 @@
 {
-  "name": "Cronus",
+  "name": "cronus",
   "version": "2.0.0",
   "private": true,
   "description": "Privacy-first local time tracking desktop app",
@@ -11,93 +11,15 @@
     "url": "https://github.com/moritzWa/cronus.git"
   },
   "scripts": {
-    "------ DEVELOPMENT ---------": "echo '------ DEVELOPMENT ---------'",
-    "dev": "VITE_BUILD_DATE=dev electron-vite dev",
-    "postinstall": "electron-builder install-app-deps",
-    "------ LINTING & TYPE-CHECKING ---------": "echo '------ LINTING & TYPE-CHECKING ---------'",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "package": "npm run build && electron-packager . Cronus --platform=darwin --arch=arm64 --out=dist --overwrite --icon=./resources/icon.icns --asar --extra-resource=./src/native-modules/native-windows/build/Release/nativeWindows.node",
+    "make": "npm run package && cd dist/Cronus-darwin-arm64 && zip -r ../Cronus-darwin-arm64.zip Cronus.app",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "typecheck": "bun run typecheck:node && bun run typecheck:web",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
-    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
-    "------ BUILDING ---------": "echo '------ BUILDING ---------'",
-    "build": "VITE_BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') electron-vite build",
-    "build:with-typecheck": "bun run typecheck && VITE_BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') electron-vite build",
-    "build:unpack": "bun run build && electron-builder --dir",
-    "build:local": "bun run build && electron-builder --mac --dir --config.mac.notarize=false",
-    "build:win": "bun run build && electron-builder --win",
-    "build:linux": "electron-vite build && electron-builder --linux",
-    "build:mac:electron-builder": "NODE_ENV=production bun run build && npx electron-builder --mac --arm64 --publish never",
-    "------ NATIVE MODULES ---------": "echo '------ NATIVE MODULES ---------'",
-    "native-modules:rebuild": "bun run native-modules:clean && npx electron-rebuild -f -m src/native-modules/native-windows",
-    "native-modules:rebuild:arm": "bun run native-modules:rebuild -- --arch arm64",
-    "native-modules:rebuild:x64": "bun run native-modules:rebuild -- --arch x64",
-    "native-modules:rebuild:all": "bun run native-modules:rebuild:arm && bun run native-modules:rebuild:x64",
-    "native-modules:clean": "rimraf src/native-modules/**/bin && rimraf src/native-modules/**/build",
-    "------ PUBLISHING & DEPLOYMENT ---------": "echo '------ PUBLISHING & DEPLOYMENT ---------'",
-    "check-latest-version-published": "bash check-latest-version-published.sh",
-    "create-latest-links": "bash create-latest-links.sh",
-    "build:for-publish:arm64": "time (bun run native-modules:rebuild:arm && NODE_ENV=production bun run build && dotenv -e .env.production -- npx electron-builder --mac --arm64 && say 'ARM64 build for publish complete')",
-    "build:for-publish:x64": "time (bun run native-modules:rebuild:x64 && NODE_ENV=production bun run build && dotenv -e .env.production -- npx electron-builder --mac --x64 && say 'x64 build for publish complete')",
-    "publish:arm64": "time (dotenv -e .env.production -- npx electron-builder --mac --arm64 --publish always && say 'ARM64 publish complete')",
-    "publish:x64": "time (dotenv -e .env.production -- npx electron-builder --mac --x64 --publish always && say 'x64 publish complete')",
-    "publish:with-links:arm64": "time (bun run build:for-publish:arm64 && bun run publish:arm64 && bun run create-latest-links arm64)",
-    "publish:with-links:x64": "time (bun run build:for-publish:x64 && bun run publish:x64 && bun run create-latest-links x64)",
-    "publish:with-links:all": "time (bun run publish:with-links:arm64 && bun run publish:with-links:x64 && say 'All publishing complete')",
-    "publish-only:with-links:arm64": "time (bun run publish:arm64 && bun run create-latest-links arm64)",
-    "publish-only:with-links:x64": "time (bun run publish:x64 && bun run create-latest-links x64)",
-    "publish-only:with-links:all": "time (bun run publish-only:with-links:arm64 && bun run publish-only:with-links:x64 && say 'All publishing complete')",
-    "------ UTILITIES ---------": "echo '------ UTILITIES ---------'",
-    "clean:cronus-installation": "bash clean_cronus_installation.sh",
-    "clean-and-build": "time (bun run clean:cronus-installation && bun run build:for-publish:arm64 && open dist/Cronus-*-arm64.dmg && say 'Build complete')",
-    "clean-and-quick-build": "time (bun run clean:cronus-installation && bash check_native_arch.sh || bun run native-modules:rebuild:arm && NODE_ENV=production bun run build && npx electron-builder --mac --arm64 -c.mac.forceCodeSigning=false -c.mac.notarize=false -c.dmg.sign=false && open dist/Cronus-*-arm64.dmg && say 'Quick build complete')",
-    "reset-app-state": "bash reset_app_state.sh",
-    "quick-build": "time (NODE_ENV=production bun run build && npx electron-builder --mac --arm64 -c.mac.forceCodeSigning=false -c.mac.notarize=false -c.dmg.sign=false && open dist/Cronus-*-arm64.dmg && say 'Quick build complete')"
-  },
-  "build": {
-    "appId": "com.cronus.app",
-    "productName": "Cronus",
-    "files": [
-      "out/",
-      "node_modules/",
-      "!build-assets/**/*",
-      "package.json"
-    ],
-    "publish": [
-      {
-        "provider": "s3",
-        "bucket": "cronusnewupdates",
-        "region": "us-east-1"
-      }
-    ],
-    "mac": {
-      "artifactName": "Cronus-${version}-${arch}.${ext}",
-      "category": "public.app-category.productivity",
-      "hardenedRuntime": true,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "notarize": true,
-      "timestamp": "http://timestamp.apple.com/ts01",
-      "icon": "build/icon.icns",
-      "extendInfo": {
-        "NSAppleEventsUsageDescription": "Cronus needs to access information from your web browser to track your activity."
-      }
-    },
-    "dmg": {
-      "sign": true
-    },
-    "protocols": {
-      "name": "Cronus Auth",
-      "schemes": [
-        "cronus"
-      ]
-    },
-    "extraResources": [
-      {
-        "from": "src/native-modules/native-windows/build/Release/nativeWindows.node",
-        "to": "native/nativeWindows.node"
-      }
-    ]
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -142,6 +64,13 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-dmg": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@electron-forge/publisher-s3": "^7.10.2",
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/preload": "^3.0.1",
@@ -160,7 +89,6 @@
     "dotenv": "^16.5.0",
     "dotenv-cli": "^8.0.0",
     "electron": "35.1.5",
-    "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9",
     "electron-vite": "^3.1.0",
     "eslint": "^9.24.0",

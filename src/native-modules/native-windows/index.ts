@@ -42,7 +42,7 @@ const addonPath = isDevelopment
       "Release",
       "nativeWindows.node",
     )
-  : path.join(process.resourcesPath, "native", "nativeWindows.node");
+  : path.join(process.resourcesPath, "nativeWindows.node");
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const addon: Addon = require(addonPath);
