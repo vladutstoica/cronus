@@ -100,29 +100,8 @@ const FloatingDisplay: React.FC = () => {
     }
   }, [latestStatus, pendingStartTime, displayedProductiveTimeMs, dailyUnproductiveMs])
 
-  // Timer counting effect
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | undefined
-
-    // Only count time if tracking is not paused and not in "maybe" state
-    if (!isTrackingPaused && latestStatus !== 'maybe') {
-      if (latestStatus === 'productive') {
-        intervalId = setInterval(() => {
-          setDisplayedProductiveTimeMs((prevMs) => prevMs + 1000)
-        }, 1000)
-      } else if (latestStatus === 'unproductive') {
-        intervalId = setInterval(() => {
-          setDailyUnproductiveMs((prevMs) => prevMs + 1000)
-        }, 1000)
-      }
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
-    }
-  }, [latestStatus, isTrackingPaused])
+  // Timer updates now come exclusively from backend (DistractionStatusBar polls every 1s)
+  // This eliminates race conditions between local increments and backend updates
 
   const handleGlobalMouseMove = useCallback((event: globalThis.MouseEvent) => {
     if (!dragStartInfoRef.current || !window.floatingApi) return
