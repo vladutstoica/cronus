@@ -249,6 +249,9 @@ dist
 # Serverless Webpack directories
 .webpack/
 
+# Electron Vite build output
+.vite/
+
 # Optional stylelint cache
 
 # SvelteKit build / generate output
@@ -257,5 +260,6 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/node,intellij
 
 # Native modules build output
-src/native-modules/**/bin/
-src/native-modules/**/build/
+native-modules/**/bin/
+native-modules/**/build/
+native-modules/**/package-lock.json

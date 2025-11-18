@@ -1,0 +1,14 @@
+{
+  "name": "native-window-observer",
+  "version": "0.1.0",
+  "description": "Native module for observing active window changes on macOS",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "rebuild": "node-gyp rebuild"
+  },
+  "gypfile": true,
+  "dependencies": {
+    "bindings": "^1.5.0"
+  }
+}

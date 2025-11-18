@@ -1,0 +1,15 @@
+# Explicitly include out directory for electron-forge
+!out/
+!out/**
+
+# Ignore source files
+src/
+.git/
+*.md
+.env*
+tsconfig*
+electron.vite.config*
+.eslintrc*
+.prettierrc*
+bun.lockb
+vite.*.config.ts

@@ -4,10 +4,7 @@ import fs from "fs/promises";
 import { join } from "path";
 import { Category } from "@shared/types";
 import icon from "../../resources/icon.png?asset";
-import {
-  nativeWindowObserver,
-  PermissionType,
-} from "../native-modules/native-window-observer";
+import { nativeWindowObserver, PermissionType } from "native-window-observer";
 import { logMainToFile } from "./logging";
 import { redactSensitiveContent } from "./redaction";
 import { setAllowForcedQuit } from "./windows";
@@ -309,7 +306,8 @@ export function registerIpcHandlers(
 
   ipcMain.handle("capture-screenshot-and-ocr", async () => {
     try {
-      const result = nativeWindowObserver.captureScreenshotAndOCRForCurrentWindow();
+      const result =
+        nativeWindowObserver.captureScreenshotAndOCRForCurrentWindow();
       logMainToFile("Screenshot + OCR captured", {
         success: result.success,
         textLength: result.ocrText?.length || 0,

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { app, BrowserWindow, session } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { ActiveWindowDetails } from "@shared/types";
-import { nativeWindowObserver } from "../native-modules/native-window-observer";
+import { nativeWindowObserver } from "native-window-observer";
 import {
   initializeAutoUpdater,
   registerAutoUpdaterHandlers,
