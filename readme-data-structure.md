@@ -1,4 +1,7 @@
-# Data Structures Refactor notes (current code):
+# Data Structures Refactor notes (ARCHIVED - Historical Reference)
+
+> **⚠️ NOTE: This document describes the legacy data flow before recent refactoring.**
+> **It is kept for historical reference only and may not reflect the current implementation.**
 
 **Problem**: We currently fetch and store only activeWindowEvents which are snapshots of an app usage. When we want to display them in a timeline or show statistics we need fetch all of the relevant ones and compute on the client.
 

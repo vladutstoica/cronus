@@ -1,5 +1,9 @@
 # Cronus - Local-First Time Tracking
 
+> **🔱 This is a fork of [moritzWa/cronus](https://github.com/moritzWa/cronus)**
+
+> **⚠️ DEVELOPMENT STATUS: This project is in active development and not yet production-ready.**
+
 > **100% Local. 100% Private. 0% API Keys Needed.**
 
 Cronus is a privacy-first, local-only desktop time tracking application that automatically categorizes your activities using AI that runs entirely on your machine.
@@ -18,6 +22,7 @@ Cronus is a privacy-first, local-only desktop time tracking application that aut
 ### Prerequisites
 
 1. **Ollama** (for AI features)
+
    ```bash
    # macOS
    brew install ollama
@@ -37,17 +42,20 @@ Cronus is a privacy-first, local-only desktop time tracking application that aut
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/cronus.git
    cd cronus
    ```
 
 2. **Install dependencies**
+
    ```bash
    bun install
    ```
 
 3. **Start Ollama and pull a model**
+
    ```bash
    # Start Ollama service (in a separate terminal)
    ollama serve
@@ -91,17 +99,20 @@ Cronus is a privacy-first, local-only desktop time tracking application that aut
 ### Data Storage
 
 All data is stored locally in:
+
 - **macOS**: `~/Library/Application Support/Cronus/`
 - **Linux**: `~/.local/share/Cronus/`
 - **Windows**: `%APPDATA%\Cronus\`
 
 Files:
+
 - `cronus.db` - SQLite database (users, categories, events)
 - `screenshots/` - Optional local screenshots (disabled by default)
 
 ### No Cloud Dependencies
 
 ❌ **Removed:**
+
 - MongoDB (replaced with SQLite)
 - OpenAI API (replaced with Ollama)
 - Google OAuth (no auth needed)
@@ -110,6 +121,7 @@ Files:
 - PostHog analytics (privacy-first)
 
 ✅ **Result:**
+
 - **No API keys needed**
 - **No internet required** (after initial model download)
 - **No subscriptions**
@@ -120,7 +132,9 @@ Files:
 All AI features use **Ollama** (local, open-source LLM) - **NO API KEY REQUIRED!**
 
 ### 1. Activity Categorization
+
 Automatically assigns activities to your custom categories based on:
+
 - Application name
 - Window title
 - URL (for browsers)
@@ -128,19 +142,25 @@ Automatically assigns activities to your custom categories based on:
 - Your personal goals and projects
 
 ### 2. Activity Summaries
+
 Generates concise summaries of what you were doing for longer activity blocks.
 
 ### 3. Smart Titles
+
 Creates descriptive titles when window titles are not informative (e.g., "New Tab").
 
 ### 4. Category Suggestions
+
 Generates personalized categories based on your goals and projects.
 
 ### 5. Emoji Suggestions
+
 Suggests relevant emojis for your categories.
 
 ### 6. Rule-Based Fallback
+
 If Ollama is unavailable or disabled, Cronus uses fast rule-based categorization:
+
 - Pattern matching on app names, URLs, keywords
 - Predefined rules for: work, communication, entertainment, social media
 - <10ms categorization time
@@ -153,26 +173,39 @@ All settings stored locally in SQLite:
 
 ```javascript
 // AI Configuration
-ai_enabled: true/false           // Enable/disable AI categorization
-ollama_model: 'llama3.2'        // Which Ollama model to use
-categorization_enabled: true     // Enable/disable categorization
+ai_enabled: true / false; // Enable/disable AI categorization
+ollama_model: "llama3.2"; // Which Ollama model to use
+categorization_enabled: true; // Enable/disable categorization
 
 // Privacy
-screenshots_enabled: false       // Enable/disable screenshots (off by default)
+screenshots_enabled: false; // Enable/disable screenshots (off by default)
 ```
 
 ### Change Settings
 
 Via IPC (in renderer):
+
 ```javascript
 // Disable AI
-await window.electron.ipcRenderer.invoke('local:set-setting', 'ai_enabled', false)
+await window.electron.ipcRenderer.invoke(
+  "local:set-setting",
+  "ai_enabled",
+  false,
+);
 
 // Enable screenshots
-await window.electron.ipcRenderer.invoke('local:set-setting', 'screenshots_enabled', true)
+await window.electron.ipcRenderer.invoke(
+  "local:set-setting",
+  "screenshots_enabled",
+  true,
+);
 
 // Change AI model
-await window.electron.ipcRenderer.invoke('local:set-setting', 'ollama_model', 'llama3.1')
+await window.electron.ipcRenderer.invoke(
+  "local:set-setting",
+  "ollama_model",
+  "llama3.1",
+);
 ```
 
 ### Available Ollama Models
@@ -263,12 +296,14 @@ CREATE TABLE app_settings (
 ## 🔒 Privacy & Security
 
 ### Data Privacy
+
 - **100% local storage** - Nothing sent to cloud
 - **No telemetry** - No analytics or tracking
 - **No accounts** - No email, no passwords
 - **Your data, your machine** - Full control
 
 ### AI Privacy
+
 - Ollama runs **entirely on your machine**
 - No data sent to OpenAI or any external service
 - Models downloaded once, cached locally
@@ -277,6 +312,7 @@ CREATE TABLE app_settings (
 ### Permissions
 
 Cronus requests minimal macOS permissions:
+
 - **Accessibility** (required) - Read window titles and content
 - **Screen Recording** (optional) - Capture screenshots
 
@@ -339,29 +375,35 @@ Build an unsigned macOS app for personal use:
 # For Apple Silicon (M1/M2/M3)
 bun run quick-build
 
-# The DMG will open automatically, or find it at:
-# dist/Cronus-2.0.0-arm64.dmg
+# The DMG and ZIP will be created in out/make/
+# DMG: out/make/Cronus-2.0.0-arm64.dmg
+# ZIP: out/make/Cronus-darwin-arm64-2.0.0.zip
 ```
 
 **What this produces:**
-- Unsigned `.dmg` installer in `dist/`
-- Unsigned `.app` bundle in `dist/mac-arm64/Cronus.app`
+
+- Unsigned `.dmg` installer in `out/make/`
+- Unsigned `.zip` archive in `out/make/`
+- Unsigned `.app` bundle can be extracted from the DMG
 - Fast build (~2-3 minutes)
 - **Can only be used locally** (not for distribution)
 
 ### Installing the Built App
 
 1. **From DMG** (recommended):
+
    ```bash
-   # DMG opens automatically after build, or:
-   open dist/Cronus-*.dmg
+   # Open the DMG from the output directory:
+   open out/make/Cronus-*.dmg
    ```
+
    - Drag Cronus.app to Applications folder
    - Launch from Applications
 
-2. **Direct from build folder**:
+2. **From ZIP**:
    ```bash
-   open dist/mac-arm64/Cronus.app
+   # Extract the ZIP and move to Applications
+   unzip out/make/Cronus-darwin-arm64-*.zip -d /Applications/
    ```
 
 ### First Launch Setup
@@ -376,6 +418,7 @@ After installing, Cronus needs macOS permissions:
 3. **Restart Cronus** for permissions to take effect
 
 **Optional permissions:**
+
 - **Screen Recording** - Enable if you want screenshot features
   - System Settings → Privacy & Security → Screen Recording
   - Enable Cronus
@@ -385,19 +428,11 @@ After installing, Cronus needs macOS permissions:
 ```bash
 # Apple Silicon (M1/M2/M3) - Default
 bun run quick-build
+# or
+bun run make:arm64
 
 # Intel Macs (x64)
-NODE_ENV=production bun run build && \
-npx electron-builder --mac --x64 \
-  -c.mac.forceCodeSigning=false \
-  -c.mac.notarize=false \
-  -c.dmg.sign=false
-
-# Universal Binary (both architectures)
-NODE_ENV=production bun run build && \
-npx electron-builder --mac --universal \
-  -c.mac.forceCodeSigning=false \
-  -c.mac.notarize=false
+bun run make:x64
 ```
 
 ### Production Build (For Distribution)
@@ -405,24 +440,23 @@ npx electron-builder --mac --universal \
 To distribute Cronus to others (requires **Apple Developer account**, $99/year):
 
 ```bash
-# 1. Set up code signing certificate in Keychain
-# 2. Create .env.production with:
-#    APPLE_ID=your@email.com
-#    APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx
-#    APPLE_TEAM_ID=XXXXXXXXXX
+# 1. Ensure native modules are built for the target architecture
+# 2. Build using electron-forge
 
-# 3. Build and sign for ARM64
+# Build and sign for ARM64
 bun run build:for-publish:arm64
 
-# 4. Build and sign for Intel
+# Build and sign for Intel
 bun run build:for-publish:x64
 
-# Output: dist/Cronus-2.0.0-{arch}.dmg (signed & notarized)
+# Output will be in out/make/ directory
 ```
 
 **What this produces:**
-- Code-signed DMG
-- Notarized by Apple
+
+- Code-signed DMG in `out/make/`
+- ZIP archive in `out/make/`
+- Notarized by Apple (if configured)
 - Users can install without security warnings
 - Required for public distribution
 
@@ -440,6 +474,7 @@ The app version is defined in `package.json`:
 **To update the version:**
 
 1. **Update package.json**:
+
    ```bash
    # Manually edit package.json or use npm:
    npm version patch  # 2.0.0 → 2.0.1
@@ -448,16 +483,18 @@ The app version is defined in `package.json`:
    ```
 
 2. **Rebuild**:
+
    ```bash
    bun run quick-build
    ```
 
 3. **New DMG will include updated version**:
    ```
-   dist/Cronus-2.0.1-arm64.dmg
+   out/make/Cronus-2.0.1-arm64.dmg
    ```
 
 **Versioning best practices:**
+
 - **Patch** (2.0.x) - Bug fixes, small changes
 - **Minor** (2.x.0) - New features, backward compatible
 - **Major** (x.0.0) - Breaking changes
@@ -465,6 +502,7 @@ The app version is defined in `package.json`:
 ### Distribution Options
 
 **1. Local Distribution** (friends, team, testing):
+
 ```bash
 # Build unsigned DMG
 bun run quick-build
@@ -474,6 +512,7 @@ bun run quick-build
 ```
 
 **2. Public Distribution** (requires Apple Developer account):
+
 ```bash
 # Build signed & notarized DMG
 bun run build:for-publish:arm64
@@ -483,6 +522,7 @@ bun run build:for-publish:arm64
 ```
 
 **3. GitHub Releases** (recommended):
+
 ```bash
 # 1. Tag the version
 git tag v2.0.0
@@ -494,7 +534,7 @@ bun run build:for-publish:arm64
 # 3. Create GitHub Release
 # - Go to https://github.com/yourusername/cronus/releases/new
 # - Select tag: v2.0.0
-# - Upload: dist/Cronus-2.0.0-arm64.dmg
+# - Upload: out/make/Cronus-2.0.0-arm64.dmg
 # - Add release notes
 # - Publish
 ```
@@ -506,7 +546,7 @@ Cronus has electron-updater configured for auto-updates.
 **Setup auto-updates:**
 
 1. **Configure S3 bucket** (or GitHub Releases):
-   - See `package.json` → `"publish"` section
+   - See `package.json` → `config.forge.publishers` section
    - Currently configured for S3: `cronusnewupdates` bucket
 
 2. **Enable auto-updates in code**:
@@ -515,8 +555,8 @@ Cronus has electron-updater configured for auto-updates.
 
 3. **Publish updates**:
    ```bash
-   # Publishes to S3 bucket
-   bun run publish:with-links:arm64
+   # Publishes to configured publishers
+   bun run publish
    ```
 
 ### Build Output Structure
@@ -525,40 +565,39 @@ After running `bun run quick-build`:
 
 ```
 cronus/
-├── dist/
-│   ├── Cronus-2.0.0-arm64.dmg          # DMG installer
-│   ├── mac-arm64/
-│   │   └── Cronus.app                   # App bundle
-│   ├── builder-effective-config.yaml    # Build config
-│   └── latest-mac.yml                   # Auto-update metadata
-└── out/
-    ├── main/                            # Compiled main process
-    ├── preload/                         # Compiled preload scripts
-    └── renderer/                        # Compiled React app
+├── out/
+│   ├── main/                               # Compiled main process
+│   ├── preload/                            # Compiled preload scripts
+│   ├── renderer/                           # Compiled React app
+│   └── make/                               # Built installers
+│       ├── Cronus-2.0.0-arm64.dmg          # DMG installer
+│       ├── Cronus-darwin-arm64-2.0.0.zip   # ZIP archive
+│       └── ...
 ```
 
 ### Cleaning Build Artifacts
 
 ```bash
 # Clean all build outputs
-rm -rf dist/ out/
+rm -rf out/
 
 # Clean app data (removes database, settings)
 bun run clean:cronus-installation
 
-# Full clean + rebuild
-bun run clean-and-quick-build
+# Clean and reset app state
+bun run reset-app-state
 ```
 
 ### Adding Features
 
 1. **New IPC Handler** (main process)
+
    ```typescript
    // src/main/ipc.ts
-   ipcMain.handle('local:your-feature', async (_event, ...args) => {
+   ipcMain.handle("local:your-feature", async (_event, ...args) => {
      // Your logic here
-     return result
-   })
+     return result;
+   });
    ```
 
 2. **New API Method** (renderer)
@@ -567,10 +606,10 @@ bun run clean-and-quick-build
    export const localApi = {
      yourFeature: {
        doSomething: async (data: any) => {
-         return window.electron.ipcRenderer.invoke('local:your-feature', data)
-       }
-     }
-   }
+         return window.electron.ipcRenderer.invoke("local:your-feature", data);
+       },
+     },
+   };
    ```
 
 ## 🐛 Troubleshooting
@@ -580,17 +619,21 @@ bun run clean-and-quick-build
 **Symptoms:** AI categorization not working, using fallback rules
 
 **Solutions:**
+
 1. Check if Ollama is running:
+
    ```bash
    curl http://localhost:11434/api/version
    ```
 
 2. Start Ollama:
+
    ```bash
    ollama serve
    ```
 
 3. Check available models:
+
    ```bash
    ollama list
    ```
@@ -605,12 +648,15 @@ bun run clean-and-quick-build
 **Symptoms:** App crashes, data not saving
 
 **Solutions:**
+
 1. Check database file exists:
+
    ```bash
    ls ~/Library/Application\ Support/Cronus/cronus.db  # macOS
    ```
 
 2. Reset database (⚠️ deletes all data):
+
    ```bash
    rm ~/Library/Application\ Support/Cronus/cronus.db
    ```
@@ -624,6 +670,7 @@ bun run clean-and-quick-build
 **Symptoms:** Window titles not captured, content empty
 
 **Solutions:**
+
 1. Grant Accessibility permission:
    - System Settings → Privacy & Security → Accessibility
    - Add Cronus
@@ -642,6 +689,7 @@ bun run clean-and-quick-build
 ## 🤝 Contributing
 
 Contributions welcome! Please:
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -666,4 +714,4 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 **Made with ❤️ for privacy-conscious individuals**
 
-*No tracking. No subscriptions. No cloud. Just your data, on your machine.*
+_No tracking. No subscriptions. No cloud. Just your data, on your machine._
