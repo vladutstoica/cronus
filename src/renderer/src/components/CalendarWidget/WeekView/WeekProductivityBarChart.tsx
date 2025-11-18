@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useMemo } from "react";
 import { formatDuration } from "../../../lib/timeFormatting";
+import { getWeekStart } from "../../../lib/weekHelpers";
 import type { ProcessedEventBlock } from "../../DashboardView";
 import { notionStyleCategoryColors } from "../../Settings/CategoryForm";
 import { TooltipProvider } from "../../ui/tooltip";
@@ -42,10 +43,7 @@ const WeekProductivityBarChart = ({
       return [];
     }
 
-    const startOfWeek = new Date(selectedDate);
-    const dayOfWeek = startOfWeek.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+    const startOfWeek = getWeekStart(selectedDate);
 
     const days = Array.from({ length: 7 }).map((_, i) => {
       const day = new Date(startOfWeek);

@@ -170,6 +170,20 @@ function runMigrations(database: Database.Database): void {
         UPDATE app_settings SET value = 'llama3.2:1b' WHERE key = 'ollama_model' AND value = 'llama3.2';
       `,
     },
+    {
+      name: "004_fix_category_is_productive",
+      up: `
+        -- Fix is_productive values for default categories
+        -- This migration fixes categories that were created with the camelCase bug
+        -- where isProductive was not converted to is_productive
+
+        UPDATE categories SET is_productive = 1
+        WHERE name IN ('Work', 'Personal', 'Communication') AND is_default = 1;
+
+        UPDATE categories SET is_productive = 0
+        WHERE name IN ('Entertainment', 'Uncategorized') AND is_default = 1;
+      `,
+    },
   ];
 
   // Apply migrations

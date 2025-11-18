@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { hexToRgba } from "../../../lib/colors";
 import { formatDuration } from "../../../lib/timeFormatting";
+import { getWeekStart } from "../../../lib/weekHelpers";
 import type { ProcessedEventBlock } from "../../DashboardView";
 import { notionStyleCategoryColors } from "../../Settings/CategoryForm";
 import { Skeleton } from "../../ui/skeleton";
@@ -30,12 +31,7 @@ const WeekBreakdown = ({
       return [];
     }
 
-    const startOfWeek = new Date(viewingDate);
-    const dayOfWeek = startOfWeek.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
-    startOfWeek.setHours(0, 0, 0, 0);
-
+    const startOfWeek = getWeekStart(viewingDate);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 7);
 

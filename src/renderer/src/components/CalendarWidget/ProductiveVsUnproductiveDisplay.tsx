@@ -51,11 +51,11 @@ export function ProductiveVsUnproductiveDisplay({
               <span>{format(unproductiveDuration)}</span>
             </TooltipTrigger>
             <TooltipContent>
-              {Math.round(
-                (unproductiveDuration /
-                  (productiveDuration + unproductiveDuration)) *
-                  100,
-              )}
+              {(() => {
+                const total = productiveDuration + unproductiveDuration;
+                if (total === 0) return 0;
+                return Math.round((unproductiveDuration / total) * 100);
+              })()}
               %
             </TooltipContent>
           </Tooltip>

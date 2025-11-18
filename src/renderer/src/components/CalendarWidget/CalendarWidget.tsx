@@ -5,6 +5,7 @@ import { useCurrentTime } from "../../hooks/useCurrentTime";
 import { useDarkMode } from "../../hooks/useDarkMode";
 import { useWindowWidth } from "../../hooks/useWindowWidth";
 import { localApi } from "../../lib/localApi";
+import { getWeekStart } from "../../lib/weekHelpers";
 import type { ProcessedEventBlock } from "../DashboardView";
 import { CalendarWidgetHeader } from "./CalendarWidgetHeader";
 import CalendarZoomControls from "./DayTimeline/CalendarZoomControls";
@@ -209,12 +210,7 @@ const CalendarWidget = ({
 
   const formattedDate = useMemo(() => {
     if (viewMode === "week") {
-      const startOfWeek = new Date(selectedDate);
-      const dayOfWeek = startOfWeek.getDay(); // Sunday = 0, Monday = 1, etc.
-      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday start
-      startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
-      startOfWeek.setHours(0, 0, 0, 0);
-
+      const startOfWeek = getWeekStart(selectedDate);
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
 

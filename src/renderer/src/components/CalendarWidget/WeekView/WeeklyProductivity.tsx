@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import { useMemo } from "react";
 import { processColor } from "../../../lib/colors";
+import { getWeekStartNWeeksAgo } from "../../../lib/weekHelpers";
 import type { ProcessedEventBlock } from "../../DashboardView";
 import { notionStyleCategoryColors } from "../../Settings/CategoryForm";
 import { Skeleton } from "../../ui/skeleton";
@@ -44,12 +45,9 @@ export function WeeklyProductivity({
     }
 
     const weeks: WeekSummary[] = [];
-    const now = viewingDate;
 
     for (let i = 3; i >= 0; i--) {
-      const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay() - i * 7 + 1);
-      start.setHours(0, 0, 0, 0);
+      const start = getWeekStartNWeeksAgo(viewingDate, i);
       const end = new Date(start);
       end.setDate(start.getDate() + 7);
 

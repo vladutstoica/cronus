@@ -586,14 +586,25 @@ export function registerIpcHandlers(
 
   ipcMain.handle("local:create-category", (_event, category: any) => {
     const user = getOrCreateLocalUser();
-    const created = createCategory({ ...category, user_id: user.id });
+    const created = createCategory({
+      ...category,
+      is_productive: category.isProductive,
+      is_default: category.isDefault,
+      is_archived: category.isArchived,
+      user_id: user.id,
+    });
     return convertCategoryToCamelCase(created);
   });
 
   ipcMain.handle(
     "local:update-category",
     (_event, id: string, updates: any) => {
-      const updated = updateCategory(id, updates);
+      const updated = updateCategory(id, {
+        ...updates,
+        is_productive: updates.isProductive,
+        is_default: updates.isDefault,
+        is_archived: updates.isArchived,
+      });
       if (!updated) return updated;
       return convertCategoryToCamelCase(updated);
     },

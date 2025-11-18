@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { processColor } from "../../../lib/colors";
+import { getWeekStartNWeeksAgo } from "../../../lib/weekHelpers";
 import type { ProcessedEventBlock } from "../../DashboardView";
 import { notionStyleCategoryColors } from "../../Settings/CategoryForm";
 import {
@@ -97,10 +98,7 @@ export function ProductivityTrendChart({
 
     // Get the 4 weeks, starting from 3 weeks ago
     for (let i = 3; i >= 0; i--) {
-      // Use the same week calculation as WeekOverWeekComparison
-      const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay() - i * 7 + 1); // Monday start
-      start.setHours(0, 0, 0, 0);
+      const start = getWeekStartNWeeksAgo(now, i);
       const end = new Date(start);
       end.setDate(start.getDate() + 7);
 
@@ -217,9 +215,8 @@ export function ProductivityTrendChart({
         point.lastWeekProductiveHours = d.productiveHours;
       }
 
-      // The current week's point
+      // The current week's point - keep the actual value, just display with faded style
       if (i === currentWeekIndex) {
-        point.productiveHours = null as any; // Don't draw a solid line to this point
         point.lastWeekProductiveHours = d.productiveHours; // Draw a faded line to this point
       }
       return point;
