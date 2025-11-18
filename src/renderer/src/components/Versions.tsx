@@ -4,7 +4,7 @@ function Versions(): React.JSX.Element {
     <ul className="versions">
       <li className="app-version">Cronus App</li>
     </ul>
-  )
+  );
 }
 
-export default Versions
+export default Versions;

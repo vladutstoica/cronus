@@ -8,5 +8,5 @@ export function LoginForm() {
         Login is no longer required - the app runs without authentication
       </p>
     </div>
-  )
+  );
 }

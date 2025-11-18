@@ -1,45 +1,51 @@
-import { Pause, Play } from 'lucide-react'
-import React, { useEffect, useRef, useState } from 'react'
-import PauseInfoModal from '../PauseInfoModal'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Pause, Play } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import PauseInfoModal from "../PauseInfoModal";
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 interface PauseTrackingSettingsProps {
-  isTrackingPaused: boolean
-  onToggleTracking: () => void
-  shouldFocus?: boolean
+  isTrackingPaused: boolean;
+  onToggleTracking: () => void;
+  shouldFocus?: boolean;
 }
 
 const PauseTrackingSettings: React.FC<PauseTrackingSettingsProps> = ({
   isTrackingPaused,
   onToggleTracking,
-  shouldFocus = false
+  shouldFocus = false,
 }) => {
-  const [showPauseModal, setShowPauseModal] = useState(false)
-  const cardRef = useRef<HTMLDivElement>(null)
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (shouldFocus && cardRef.current) {
-      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [shouldFocus])
+  }, [shouldFocus]);
 
   const handlePauseClick = () => {
     if (!isTrackingPaused) {
-      setShowPauseModal(true)
+      setShowPauseModal(true);
     } else {
-      onToggleTracking()
+      onToggleTracking();
     }
-  }
+  };
 
   const handlePauseConfirm = () => {
-    setShowPauseModal(false)
-    onToggleTracking()
-  }
+    setShowPauseModal(false);
+    onToggleTracking();
+  };
 
   const handlePauseCancel = () => {
-    setShowPauseModal(false)
-  }
+    setShowPauseModal(false);
+  };
 
   return (
     <React.Fragment>
@@ -47,13 +53,17 @@ const PauseTrackingSettings: React.FC<PauseTrackingSettingsProps> = ({
         <CardHeader>
           <CardTitle className="text-xl">Pause Tracking</CardTitle>
           <CardDescription>
-            We automatically track when your computer goes asleep/becomes inactive and pause the
-            tracking accordingly. You can still pause tracking here if you do not want your activity
-            to appear in the timeline.
+            We automatically track when your computer goes asleep/becomes
+            inactive and pause the tracking accordingly. You can still pause
+            tracking here if you do not want your activity to appear in the
+            timeline.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button onClick={handlePauseClick} variant={isTrackingPaused ? 'default' : 'outline'}>
+          <Button
+            onClick={handlePauseClick}
+            variant={isTrackingPaused ? "default" : "outline"}
+          >
             {isTrackingPaused ? (
               <>
                 <Play className="w-4 h-4 mr-2" />
@@ -75,7 +85,7 @@ const PauseTrackingSettings: React.FC<PauseTrackingSettingsProps> = ({
         onConfirm={handlePauseConfirm}
       />
     </React.Fragment>
-  )
-}
+  );
+};
 
-export default PauseTrackingSettings
+export default PauseTrackingSettings;

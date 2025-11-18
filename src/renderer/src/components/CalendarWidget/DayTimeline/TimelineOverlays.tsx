@@ -1,17 +1,17 @@
-import React from 'react'
+import React from "react";
 
 interface TimelineOverlaysProps {
-  isToday: boolean
-  currentTimeTop: number | null
-  currentHourRef: React.RefObject<HTMLDivElement | null>
-  hourHeight: number
+  isToday: boolean;
+  currentTimeTop: number | null;
+  currentHourRef: React.RefObject<HTMLDivElement | null>;
+  hourHeight: number;
 }
 
 export const TimelineOverlays: React.FC<TimelineOverlaysProps> = ({
   isToday,
   currentTimeTop,
   currentHourRef,
-  hourHeight
+  hourHeight,
 }) => {
   return (
     <>
@@ -27,5 +27,5 @@ export const TimelineOverlays: React.FC<TimelineOverlaysProps> = ({
         </div>
       )}
     </>
-  )
-}
+  );
+};

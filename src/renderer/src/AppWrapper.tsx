@@ -1,12 +1,12 @@
-import { HashRouter, Route, Routes } from 'react-router-dom'
-import { MainAppContent } from './App'
-import './assets/custom-title-bar.css'
-import { PageContainer } from './components/layout/PageContainer'
-import Spinner from './components/ui/Spinner'
-import { useAuth } from './contexts/AuthContext'
+import { HashRouter, Route, Routes } from "react-router-dom";
+import { MainAppContent } from "./App";
+import "./assets/custom-title-bar.css";
+import { PageContainer } from "./components/layout/PageContainer";
+import Spinner from "./components/ui/Spinner";
+import { useAuth } from "./contexts/AuthContext";
 
 function AppWrapper(): React.JSX.Element {
-  const { isLoading: isAuthLoading } = useAuth()
+  const { isLoading: isAuthLoading } = useAuth();
 
   if (isAuthLoading) {
     return (
@@ -16,7 +16,7 @@ function AppWrapper(): React.JSX.Element {
           <div className="mt-4 text-gray-500">Loading...</div>
         </div>
       </PageContainer>
-    )
+    );
   }
 
   return (
@@ -25,7 +25,7 @@ function AppWrapper(): React.JSX.Element {
         <Route path="/" element={<MainAppContent />} />
       </Routes>
     </PageContainer>
-  )
+  );
 }
 
 function App(): React.JSX.Element {
@@ -33,7 +33,7 @@ function App(): React.JSX.Element {
     <HashRouter>
       <AppWrapper />
     </HashRouter>
-  )
+  );
 }
 
-export default App
+export default App;

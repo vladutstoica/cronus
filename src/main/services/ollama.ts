@@ -1,6 +1,6 @@
-import { Ollama } from 'ollama';
-import { getBooleanSetting, getSetting } from '../database/services/settings';
-import { AIProvider } from './aiProvider';
+import { Ollama } from "ollama";
+import { getBooleanSetting, getSetting } from "../database/services/settings";
+import { AIProvider } from "./aiProvider";
 
 let ollamaClient: Ollama | null = null;
 
@@ -8,7 +8,8 @@ let ollamaClient: Ollama | null = null;
  * Initialize Ollama client with optional custom host
  */
 export function initializeOllama(customHost?: string): OllamaProvider {
-  const host = customHost || getSetting('ollama_base_url') || 'http://localhost:11434';
+  const host =
+    customHost || getSetting("ollama_base_url") || "http://localhost:11434";
 
   ollamaClient = new Ollama({ host });
 
@@ -21,7 +22,7 @@ export function initializeOllama(customHost?: string): OllamaProvider {
 export function getOllamaClient(): Ollama {
   if (!ollamaClient) {
     const provider = initializeOllama();
-    return provider['client']; // Access private client
+    return provider["client"]; // Access private client
   }
   return ollamaClient;
 }
@@ -36,7 +37,7 @@ export class OllamaProvider implements AIProvider {
     if (client) {
       this.client = client;
     } else {
-      const host = getSetting('ollama_base_url') || 'http://localhost:11434';
+      const host = getSetting("ollama_base_url") || "http://localhost:11434";
       this.client = new Ollama({ host });
     }
   }
@@ -49,7 +50,7 @@ export class OllamaProvider implements AIProvider {
       await this.client.list();
       return true;
     } catch (error) {
-      console.warn('Ollama not available:', error);
+      console.warn("Ollama not available:", error);
       return false;
     }
   }
@@ -62,7 +63,7 @@ export class OllamaProvider implements AIProvider {
       const response = await this.client.list();
       return response.models.map((m) => m.name);
     } catch (error) {
-      console.error('Error listing Ollama models:', error);
+      console.error("Error listing Ollama models:", error);
       return [];
     }
   }
@@ -71,12 +72,12 @@ export class OllamaProvider implements AIProvider {
    * Generate a chat completion using Ollama
    */
   async generateChatCompletion(
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
     options?: {
       temperature?: number;
       maxTokens?: number;
-      format?: 'json' | undefined;
-    }
+      format?: "json" | undefined;
+    },
   ): Promise<string | null> {
     try {
       const model = getOllamaModel();
@@ -87,14 +88,14 @@ export class OllamaProvider implements AIProvider {
         stream: false,
         options: {
           temperature: options?.temperature ?? 0.7,
-          num_predict: options?.maxTokens ?? 500
+          num_predict: options?.maxTokens ?? 500,
         },
-        format: options?.format
+        format: options?.format,
       });
 
       return response.message.content;
     } catch (error) {
-      console.error('Error generating Ollama completion:', error);
+      console.error("Error generating Ollama completion:", error);
       return null;
     }
   }
@@ -126,14 +127,14 @@ export async function isOllamaAvailable(): Promise<boolean> {
  * Check if AI categorization is enabled
  */
 export function isAIEnabled(): boolean {
-  return getBooleanSetting('ai_enabled', true);
+  return getBooleanSetting("ai_enabled", true);
 }
 
 /**
  * Get the configured Ollama model
  */
 export function getOllamaModel(): string {
-  return getSetting('ollama_model') || 'llama3.2:1b';
+  return getSetting("ollama_model") || "llama3.2:1b";
 }
 
 /**
@@ -141,15 +142,15 @@ export function getOllamaModel(): string {
  * @deprecated Use OllamaProvider.generateChatCompletion() instead
  */
 export async function generateChatCompletion(
-  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
   options?: {
     temperature?: number;
     maxTokens?: number;
-    format?: 'json' | undefined;
-  }
+    format?: "json" | undefined;
+  },
 ): Promise<string | null> {
   if (!isAIEnabled()) {
-    console.log('AI is disabled in settings');
+    console.log("AI is disabled in settings");
     return null;
   }
 
@@ -157,7 +158,7 @@ export async function generateChatCompletion(
   const available = await provider.isAvailable();
 
   if (!available) {
-    console.log('Ollama is not available');
+    console.log("Ollama is not available");
     return null;
   }
 

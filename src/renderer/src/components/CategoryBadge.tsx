@@ -1,40 +1,44 @@
-import { X } from 'lucide-react'
-import React from 'react'
-import { useDarkMode } from '../hooks/useDarkMode'
-import { getDarkerColor, getLighterColor, hexToRgba } from '../lib/colors'
+import { X } from "lucide-react";
+import React from "react";
+import { useDarkMode } from "../hooks/useDarkMode";
+import { getDarkerColor, getLighterColor, hexToRgba } from "../lib/colors";
 
 interface CategoryBadgeProps {
   category: {
-    name: string
-    color: string
-    emoji?: string
-  }
-  className?: string
-  onClear?: () => void
+    name: string;
+    color: string;
+    emoji?: string;
+  };
+  className?: string;
+  onClear?: () => void;
 }
 
-export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, className, onClear }) => {
-  const { name, color, emoji } = category
-  const isDarkMode = useDarkMode()
+export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
+  category,
+  className,
+  onClear,
+}) => {
+  const { name, color, emoji } = category;
+  const isDarkMode = useDarkMode();
 
   const textColor = color
     ? isDarkMode
       ? getLighterColor(color, 0.8)
       : getDarkerColor(color, 0.6)
-    : undefined
+    : undefined;
 
   const backgroundColor = color
     ? isDarkMode
       ? hexToRgba(color, 0.3)
       : hexToRgba(color, 0.1)
-    : undefined
+    : undefined;
 
   return (
     <div
       className={`px-2 py-1 rounded-md text-sm font-medium transition-all overflow-hidden flex items-center gap-2 w-fit whitespace-nowrap ${className}`}
       style={{
         backgroundColor: backgroundColor,
-        color: textColor
+        color: textColor,
       }}
     >
       {emoji && <span className="text-base">{emoji}</span>}
@@ -49,5 +53,5 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, classNam
         </button>
       )}
     </div>
-  )
-}
+  );
+};

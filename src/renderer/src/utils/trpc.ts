@@ -3,11 +3,11 @@
 
 export const trpc = {
   useContext: () => {
-    console.warn('tRPC is no longer available - use localApi instead')
-    return {}
+    console.warn("tRPC is no longer available - use localApi instead");
+    return {};
   },
   useUtils: () => {
-    console.warn('tRPC is no longer available - use localApi instead')
-    return {}
-  }
-}
+    console.warn("tRPC is no longer available - use localApi instead");
+    return {};
+  },
+};

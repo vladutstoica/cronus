@@ -1,13 +1,13 @@
-import { CheckCircle, Shield } from 'lucide-react'
+import { CheckCircle, Shield } from "lucide-react";
 
 interface AccessibilityStepProps {
-  permissionStatus: number | null
-  hasRequestedPermission: boolean
+  permissionStatus: number | null;
+  hasRequestedPermission: boolean;
 }
 
 export function AccessibilityStep({
   permissionStatus,
-  hasRequestedPermission
+  hasRequestedPermission,
 }: AccessibilityStepProps) {
   return (
     <div className="text-center space-y-4 flex flex-col items-center">
@@ -15,12 +15,15 @@ export function AccessibilityStep({
         <Shield className="w-12 h-12 text-blue-600 dark:text-blue-400" />
       </div>
       <div className="bg-muted/30 rounded-lg p-4 border border-border/50 max-w-md w-full">
-        <h3 className="font-semibold mb-2 text-left text-md">Why We Need This Permission</h3>
+        <h3 className="font-semibold mb-2 text-left text-md">
+          Why We Need This Permission
+        </h3>
         <ul className="space-y-4 text-left text-muted-foreground">
           <li className="flex items-baseline">
             <span className="text-blue-500 mr-3">&#x2022;</span>
             <span>
-              Automatically track application and website usage to categorize your activities.
+              Automatically track application and website usage to categorize
+              your activities.
             </span>
           </li>
           <li className="flex items-baseline">
@@ -45,10 +48,12 @@ export function AccessibilityStep({
         <div className="w-full bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mt-4 border border-green-200 dark:border-green-800">
           <div className="text-sm text-green-800 dark:text-green-200 flex items-center justify-center">
             <CheckCircle className="w-4 h-4 mr-2" />
-            <div className="font-medium">Permission granted! You can now continue.</div>
+            <div className="font-medium">
+              Permission granted! You can now continue.
+            </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

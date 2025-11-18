@@ -1,6 +1,6 @@
-import { ActivityToRecategorize } from '@renderer/hooks/useActivityTracking'
-import clsx from 'clsx'
-import { AnimatePresence, motion } from 'framer-motion'
+import { ActivityToRecategorize } from "@renderer/hooks/useActivityTracking";
+import clsx from "clsx";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   CircleQuestionMark,
@@ -11,49 +11,53 @@ import {
   Pause,
   Play,
   Settings as SettingsIcon,
-  Youtube
-} from 'lucide-react'
-import React, { JSX, useEffect, useMemo, useRef, useState } from 'react'
-import { ActiveWindowDetails, ActiveWindowEvent, Category } from '@shared/types'
-import { useAuth } from '../contexts/AuthContext'
-import { useDistractionNotification } from '../hooks/useDistractionNotification'
-import { useDistractionSound } from '../hooks/useDistractionSound'
-import { useRecategorizationHandler } from '../hooks/useRecategorizationHandler'
+  Youtube,
+} from "lucide-react";
+import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActiveWindowDetails,
+  ActiveWindowEvent,
+  Category,
+} from "@shared/types";
+import { useAuth } from "../contexts/AuthContext";
+import { useDistractionNotification } from "../hooks/useDistractionNotification";
+import { useDistractionSound } from "../hooks/useDistractionSound";
+import { useRecategorizationHandler } from "../hooks/useRecategorizationHandler";
 import {
   getCardBgColor,
   getDisplayWindowInfo,
   getStatusText,
-  getStatusTextColor
-} from '../utils/distractionStatusBarUIHelpers'
-import { calculateProductivityMetrics } from '../utils/timeMetrics'
-import { localApi } from '../lib/localApi'
-import { ActivityIcon } from './ActivityList/ActivityIcon'
-import DistractionStatusLoadingSkeleton from './DistractionStatusLoadingSkeleton'
-import PauseInfoModal from './PauseInfoModal'
-import { Button } from './ui/button'
+  getStatusTextColor,
+} from "../utils/distractionStatusBarUIHelpers";
+import { calculateProductivityMetrics } from "../utils/timeMetrics";
+import { localApi } from "../lib/localApi";
+import { ActivityIcon } from "./ActivityList/ActivityIcon";
+import DistractionStatusLoadingSkeleton from "./DistractionStatusLoadingSkeleton";
+import PauseInfoModal from "./PauseInfoModal";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
-} from './ui/dropdown-menu'
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface DistractionStatusBarProps {
-  activeWindow: ActiveWindowDetails | null
-  onOpenMiniTimerClick: () => void
-  isMiniTimerVisible: boolean
-  onOpenRecategorizeDialog: (target: ActivityToRecategorize) => void
-  onSettingsClick: () => void
-  isSettingsOpen: boolean
-  isTrackingPaused: boolean
-  onToggleTracking: () => void
+  activeWindow: ActiveWindowDetails | null;
+  onOpenMiniTimerClick: () => void;
+  isMiniTimerVisible: boolean;
+  onOpenRecategorizeDialog: (target: ActivityToRecategorize) => void;
+  onSettingsClick: () => void;
+  isSettingsOpen: boolean;
+  isTrackingPaused: boolean;
+  onToggleTracking: () => void;
 }
 
 // Props comparison can be simplified or removed if activeWindow prop changes don't directly trigger new data fetching logic
 // For now, let's keep it, but its role might change.
 const arePropsEqual = (
   prevProps: DistractionStatusBarProps,
-  nextProps: DistractionStatusBarProps
+  nextProps: DistractionStatusBarProps,
 ): boolean => {
   const activeWindowEqual =
     (!prevProps.activeWindow && !nextProps.activeWindow) ||
@@ -66,7 +70,7 @@ const arePropsEqual = (
       prevProps.activeWindow.content === nextProps.activeWindow.content &&
       prevProps.activeWindow.type === nextProps.activeWindow.type &&
       prevProps.activeWindow.browser === nextProps.activeWindow.browser
-    )
+    );
 
   return (
     activeWindowEqual &&
@@ -76,8 +80,8 @@ const arePropsEqual = (
     prevProps.isSettingsOpen === nextProps.isSettingsOpen &&
     prevProps.isTrackingPaused === nextProps.isTrackingPaused &&
     prevProps.onToggleTracking === nextProps.onToggleTracking
-  )
-}
+  );
+};
 
 const DistractionStatusBar = ({
   activeWindow,
@@ -87,259 +91,305 @@ const DistractionStatusBar = ({
   onSettingsClick,
   isSettingsOpen,
   isTrackingPaused,
-  onToggleTracking
+  onToggleTracking,
 }: DistractionStatusBarProps): JSX.Element | null => {
-  const { user, isAuthenticated } = useAuth()
-  const [isNarrowView, setIsNarrowView] = useState(false)
-  const [showPauseModal, setShowPauseModal] = useState(false)
-  const lastSentData = useRef<string | null>(null)
-  const lastSuccessfulUpdate = useRef<number>(Date.now())
+  const { user, isAuthenticated } = useAuth();
+  const [isNarrowView, setIsNarrowView] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const lastSentData = useRef<string | null>(null);
+  const lastSuccessfulUpdate = useRef<number>(Date.now());
 
-  const [latestEvent, setLatestEvent] = useState<ActiveWindowEvent | null>(null)
-  const [isLoadingLatestEvent, setIsLoadingLatestEvent] = useState(true)
-  const [categoryDetails, setCategoryDetails] = useState<Category | null>(null)
-  const [isLoadingCategory, setIsLoadingCategory] = useState(false)
-  const [userCategories, setUserCategories] = useState<Category[]>([])
-  const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(true)
-  const [todayEvents, setTodayEvents] = useState<ActiveWindowEvent[]>([])
-  const [isLoadingTodayEvents, setIsLoadingTodayEvents] = useState(true)
+  const [latestEvent, setLatestEvent] = useState<ActiveWindowEvent | null>(
+    null,
+  );
+  const [isLoadingLatestEvent, setIsLoadingLatestEvent] = useState(true);
+  const [categoryDetails, setCategoryDetails] = useState<Category | null>(null);
+  const [isLoadingCategory, setIsLoadingCategory] = useState(false);
+  const [userCategories, setUserCategories] = useState<Category[]>([]);
+  const [isLoadingUserCategories, setIsLoadingUserCategories] = useState(true);
+  const [todayEvents, setTodayEvents] = useState<ActiveWindowEvent[]>([]);
+  const [isLoadingTodayEvents, setIsLoadingTodayEvents] = useState(true);
 
   // No error tracking in simplified implementation
-  const categoryError = null
+  const categoryError = null;
 
   const handlePauseClick = () => {
-    const hasPausedBefore = localStorage.getItem('cronus-has-paused-before')
+    const hasPausedBefore = localStorage.getItem("cronus-has-paused-before");
 
     if (!hasPausedBefore && !isTrackingPaused) {
       // First time pausing - show modal
-      setShowPauseModal(true)
+      setShowPauseModal(true);
     } else {
       // Not first time - directly toggle
-      onToggleTracking()
+      onToggleTracking();
     }
-  }
+  };
 
   const handlePauseConfirm = () => {
     // Mark as paused before
-    localStorage.setItem('cronus-has-paused-before', 'true')
-    setShowPauseModal(false)
-    onToggleTracking()
-  }
+    localStorage.setItem("cronus-has-paused-before", "true");
+    setShowPauseModal(false);
+    onToggleTracking();
+  };
 
   const handlePauseCancel = () => {
-    setShowPauseModal(false)
-  }
+    setShowPauseModal(false);
+  };
 
   useEffect(() => {
     const handleResize = (): void => {
-      setIsNarrowView(window.innerWidth < 800)
-    }
-    window.addEventListener('resize', handleResize)
-    handleResize() // Initial check
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+      setIsNarrowView(window.innerWidth < 800);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Initial check
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Load latest event - poll every 1 second
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated) return;
 
     const loadLatestEvent = async () => {
       try {
-        const events = await localApi.events.getAll(1, 0) // Get latest 1 event
+        const events = await localApi.events.getAll(1, 0); // Get latest 1 event
         if (events && events.length > 0) {
-          const event = events[0] as unknown as ActiveWindowEvent
+          const event = events[0] as unknown as ActiveWindowEvent;
           setLatestEvent({
             ...event,
             lastCategorizationAt: event.lastCategorizationAt
               ? new Date(event.lastCategorizationAt)
               : undefined,
-            categoryReasoning: event.categoryReasoning
-          })
+            categoryReasoning: event.categoryReasoning,
+          });
         } else {
           // Don't clear state on empty results - preserve previous value as fallback
-          console.warn('[DistractionStatusBar] Database query returned empty, keeping previous latestEvent')
+          console.warn(
+            "[DistractionStatusBar] Database query returned empty, keeping previous latestEvent",
+          );
         }
       } catch (error) {
-        console.error('[DistractionStatusBar] Error loading latest event:', error)
+        console.error(
+          "[DistractionStatusBar] Error loading latest event:",
+          error,
+        );
         // Don't update state on error - keep previous value
       } finally {
-        setIsLoadingLatestEvent(false)
+        setIsLoadingLatestEvent(false);
       }
-    }
+    };
 
-    loadLatestEvent()
-    const interval = setInterval(loadLatestEvent, 1000)
-    return () => clearInterval(interval)
-  }, [isAuthenticated])
+    loadLatestEvent();
+    const interval = setInterval(loadLatestEvent, 1000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (latestEvent) {
       // @ts-ignore - Window API is injected by Electron at runtime and not available in TypeScript types
       window.api?.logToFile(
-        '[DistractionCategorizationResult] Received latest event from server:',
-        latestEvent
-      )
+        "[DistractionCategorizationResult] Received latest event from server:",
+        latestEvent,
+      );
     }
-  }, [latestEvent])
+  }, [latestEvent]);
 
-  const categoryId = latestEvent?.categoryId
+  const categoryId = latestEvent?.categoryId;
 
   // Load category details when categoryId changes
   useEffect(() => {
     if (!isAuthenticated || !categoryId) {
-      setCategoryDetails(null)
-      return
+      setCategoryDetails(null);
+      return;
     }
 
     const loadCategory = async () => {
-      setIsLoadingCategory(true)
+      setIsLoadingCategory(true);
       try {
-        const category = await localApi.categories.getById(categoryId)
-        setCategoryDetails(category as Category)
+        const category = await localApi.categories.getById(categoryId);
+        setCategoryDetails(category as Category);
       } catch (error) {
-        console.error('Error loading category:', error)
-        setCategoryDetails(null)
+        console.error("Error loading category:", error);
+        setCategoryDetails(null);
       } finally {
-        setIsLoadingCategory(false)
+        setIsLoadingCategory(false);
       }
-    }
+    };
 
-    loadCategory()
-  }, [isAuthenticated, categoryId])
+    loadCategory();
+  }, [isAuthenticated, categoryId]);
 
   // Load user categories
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated) return;
 
     const loadCategories = async () => {
-      setIsLoadingUserCategories(true)
+      setIsLoadingUserCategories(true);
       try {
-        const categories = await localApi.categories.getAll()
-        setUserCategories(categories as Category[])
+        const categories = await localApi.categories.getAll();
+        setUserCategories(categories as Category[]);
       } catch (error) {
-        console.error('Error loading categories:', error)
+        console.error("Error loading categories:", error);
       } finally {
-        setIsLoadingUserCategories(false)
+        setIsLoadingUserCategories(false);
       }
-    }
+    };
 
-    loadCategories()
-  }, [isAuthenticated])
+    loadCategories();
+  }, [isAuthenticated]);
 
-  const [currentDayStartDateMs, setCurrentDayStartDateMs] = React.useState<number | null>(null)
-  const [currentDayEndDateMs, setCurrentDayEndDateMs] = React.useState<number | null>(null)
+  const [currentDayStartDateMs, setCurrentDayStartDateMs] = React.useState<
+    number | null
+  >(null);
+  const [currentDayEndDateMs, setCurrentDayEndDateMs] = React.useState<
+    number | null
+  >(null);
 
   React.useEffect(() => {
     const updateDates = (): void => {
-      const now = new Date()
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
-      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0)
-      setCurrentDayStartDateMs(startOfToday.getTime())
-      setCurrentDayEndDateMs(endOfToday.getTime())
-    }
+      const now = new Date();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      const endOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      );
+      setCurrentDayStartDateMs(startOfToday.getTime());
+      setCurrentDayEndDateMs(endOfToday.getTime());
+    };
 
-    updateDates()
-    const intervalId = setInterval(updateDates, 10000) // Check every 10 seconds
+    updateDates();
+    const intervalId = setInterval(updateDates, 10000); // Check every 10 seconds
 
-    return () => clearInterval(intervalId)
-  }, [])
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Load today's events - poll every 30 seconds
   useEffect(() => {
-    if (!isAuthenticated || currentDayStartDateMs === null || currentDayEndDateMs === null) return
+    if (
+      !isAuthenticated ||
+      currentDayStartDateMs === null ||
+      currentDayEndDateMs === null
+    )
+      return;
 
     const loadTodayEvents = async () => {
-      setIsLoadingTodayEvents(true)
+      setIsLoadingTodayEvents(true);
       try {
         const data = await localApi.events.getByDateRange(
           new Date(currentDayStartDateMs).toISOString(),
-          new Date(currentDayEndDateMs).toISOString()
-        )
+          new Date(currentDayEndDateMs).toISOString(),
+        );
         const eventsWithParsedDates = (data || []).map((event: any) => {
-          const e = event as unknown as ActiveWindowEvent
+          const e = event as unknown as ActiveWindowEvent;
           return {
             ...e,
             lastCategorizationAt: e.lastCategorizationAt
               ? new Date(e.lastCategorizationAt)
-              : undefined
-          }
-        })
-        setTodayEvents(eventsWithParsedDates)
+              : undefined,
+          };
+        });
+        setTodayEvents(eventsWithParsedDates);
       } catch (error) {
-        console.error('Error loading today events:', error)
+        console.error("Error loading today events:", error);
       } finally {
-        setIsLoadingTodayEvents(false)
+        setIsLoadingTodayEvents(false);
       }
-    }
+    };
 
-    loadTodayEvents()
-    const interval = setInterval(loadTodayEvents, 30000)
+    loadTodayEvents();
+    const interval = setInterval(loadTodayEvents, 30000);
 
     // Listen for manual refresh events (e.g., after bulk recategorization)
     const handleRefreshEvents = () => {
-      console.log('Received refresh-today-events event, reloading...')
-      loadTodayEvents()
-    }
-    window.addEventListener('refresh-today-events', handleRefreshEvents)
+      console.log("Received refresh-today-events event, reloading...");
+      loadTodayEvents();
+    };
+    window.addEventListener("refresh-today-events", handleRefreshEvents);
 
     return () => {
-      clearInterval(interval)
-      window.removeEventListener('refresh-today-events', handleRefreshEvents)
-    }
-  }, [isAuthenticated, currentDayStartDateMs, currentDayEndDateMs])
+      clearInterval(interval);
+      window.removeEventListener("refresh-today-events", handleRefreshEvents);
+    };
+  }, [isAuthenticated, currentDayStartDateMs, currentDayEndDateMs]);
 
-  useDistractionSound(categoryDetails as Category | null | undefined)
+  useDistractionSound(categoryDetails as Category | null | undefined);
 
   const displayWindowInfo = useMemo(
     () => getDisplayWindowInfo(latestEvent, activeWindow),
-    [latestEvent, activeWindow]
-  )
+    [latestEvent, activeWindow],
+  );
 
   useEffect(() => {
     const sendUpdate = async (): Promise<void> => {
       try {
         // Detailed error logging for silent failures
         if (!latestEvent) {
-          console.warn('[FloatingWindow] Cannot send update: latestEvent is null')
-          return
+          console.warn(
+            "[FloatingWindow] Cannot send update: latestEvent is null",
+          );
+          return;
         }
         if (!userCategories) {
-          console.warn('[FloatingWindow] Cannot send update: userCategories is null')
-          return
+          console.warn(
+            "[FloatingWindow] Cannot send update: userCategories is null",
+          );
+          return;
         }
         if (!todayEvents) {
-          console.warn('[FloatingWindow] Cannot send update: todayEvents is null')
-          return
+          console.warn(
+            "[FloatingWindow] Cannot send update: todayEvents is null",
+          );
+          return;
         }
         if (!window.electron?.ipcRenderer) {
-          console.error('[FloatingWindow] Cannot send update: IPC renderer not available')
-          return
+          console.error(
+            "[FloatingWindow] Cannot send update: IPC renderer not available",
+          );
+          return;
         }
 
-        let latestStatus: 'productive' | 'unproductive' | 'maybe' = 'maybe'
-        let categoryDetailsForFloatingWindow: Category | undefined
+        let latestStatus: "productive" | "unproductive" | "maybe" = "maybe";
+        let categoryDetailsForFloatingWindow: Category | undefined;
 
-        if (categoryDetails && typeof categoryDetails === 'object' && '_id' in categoryDetails) {
-          const fullCategoryDetails = categoryDetails as Category
-          if (fullCategoryDetails.isProductive === true) latestStatus = 'productive'
+        if (
+          categoryDetails &&
+          typeof categoryDetails === "object" &&
+          "_id" in categoryDetails
+        ) {
+          const fullCategoryDetails = categoryDetails as Category;
+          if (fullCategoryDetails.isProductive === true)
+            latestStatus = "productive";
           else if (fullCategoryDetails.isProductive === false) {
-            latestStatus = 'unproductive'
+            latestStatus = "unproductive";
           }
-          categoryDetailsForFloatingWindow = fullCategoryDetails
+          categoryDetailsForFloatingWindow = fullCategoryDetails;
         } else if (categoryDetails === null) {
-          latestStatus = 'maybe'
+          latestStatus = "maybe";
         }
 
-        const { dailyProductiveMs, dailyUnproductiveMs } = calculateProductivityMetrics(
-          todayEvents as ActiveWindowEvent[],
-          (userCategories as unknown as Category[]) || []
-        )
+        const { dailyProductiveMs, dailyUnproductiveMs } =
+          calculateProductivityMetrics(
+            todayEvents as ActiveWindowEvent[],
+            (userCategories as unknown as Category[]) || [],
+          );
 
-        const itemType = displayWindowInfo.url ? 'website' : 'app'
+        const itemType = displayWindowInfo.url ? "website" : "app";
         const activityIdentifier = displayWindowInfo.isApp
           ? displayWindowInfo.ownerName
-          : displayWindowInfo.url
-        const activityName = displayWindowInfo.ownerName
+          : displayWindowInfo.url;
+        const activityName = displayWindowInfo.ownerName;
 
         const dataToSend = {
           latestStatus,
@@ -351,58 +401,63 @@ const DistractionStatusBar = ({
           activityName,
           activityUrl: displayWindowInfo.url,
           categoryReasoning: latestEvent?.categoryReasoning,
-          isTrackingPaused
-        }
+          isTrackingPaused,
+        };
 
-        const currentDataString = JSON.stringify(dataToSend)
+        const currentDataString = JSON.stringify(dataToSend);
 
         if (currentDataString === lastSentData.current) {
-          return // Data hasn't changed, no need to send.
+          return; // Data hasn't changed, no need to send.
         }
 
         if (window.api?.getFloatingWindowVisibility) {
-          const isVisible = await window.api.getFloatingWindowVisibility()
+          const isVisible = await window.api.getFloatingWindowVisibility();
           if (isVisible) {
-            window.electron.ipcRenderer.send('update-floating-window-status', dataToSend)
-            lastSentData.current = currentDataString
-            lastSuccessfulUpdate.current = Date.now() // Track successful update
+            window.electron.ipcRenderer.send(
+              "update-floating-window-status",
+              dataToSend,
+            );
+            lastSentData.current = currentDataString;
+            lastSuccessfulUpdate.current = Date.now(); // Track successful update
           }
         }
       } catch (error) {
-        console.error('[FloatingWindow] Error in sendUpdate:', error)
+        console.error("[FloatingWindow] Error in sendUpdate:", error);
         // Don't break the update chain - continue trying on next dependency change
       }
-    }
+    };
 
-    sendUpdate()
+    sendUpdate();
   }, [
     latestEvent,
     categoryDetails,
     userCategories,
     todayEvents,
     displayWindowInfo,
-    isTrackingPaused
-  ])
+    isTrackingPaused,
+  ]);
 
   // Health check system: monitor and report when updates stop
   useEffect(() => {
     const healthCheck = setInterval(() => {
-      const timeSinceUpdate = Date.now() - lastSuccessfulUpdate.current
+      const timeSinceUpdate = Date.now() - lastSuccessfulUpdate.current;
 
       if (timeSinceUpdate > 30000) {
-        console.error('[HealthCheck] No floating window updates sent for 30+ seconds')
-        console.error('[HealthCheck] Current state:', {
+        console.error(
+          "[HealthCheck] No floating window updates sent for 30+ seconds",
+        );
+        console.error("[HealthCheck] Current state:", {
           hasLatestEvent: !!latestEvent,
           hasUserCategories: !!userCategories && userCategories.length > 0,
           hasTodayEvents: !!todayEvents && todayEvents.length > 0,
           hasIpcRenderer: !!window.electron?.ipcRenderer,
-          isTrackingPaused
-        })
+          isTrackingPaused,
+        });
       }
-    }, 10000) // Check every 10 seconds
+    }, 10000); // Check every 10 seconds
 
-    return () => clearInterval(healthCheck)
-  }, [latestEvent, userCategories, todayEvents, isTrackingPaused])
+    return () => clearInterval(healthCheck);
+  }, [latestEvent, userCategories, todayEvents, isTrackingPaused]);
 
   const statusText = useMemo(
     () =>
@@ -413,7 +468,7 @@ const DistractionStatusBar = ({
         isLoadingCategory,
         isLoadingUserCategories,
         categoryDetails,
-        categoryError
+        categoryError,
       ),
     [
       latestEvent,
@@ -422,48 +477,48 @@ const DistractionStatusBar = ({
       isLoadingCategory,
       isLoadingUserCategories,
       categoryDetails,
-      categoryError
-    ]
-  )
+      categoryError,
+    ],
+  );
 
   useDistractionNotification(
     categoryDetails as Category | null | undefined,
     activeWindow,
-    statusText
-  )
+    statusText,
+  );
 
   const cardBgColor = useMemo(
     () => getCardBgColor(categoryDetails, categoryError),
-    [categoryDetails, categoryError]
-  )
+    [categoryDetails, categoryError],
+  );
   const statusTextColor = useMemo(
     () => getStatusTextColor(categoryDetails, categoryError),
-    [categoryDetails, categoryError]
-  )
+    [categoryDetails, categoryError],
+  );
 
   const isLoadingPrimary =
     isLoadingLatestEvent ||
-    (!latestEvent && !isLoadingCategory && !isLoadingUserCategories)
+    (!latestEvent && !isLoadingCategory && !isLoadingUserCategories);
 
   const handleOpenRecategorize = useRecategorizationHandler(
     latestEvent,
     displayWindowInfo,
     categoryDetails,
-    onOpenRecategorizeDialog
-  )
+    onOpenRecategorizeDialog,
+  );
 
   if (isLoadingPrimary) {
-    return <DistractionStatusLoadingSkeleton cardBgColor={cardBgColor} />
+    return <DistractionStatusLoadingSkeleton cardBgColor={cardBgColor} />;
   }
 
   return (
     <div className="flex items-center gap-2 w-full">
       <div
         className={clsx(
-          'rounded-lg',
-          'p-2 px-4 py-[10px] flex-1 min-w-0 flex flex-row items-center justify-between sm:gap-x-3',
+          "rounded-lg",
+          "p-2 px-4 py-[10px] flex-1 min-w-0 flex flex-row items-center justify-between sm:gap-x-3",
           cardBgColor,
-          'relative'
+          "relative",
         )}
       >
         {/* Paused overlay */}
@@ -487,7 +542,9 @@ const DistractionStatusBar = ({
             >
               {/* Icon Display Logic */}
               <ActivityIcon
-                url={displayWindowInfo.isApp ? undefined : displayWindowInfo.url}
+                url={
+                  displayWindowInfo.isApp ? undefined : displayWindowInfo.url
+                }
                 appName={displayWindowInfo.ownerName}
                 size={16}
                 className="mr-2"
@@ -532,7 +589,7 @@ const DistractionStatusBar = ({
             title="Open Mini Timer"
           >
             <ExternalLink size={20} />
-            {!isNarrowView && <span className="ml-2">{'Open Mini Timer'}</span>}
+            {!isNarrowView && <span className="ml-2">{"Open Mini Timer"}</span>}
           </Button>
         )}
 
@@ -563,7 +620,7 @@ const DistractionStatusBar = ({
                   className="flex items-center gap-2 cursor-pointer transition-colors data-[highlighted]:bg-black/[0.02] dark:data-[highlighted]:bg-white/[0.02]"
                   onClick={() =>
                     window.open(
-                      'mailto:wallawitsch@gmail.com, arne.strickmann@googlemail.com?subject=Cronus%20Feedback'
+                      "mailto:wallawitsch@gmail.com, arne.strickmann@googlemail.com?subject=Cronus%20Feedback",
                     )
                   }
                 >
@@ -573,7 +630,10 @@ const DistractionStatusBar = ({
                 <DropdownMenuItem
                   className="flex items-center gap-2 cursor-pointer transition-colors data-[highlighted]:bg-black/[0.02] dark:data-[highlighted]:bg-white/[0.02]"
                   onClick={() =>
-                    window.open('https://chat.whatsapp.com/Lrge0tDN19THKld1kCjdwB', '_blank')
+                    window.open(
+                      "https://chat.whatsapp.com/Lrge0tDN19THKld1kCjdwB",
+                      "_blank",
+                    )
                   }
                 >
                   <MessageCircle size={20} />
@@ -583,8 +643,8 @@ const DistractionStatusBar = ({
                   className="flex items-center gap-2 cursor-pointer transition-colors data-[highlighted]:bg-black/[0.02] dark:data-[highlighted]:bg-white/[0.02]"
                   onClick={() =>
                     window.open(
-                      'https://www.loom.com/share/34531aee1ce94343a2c4c7cee04a0dc8?sid=a601c97f-9d16-4a7d-97e3-d8fc3db96679',
-                      '_blank'
+                      "https://www.loom.com/share/34531aee1ce94343a2c4c7cee04a0dc8?sid=a601c97f-9d16-4a7d-97e3-d8fc3db96679",
+                      "_blank",
                     )
                   }
                 >
@@ -597,12 +657,20 @@ const DistractionStatusBar = ({
         </DropdownMenu>
         <Button
           variant="ghost"
-          size={isNarrowView ? 'icon' : 'default'}
-          className={!isNarrowView ? 'w-32 hover:bg-gray-200 dark:hover:bg-gray-700/50' : ''}
+          size={isNarrowView ? "icon" : "default"}
+          className={
+            !isNarrowView
+              ? "w-32 hover:bg-gray-200 dark:hover:bg-gray-700/50"
+              : ""
+          }
           onClick={onSettingsClick}
           title="Settings"
         >
-          {isSettingsOpen ? <ArrowLeft size={20} /> : <SettingsIcon size={20} />}
+          {isSettingsOpen ? (
+            <ArrowLeft size={20} />
+          ) : (
+            <SettingsIcon size={20} />
+          )}
           {!isNarrowView &&
             (isSettingsOpen ? (
               <span className="ml-2">Dashboard</span>
@@ -617,7 +685,7 @@ const DistractionStatusBar = ({
         onConfirm={handlePauseConfirm}
       />
     </div>
-  )
-}
+  );
+};
 
-export default React.memo(DistractionStatusBar, arePropsEqual)
+export default React.memo(DistractionStatusBar, arePropsEqual);

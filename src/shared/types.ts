@@ -10,7 +10,7 @@ export interface User {
   tokenVersion?: number;
   electronAppSettings?: {
     calendarZoomLevel?: number;
-    theme?: 'light' | 'dark' | 'system';
+    theme?: "light" | "dark" | "system";
     playDistractionSound?: boolean;
     distractionSoundInterval?: number;
     showDistractionNotifications?: boolean;
@@ -22,13 +22,13 @@ export interface User {
 export interface ActiveWindowDetails {
   windowId?: number;
   ownerName: string;
-  type: 'window' | 'browser' | 'system' | 'manual' | 'calendar';
-  browser?: 'chrome' | 'safari' | 'arc' | null;
+  type: "window" | "browser" | "system" | "manual" | "calendar";
+  browser?: "chrome" | "safari" | "arc" | null;
   title?: string | null;
   url?: string | null;
   content?: string | null;
   timestamp: number;
-  contentSource?: 'ocr' | 'accessibility' | null;
+  contentSource?: "ocr" | "accessibility" | null;
   localScreenshotPath?: string | null;
   screenshotS3Url?: string | null;
   durationMs?: number;
@@ -69,7 +69,7 @@ export interface ActivityEventSuggestion {
   endTime: string;
   name: string;
   suggestedCategoryId?: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   reasoning?: string;
   // Fields added by the router populate
   categoryColor?: string;

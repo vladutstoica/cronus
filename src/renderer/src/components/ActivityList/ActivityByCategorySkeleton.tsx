@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader } from '../ui/card'
-import { Skeleton } from '../ui/skeleton'
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
 
 const ActivityByCategorySkeleton = () => {
   return (
@@ -13,7 +13,10 @@ const ActivityByCategorySkeleton = () => {
               <Skeleton className="h-5 w-1/4" />
             </div>
             {[...Array(2)].map((_, j) => (
-              <div key={`skel-act-${i}-${j}`} className="flex items-center justify-between py-0.5">
+              <div
+                key={`skel-act-${i}-${j}`}
+                className="flex items-center justify-between py-0.5"
+              >
                 <div className="flex items-center flex-1 min-w-0">
                   <Skeleton className="h-4 w-4 mr-2 rounded-full" />
                   <Skeleton className="h-4 flex-1" />
@@ -25,7 +28,7 @@ const ActivityByCategorySkeleton = () => {
         ))}
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default ActivityByCategorySkeleton
+export default ActivityByCategorySkeleton;

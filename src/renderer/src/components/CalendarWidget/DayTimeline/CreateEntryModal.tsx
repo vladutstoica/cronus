@@ -2,5 +2,5 @@
 // Keeping as stub to avoid import errors
 
 export default function CreateEntryModal() {
-  return null
+  return null;
 }

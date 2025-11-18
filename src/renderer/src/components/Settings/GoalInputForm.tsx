@@ -1,110 +1,120 @@
-import { useEffect, useRef, useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import { toast } from '../../hooks/use-toast'
-import { localApi } from '../../lib/localApi'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Textarea } from '../ui/textarea'
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { toast } from "../../hooks/use-toast";
+import { localApi } from "../../lib/localApi";
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Textarea } from "../ui/textarea";
 
 interface GoalInputFormProps {
-  onboardingMode?: boolean
-  onComplete?: (goals: string) => void
-  shouldFocus?: boolean
+  onboardingMode?: boolean;
+  onComplete?: (goals: string) => void;
+  shouldFocus?: boolean;
 }
 
 const GoalInputForm = ({
   onboardingMode = false,
   onComplete,
-  shouldFocus = false
+  shouldFocus = false,
 }: GoalInputFormProps) => {
-  const { user } = useAuth()
-  const [userProjectsAndGoals, setUserProjectsAndGoals] = useState('')
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { user } = useAuth();
+  const [userProjectsAndGoals, setUserProjectsAndGoals] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const hasContent = userProjectsAndGoals.trim().length > 0
+  const hasContent = userProjectsAndGoals.trim().length > 0;
 
   // Load user goals
   useEffect(() => {
     if (user) {
-      loadGoals()
+      loadGoals();
     }
-  }, [user])
+  }, [user]);
 
   const loadGoals = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const userData = await localApi.user.get()
+      const userData = await localApi.user.get();
       if (userData && userData.user_projects_and_goals) {
-        const goals = typeof userData.user_projects_and_goals === 'string'
-          ? userData.user_projects_and_goals
-          : JSON.stringify(userData.user_projects_and_goals)
-        setUserProjectsAndGoals(goals)
+        const goals =
+          typeof userData.user_projects_and_goals === "string"
+            ? userData.user_projects_and_goals
+            : JSON.stringify(userData.user_projects_and_goals);
+        setUserProjectsAndGoals(goals);
       }
     } catch (error) {
-      console.error('Failed to load goals:', error)
+      console.error("Failed to load goals:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Auto-edit mode for onboarding
   useEffect(() => {
     if (onboardingMode) {
-      setIsEditing(true)
+      setIsEditing(true);
     }
-  }, [onboardingMode])
+  }, [onboardingMode]);
 
   useEffect(() => {
     if (shouldFocus) {
-      setIsEditing(true)
+      setIsEditing(true);
       setTimeout(() => {
-        textareaRef.current?.focus()
-        textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 100)
+        textareaRef.current?.focus();
+        textareaRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
     }
-  }, [shouldFocus])
+  }, [shouldFocus]);
 
   const handleSave = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       await localApi.user.update({
-        user_projects_and_goals: userProjectsAndGoals
-      })
+        user_projects_and_goals: userProjectsAndGoals,
+      });
 
-      setIsEditing(false)
+      setIsEditing(false);
 
       if (!onboardingMode) {
         toast({
-          title: 'Goals Updated!',
+          title: "Goals Updated!",
           duration: 1500,
-          description: 'Your goals have been successfully updated.'
-        })
+          description: "Your goals have been successfully updated.",
+        });
       }
 
       // Call onComplete if in onboarding mode
       if (onboardingMode && onComplete) {
-        onComplete(userProjectsAndGoals)
+        onComplete(userProjectsAndGoals);
       }
     } catch (error) {
-      console.error('Failed to update goals:', error)
-      alert('Failed to save goals. Please try again.')
+      console.error("Failed to update goals:", error);
+      alert("Failed to save goals. Please try again.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleCancel = () => {
     if (onboardingMode) {
-      return
+      return;
     } else {
       // Reload goals from server
-      loadGoals()
-      setIsEditing(false)
+      loadGoals();
+      setIsEditing(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -118,30 +128,34 @@ const GoalInputForm = ({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card
       className={`bg-card border-border ${
-        onboardingMode ? '' : !isEditing ? 'cursor-pointer' : ''
+        onboardingMode ? "" : !isEditing ? "cursor-pointer" : ""
       }`}
       onClick={
         onboardingMode
           ? undefined
           : () => {
-              if (!isEditing) setIsEditing(true)
+              if (!isEditing) setIsEditing(true);
             }
       }
       tabIndex={onboardingMode ? undefined : 0}
-      role={onboardingMode ? undefined : 'button'}
-      aria-label={!onboardingMode && !isEditing ? 'Click to edit your goals' : undefined}
+      role={onboardingMode ? undefined : "button"}
+      aria-label={
+        !onboardingMode && !isEditing ? "Click to edit your goals" : undefined
+      }
     >
       <CardHeader>
-        <CardTitle className="text-xl text-card-foreground">Explain your current work & goals</CardTitle>
+        <CardTitle className="text-xl text-card-foreground">
+          Explain your current work & goals
+        </CardTitle>
         <CardDescription>
-          What is your job? What are your hobbies and projects? Details help our AI differentiate
-          between your activities and distractions.
+          What is your job? What are your hobbies and projects? Details help our
+          AI differentiate between your activities and distractions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -159,7 +173,9 @@ const GoalInputForm = ({
           ) : (
             <p className="px-3 py-2 bg-input/50 rounded-md text-foreground min-h-12 whitespace-pre-wrap">
               {userProjectsAndGoals || (
-                <span className="text-muted-foreground italic">No projects or goals set yet.</span>
+                <span className="text-muted-foreground italic">
+                  No projects or goals set yet.
+                </span>
               )}
             </p>
           )}
@@ -168,7 +184,12 @@ const GoalInputForm = ({
         {isEditing && (
           <div className="flex justify-end gap-3 mt-6">
             {!onboardingMode && (
-              <Button variant="outline" size="sm" onClick={handleCancel} disabled={isSaving}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
                 Cancel
               </Button>
             )}
@@ -177,13 +198,17 @@ const GoalInputForm = ({
               onClick={handleSave}
               disabled={isSaving || (onboardingMode && !hasContent)}
             >
-              {isSaving ? 'Saving...' : onboardingMode ? 'Save & Continue' : 'Save Goals'}
+              {isSaving
+                ? "Saving..."
+                : onboardingMode
+                  ? "Save & Continue"
+                  : "Save Goals"}
             </Button>
           </div>
         )}
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default GoalInputForm
+export default GoalInputForm;

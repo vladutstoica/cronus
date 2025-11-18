@@ -1,4 +1,4 @@
-import { getDatabase } from '../index';
+import { getDatabase } from "../index";
 
 export interface AppSetting {
   key: string;
@@ -11,7 +11,9 @@ export interface AppSetting {
  */
 export function getSetting(key: string): string | undefined {
   const db = getDatabase();
-  const setting = db.prepare('SELECT value FROM app_settings WHERE key = ?').get(key) as { value: string } | undefined;
+  const setting = db
+    .prepare("SELECT value FROM app_settings WHERE key = ?")
+    .get(key) as { value: string } | undefined;
   return setting?.value;
 }
 
@@ -21,7 +23,7 @@ export function getSetting(key: string): string | undefined {
 export function getBooleanSetting(key: string, defaultValue = false): boolean {
   const value = getSetting(key);
   if (!value) return defaultValue;
-  return value === 'true';
+  return value === "true";
 }
 
 /**
@@ -29,30 +31,41 @@ export function getBooleanSetting(key: string, defaultValue = false): boolean {
  */
 export function getAllSettings(): Record<string, string> {
   const db = getDatabase();
-  const settings = db.prepare('SELECT key, value FROM app_settings').all() as { key: string; value: string }[];
+  const settings = db.prepare("SELECT key, value FROM app_settings").all() as {
+    key: string;
+    value: string;
+  }[];
 
-  return settings.reduce((acc, setting) => {
-    acc[setting.key] = setting.value;
-    return acc;
-  }, {} as Record<string, string>);
+  return settings.reduce(
+    (acc, setting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 }
 
 /**
  * Set a setting value
  */
-export function setSetting(key: string, value: string | boolean | number): void {
+export function setSetting(
+  key: string,
+  value: string | boolean | number,
+): void {
   const db = getDatabase();
   const now = new Date().toISOString();
 
-  const stringValue = typeof value === 'string' ? value : String(value);
+  const stringValue = typeof value === "string" ? value : String(value);
 
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO app_settings (key, value, updated_at)
     VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET
       value = excluded.value,
       updated_at = excluded.updated_at
-  `).run(key, stringValue, now);
+  `,
+  ).run(key, stringValue, now);
 }
 
 /**
@@ -60,14 +73,16 @@ export function setSetting(key: string, value: string | boolean | number): void 
  */
 export function deleteSetting(key: string): boolean {
   const db = getDatabase();
-  const result = db.prepare('DELETE FROM app_settings WHERE key = ?').run(key);
+  const result = db.prepare("DELETE FROM app_settings WHERE key = ?").run(key);
   return result.changes > 0;
 }
 
 /**
  * Update multiple settings at once
  */
-export function updateSettings(settings: Record<string, string | boolean | number>): void {
+export function updateSettings(
+  settings: Record<string, string | boolean | number>,
+): void {
   const db = getDatabase();
 
   db.transaction(() => {

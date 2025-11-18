@@ -1,12 +1,15 @@
-import { motion } from 'framer-motion'
-import { ReactNode } from 'react'
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
 interface PageContainerProps {
-  children: ReactNode
-  className?: string
+  children: ReactNode;
+  className?: string;
 }
 
-export function PageContainer({ children, className = '' }: PageContainerProps): React.JSX.Element {
+export function PageContainer({
+  children,
+  className = "",
+}: PageContainerProps): React.JSX.Element {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -16,5 +19,5 @@ export function PageContainer({ children, className = '' }: PageContainerProps):
     >
       {children}
     </motion.div>
-  )
+  );
 }

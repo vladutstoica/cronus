@@ -28,7 +28,9 @@
     /* Scrollbar Colors - Light Theme */
     --scrollbar-track: hsl(0 0% 90%); /* Lighter gray for track in light mode */
     --scrollbar-thumb: hsl(0 0% 60%); /* Medium gray for thumb in light mode */
-    --scrollbar-thumb-hover: hsl(0 0% 50%); /* Darker gray for thumb hover in light mode */
+    --scrollbar-thumb-hover: hsl(
+      0 0% 50%
+    ); /* Darker gray for thumb hover in light mode */
   }
 
   .dark {
@@ -55,7 +57,9 @@
     /* Scrollbar Colors - Dark Theme */
     --scrollbar-track: hsl(0 0% 15%); /* Darker gray for track in dark mode */
     --scrollbar-thumb: hsl(0 0% 30%); /* Medium gray for thumb in dark mode */
-    --scrollbar-thumb-hover: hsl(0 0% 40%); /* Lighter gray for thumb hover in dark mode */
+    --scrollbar-thumb-hover: hsl(
+      0 0% 40%
+    ); /* Lighter gray for thumb hover in dark mode */
   }
 }
 

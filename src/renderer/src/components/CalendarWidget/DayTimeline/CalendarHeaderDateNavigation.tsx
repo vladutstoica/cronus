@@ -1,18 +1,18 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '../../ui/button'
-import { Calendar } from '../../ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover'
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../../ui/button";
+import { Calendar } from "../../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 
 interface CalendarHeaderDateNavigationProps {
-  handlePrev: () => void
-  handleNext: () => void
-  canGoNext: () => boolean
-  selectedDate: Date
-  onDateSelect: (date: Date) => void
-  width: number
-  fullDate: string
-  compactDate: string
-  viewMode: 'day' | 'week'
+  handlePrev: () => void;
+  handleNext: () => void;
+  canGoNext: () => boolean;
+  selectedDate: Date;
+  onDateSelect: (date: Date) => void;
+  width: number;
+  fullDate: string;
+  compactDate: string;
+  viewMode: "day" | "week";
 }
 
 export const CalendarHeaderDateNavigation = ({
@@ -24,20 +24,22 @@ export const CalendarHeaderDateNavigation = ({
   width,
   fullDate,
   compactDate,
-  viewMode
+  viewMode,
 }: CalendarHeaderDateNavigationProps) => {
   return (
     <div className="flex items-center gap-2">
       <Button variant="outline" size="xs" onClick={handlePrev}>
         <ChevronLeft size={20} />
       </Button>
-      {viewMode === 'day' ? (
+      {viewMode === "day" ? (
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="xs" className="cursor-pointer">
               <div className="flex items-center gap-1 min-w-0">
                 {width >= 1000 ? (
-                  <span className="text-sm text-muted-foreground font-medium">{fullDate}</span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {fullDate}
+                  </span>
                 ) : width >= 800 ? (
                   <span
                     className="text-xs text-muted-foreground font-medium px-1 py-0.5"
@@ -51,8 +53,8 @@ export const CalendarHeaderDateNavigation = ({
                     title={fullDate}
                   >
                     {selectedDate.toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric'
+                      month: "short",
+                      day: "numeric",
                     })}
                   </span>
                 )}
@@ -70,7 +72,7 @@ export const CalendarHeaderDateNavigation = ({
               mode="single"
               selected={selectedDate}
               onSelect={(date) => {
-                if (date) onDateSelect(date)
+                if (date) onDateSelect(date);
               }}
               initialFocus
             />
@@ -81,9 +83,14 @@ export const CalendarHeaderDateNavigation = ({
           {compactDate}
         </span>
       )}
-      <Button variant="outline" size="xs" onClick={handleNext} disabled={!canGoNext()}>
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={handleNext}
+        disabled={!canGoNext()}
+      >
         <ChevronRight size={20} />
       </Button>
     </div>
-  )
-}
+  );
+};

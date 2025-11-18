@@ -1,66 +1,73 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import type { Theme } from '../../contexts/ThemeContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { localApi } from '../../lib/localApi'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { useEffect, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import type { Theme } from "../../contexts/ThemeContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import { localApi } from "../../lib/localApi";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 export function ThemeSwitcher() {
-  const { theme, setTheme } = useTheme()
-  const { user } = useAuth()
-  const [previousTheme, setPreviousTheme] = useState<Theme>(theme)
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true)
-  const [isUpdating, setIsUpdating] = useState(false)
+  const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
+  const [previousTheme, setPreviousTheme] = useState<Theme>(theme);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Load theme from backend
   useEffect(() => {
     if (user) {
-      loadTheme()
+      loadTheme();
     }
-  }, [user])
+  }, [user]);
 
   const loadTheme = async () => {
-    setIsLoadingSettings(true)
+    setIsLoadingSettings(true);
     try {
-      const userData = await localApi.user.get()
-      if (userData && userData.electron_app_settings && userData.electron_app_settings.theme) {
-        const backendTheme = userData.electron_app_settings.theme as 'light' | 'dark' | 'system'
-        setTheme(backendTheme)
-        setPreviousTheme(backendTheme)
+      const userData = await localApi.user.get();
+      if (
+        userData &&
+        userData.electron_app_settings &&
+        userData.electron_app_settings.theme
+      ) {
+        const backendTheme = userData.electron_app_settings.theme as
+          | "light"
+          | "dark"
+          | "system";
+        setTheme(backendTheme);
+        setPreviousTheme(backendTheme);
       }
     } catch (error) {
-      console.error('Failed to fetch theme settings:', error)
+      console.error("Failed to fetch theme settings:", error);
     } finally {
-      setIsLoadingSettings(false)
+      setIsLoadingSettings(false);
     }
-  }
+  };
 
   // This effect synchronizes the local previousTheme state if the theme is changed by other means
   useEffect(() => {
-    setPreviousTheme(theme)
-  }, [theme])
+    setPreviousTheme(theme);
+  }, [theme]);
 
-  const handleSetTheme = async (newTheme: 'light' | 'dark' | 'system') => {
-    setPreviousTheme(theme) // Store current theme as previous before attempting change
-    setTheme(newTheme) // Optimistically update UI
+  const handleSetTheme = async (newTheme: "light" | "dark" | "system") => {
+    setPreviousTheme(theme); // Store current theme as previous before attempting change
+    setTheme(newTheme); // Optimistically update UI
 
-    setIsUpdating(true)
+    setIsUpdating(true);
     try {
       await localApi.user.update({
         electron_app_settings: {
-          theme: newTheme
-        }
-      })
-      localStorage.setItem('theme', newTheme)
+          theme: newTheme,
+        },
+      });
+      localStorage.setItem("theme", newTheme);
     } catch (error) {
-      console.error('Failed to update theme:', error)
+      console.error("Failed to update theme:", error);
       // Revert to the previous theme on error
-      setTheme(previousTheme)
+      setTheme(previousTheme);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   if (isLoadingSettings) {
     return (
@@ -78,7 +85,7 @@ export function ThemeSwitcher() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -89,22 +96,22 @@ export function ThemeSwitcher() {
       <CardContent>
         <div className="flex space-x-2">
           <Button
-            onClick={() => handleSetTheme('light')}
-            variant={theme === 'light' ? 'default' : 'outline'}
+            onClick={() => handleSetTheme("light")}
+            variant={theme === "light" ? "default" : "outline"}
             disabled={isUpdating}
           >
             Light
           </Button>
           <Button
-            onClick={() => handleSetTheme('dark')}
-            variant={theme === 'dark' ? 'default' : 'outline'}
+            onClick={() => handleSetTheme("dark")}
+            variant={theme === "dark" ? "default" : "outline"}
             disabled={isUpdating}
           >
             Dark
           </Button>
           <Button
-            onClick={() => handleSetTheme('system')}
-            variant={theme === 'system' ? 'default' : 'outline'}
+            onClick={() => handleSetTheme("system")}
+            variant={theme === "system" ? "default" : "outline"}
             disabled={isUpdating}
           >
             System
@@ -112,5 +119,5 @@ export function ThemeSwitcher() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

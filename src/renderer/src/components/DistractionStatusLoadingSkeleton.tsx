@@ -1,9 +1,13 @@
-import clsx from 'clsx'
-import { Card } from './ui/card'
+import clsx from "clsx";
+import { Card } from "./ui/card";
 
-const DistractionStatusLoadingSkeleton = ({ cardBgColor }: { cardBgColor: string }) => {
+const DistractionStatusLoadingSkeleton = ({
+  cardBgColor,
+}: {
+  cardBgColor: string;
+}) => {
   return (
-    <Card className={clsx('p-2 rounded-lg border-border', cardBgColor)}>
+    <Card className={clsx("p-2 rounded-lg border-border", cardBgColor)}>
       <div className="flex items-center justify-between gap-x-2 sm:gap-x-3">
         <div className="animate-pulse flex-grow min-w-0">
           <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
@@ -14,7 +18,7 @@ const DistractionStatusLoadingSkeleton = ({ cardBgColor }: { cardBgColor: string
         </div>
       </div>
     </Card>
-  )
-}
+  );
+};
 
-export default DistractionStatusLoadingSkeleton
+export default DistractionStatusLoadingSkeleton;

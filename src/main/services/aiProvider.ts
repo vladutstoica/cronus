@@ -1,8 +1,8 @@
-import { getSetting } from '../database/services/settings';
-import { initializeOllama, OllamaProvider } from './ollama';
-import { LMStudioProvider } from './lmstudio';
+import { getSetting } from "../database/services/settings";
+import { initializeOllama, OllamaProvider } from "./ollama";
+import { LMStudioProvider } from "./lmstudio";
 
-export type AIProviderType = 'ollama' | 'lmstudio';
+export type AIProviderType = "ollama" | "lmstudio";
 
 /**
  * Common interface for AI providers
@@ -22,12 +22,12 @@ export interface AIProvider {
    * Generate a chat completion
    */
   generateChatCompletion(
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
     options?: {
       temperature?: number;
       maxTokens?: number;
-      format?: 'json' | undefined;
-    }
+      format?: "json" | undefined;
+    },
   ): Promise<string | null>;
 
   /**
@@ -37,7 +37,9 @@ export interface AIProvider {
 }
 
 // Cache for provider availability to avoid repeated connection attempts
-let availabilityCache: { [key: string]: { available: boolean; timestamp: number } } = {};
+let availabilityCache: {
+  [key: string]: { available: boolean; timestamp: number };
+} = {};
 const CACHE_DURATION = 30000; // 30 seconds
 
 /**
@@ -45,7 +47,7 @@ const CACHE_DURATION = 30000; // 30 seconds
  */
 async function checkProviderAvailability(
   provider: AIProvider,
-  providerType: AIProviderType
+  providerType: AIProviderType,
 ): Promise<boolean> {
   const now = Date.now();
   const cached = availabilityCache[providerType];
@@ -78,12 +80,13 @@ export function clearAvailabilityCache() {
  * Get the active AI provider based on settings
  */
 export function getActiveProvider(): AIProvider {
-  const providerType = (getSetting('ai_provider') || 'ollama') as AIProviderType;
+  const providerType = (getSetting("ai_provider") ||
+    "ollama") as AIProviderType;
 
   switch (providerType) {
-    case 'lmstudio':
+    case "lmstudio":
       return new LMStudioProvider();
-    case 'ollama':
+    case "ollama":
     default:
       return new OllamaProvider();
   }
@@ -93,7 +96,7 @@ export function getActiveProvider(): AIProvider {
  * Get the active provider type from settings
  */
 export function getActiveProviderType(): AIProviderType {
-  return (getSetting('ai_provider') || 'ollama') as AIProviderType;
+  return (getSetting("ai_provider") || "ollama") as AIProviderType;
 }
 
 /**
@@ -110,9 +113,9 @@ export async function isActiveProviderAvailable(): Promise<boolean> {
  */
 export function getProviderByType(type: AIProviderType): AIProvider {
   switch (type) {
-    case 'lmstudio':
+    case "lmstudio":
       return new LMStudioProvider();
-    case 'ollama':
+    case "ollama":
       return new OllamaProvider();
   }
 }
@@ -122,12 +125,12 @@ export function getProviderByType(type: AIProviderType): AIProvider {
  */
 export async function testProviderConnection(
   type: AIProviderType,
-  baseUrl?: string
+  baseUrl?: string,
 ): Promise<{ success: boolean; message: string; models?: string[] }> {
   try {
     let provider: AIProvider;
 
-    if (type === 'ollama') {
+    if (type === "ollama") {
       provider = initializeOllama(baseUrl);
     } else {
       provider = new LMStudioProvider(baseUrl);
@@ -138,7 +141,7 @@ export async function testProviderConnection(
     if (!available) {
       return {
         success: false,
-        message: `Cannot connect to ${type === 'ollama' ? 'Ollama' : 'LM Studio'}. Make sure it's running.`
+        message: `Cannot connect to ${type === "ollama" ? "Ollama" : "LM Studio"}. Make sure it's running.`,
       };
     }
 
@@ -146,14 +149,14 @@ export async function testProviderConnection(
 
     return {
       success: true,
-      message: `Connected successfully! Found ${models.length} model${models.length !== 1 ? 's' : ''}.`,
-      models
+      message: `Connected successfully! Found ${models.length} model${models.length !== 1 ? "s" : ""}.`,
+      models,
     };
   } catch (error) {
     console.error(`Error testing ${type} connection:`, error);
     return {
       success: false,
-      message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      message: `Connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     };
   }
 }

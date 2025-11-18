@@ -1,23 +1,23 @@
-import { processColor } from '../../lib/colors'
-import { notionStyleCategoryColors } from '../Settings/CategoryForm'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+import { processColor } from "../../lib/colors";
+import { notionStyleCategoryColors } from "../Settings/CategoryForm";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface Props {
-  productiveDuration: number
-  unproductiveDuration: number
-  isDarkMode: boolean
-  formatDuration?: (ms: number) => string | null
+  productiveDuration: number;
+  unproductiveDuration: number;
+  isDarkMode: boolean;
+  formatDuration?: (ms: number) => string | null;
 }
 
 export function ProductiveVsUnproductiveDisplay({
   productiveDuration,
   unproductiveDuration,
   isDarkMode,
-  formatDuration
+  formatDuration,
 }: Props) {
   const format = formatDuration
     ? formatDuration
-    : (ms: number) => `${(ms / (1000 * 60 * 60)).toFixed(1)}h`
+    : (ms: number) => `${(ms / (1000 * 60 * 60)).toFixed(1)}h`;
 
   return (
     <div className="flex flex-col flex-start gap-0.5 mt-1 text-muted-foreground">
@@ -28,8 +28,8 @@ export function ProductiveVsUnproductiveDisplay({
             style={{
               backgroundColor: processColor(notionStyleCategoryColors[0], {
                 isDarkMode,
-                opacity: isDarkMode ? 0.7 : 0.6
-              })
+                opacity: isDarkMode ? 0.7 : 0.6,
+              }),
             }}
           />
           <span>{format(productiveDuration)}</span>
@@ -42,8 +42,8 @@ export function ProductiveVsUnproductiveDisplay({
             style={{
               backgroundColor: processColor(notionStyleCategoryColors[1], {
                 isDarkMode,
-                opacity: isDarkMode ? 0.7 : 0.6
-              })
+                opacity: isDarkMode ? 0.7 : 0.6,
+              }),
             }}
           />
           <Tooltip>
@@ -52,7 +52,9 @@ export function ProductiveVsUnproductiveDisplay({
             </TooltipTrigger>
             <TooltipContent>
               {Math.round(
-                (unproductiveDuration / (productiveDuration + unproductiveDuration)) * 100
+                (unproductiveDuration /
+                  (productiveDuration + unproductiveDuration)) *
+                  100,
               )}
               %
             </TooltipContent>
@@ -60,5 +62,5 @@ export function ProductiveVsUnproductiveDisplay({
         </div>
       )}
     </div>
-  )
+  );
 }

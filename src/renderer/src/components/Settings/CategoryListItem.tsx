@@ -4,27 +4,27 @@ import {
   Edit3,
   MoreHorizontal,
   ToggleLeft,
-  ToggleRight
-} from 'lucide-react'
-import { JSX } from 'react'
-import { Category } from '@shared/types'
-import { Button } from '../ui/button'
+  ToggleRight,
+} from "lucide-react";
+import { JSX } from "react";
+import { Category } from "@shared/types";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
-} from '../ui/dropdown-menu'
-import { CategoryItemDisplay } from './CategoryItemDisplay'
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { CategoryItemDisplay } from "./CategoryItemDisplay";
 
 interface CategoryListItemProps {
-  category: Category
-  onEdit: (category: Category) => void
-  onDelete: (id: string) => void
-  onToggleProductive: (category: Category) => void
-  onToggleArchive: (category: Category) => void
-  isDeleting: boolean
-  isUpdating: boolean
+  category: Category;
+  onEdit: (category: Category) => void;
+  onDelete: (id: string) => void;
+  onToggleProductive: (category: Category) => void;
+  onToggleArchive: (category: Category) => void;
+  isDeleting: boolean;
+  isUpdating: boolean;
 }
 
 export function CategoryListItem({
@@ -33,7 +33,7 @@ export function CategoryListItem({
   onToggleProductive,
   onToggleArchive,
   isDeleting,
-  isUpdating
+  isUpdating,
 }: CategoryListItemProps): JSX.Element {
   return (
     <CategoryItemDisplay
@@ -79,7 +79,9 @@ export function CategoryListItem({
                   <ToggleLeft size={18} className="mr-2 text-red-500" />
                 )}
                 <span>
-                  {category.isProductive ? 'Mark as non-productive' : 'Mark as productive'}
+                  {category.isProductive
+                    ? "Mark as non-productive"
+                    : "Mark as productive"}
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -92,12 +94,12 @@ export function CategoryListItem({
                 ) : (
                   <Archive size={18} className="mr-2" />
                 )}
-                <span>{category.isArchived ? 'Unarchive' : 'Archive'}</span>
+                <span>{category.isArchived ? "Unarchive" : "Archive"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </>
       }
     />
-  )
+  );
 }

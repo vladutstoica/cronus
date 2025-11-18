@@ -1,10 +1,10 @@
-import { Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { useOnboardingCompletion } from '../hooks/useOnboardingCompletion'
-import { useOnboardingPermissions } from '../hooks/useOnboardingPermissions'
-import { useOnboardingQueries } from '../hooks/useOnboardingQueries'
-import { useOnboardingSteps } from '../hooks/useOnboardingSteps'
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useOnboardingCompletion } from "../hooks/useOnboardingCompletion";
+import { useOnboardingPermissions } from "../hooks/useOnboardingPermissions";
+import { useOnboardingQueries } from "../hooks/useOnboardingQueries";
+import { useOnboardingSteps } from "../hooks/useOnboardingSteps";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,17 +13,17 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
-} from './ui/alert-dialog'
-import { Button } from './ui/button'
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { Button } from "./ui/button";
 
 interface OnboardingModalProps {
-  onComplete: () => void
+  onComplete: () => void;
 }
 
 export function OnboardingModal({ onComplete }: OnboardingModalProps) {
-  const [showSkipConfirmDialog, setShowSkipConfirmDialog] = useState(false)
-  const { user } = useAuth()
+  const [showSkipConfirmDialog, setShowSkipConfirmDialog] = useState(false);
+  const { user } = useAuth();
 
   const {
     isDev,
@@ -37,8 +37,8 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     hasExistingReferral,
     isLoading,
     handleGoalsComplete,
-    handleCategoriesComplete
-  } = useOnboardingQueries()
+    handleCategoriesComplete,
+  } = useOnboardingQueries();
 
   const {
     isRequestingPermission,
@@ -50,18 +50,18 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     handleRequestAccessibilityPermission,
     handleRequestScreenRecordingPermission,
     resetPermissionStates,
-    startPermissionPolling
-  } = useOnboardingPermissions()
+    startPermissionPolling,
+  } = useOnboardingPermissions();
 
   const handleGoalsCompleteAndNext = (goals: string) => {
-    handleGoalsComplete(goals)
-    handleStepNext()
-  }
+    handleGoalsComplete(goals);
+    handleStepNext();
+  };
 
   const handleCategoriesCompleteAndNext = async (categories: any[]) => {
-    await handleCategoriesComplete(categories)
-    handleStepNext()
-  }
+    await handleCategoriesComplete(categories);
+    handleStepNext();
+  };
 
   const {
     currentStep,
@@ -75,7 +75,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     isWelcomeStep,
     handleNext: handleStepNext,
     handleBack,
-    handleSkipToEnd
+    handleSkipToEnd,
   } = useOnboardingSteps({
     user,
     hasExistingGoals: hasExistingGoals || false,
@@ -91,58 +91,62 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     onGoalsComplete: handleGoalsCompleteAndNext,
     onCategoriesComplete: handleCategoriesCompleteAndNext,
     onNext: () => {}, // Will be updated after completion hook
-    onAiCategoriesLoadingChange: setIsAiCategoriesLoading
-  })
+    onAiCategoriesLoadingChange: setIsAiCategoriesLoading,
+  });
 
   const { isCompleting, handleComplete } = useOnboardingCompletion({
-    steps
-  })
+    steps,
+  });
 
   // Check permission status when on accessibility step
   useEffect(() => {
-    const activeStepDefinition = steps[currentStep]
-    if (!activeStepDefinition) return
-    return startPermissionPolling(activeStepDefinition.id)
-  }, [currentStep, steps, startPermissionPolling])
+    const activeStepDefinition = steps[currentStep];
+    if (!activeStepDefinition) return;
+    return startPermissionPolling(activeStepDefinition.id);
+  }, [currentStep, steps, startPermissionPolling]);
 
   useEffect(() => {
     if (currentStepData?.id) {
       // Analytics removed
     }
-  }, [currentStepData?.id])
+  }, [currentStepData?.id]);
 
   const handleBackWithReset = () => {
-    const currentStepId = steps[currentStep]?.id
-    resetPermissionStates(currentStepId)
-    handleBack()
-  }
+    const currentStepId = steps[currentStep]?.id;
+    resetPermissionStates(currentStepId);
+    handleBack();
+  };
 
   const handleNext = () => {
     if (isLastStep) {
       // Analytics removed
-      handleComplete(referralSource, onComplete)
+      handleComplete(referralSource, onComplete);
     } else {
-      handleStepNext()
+      handleStepNext();
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
-    )
+    );
   }
 
   return (
     <>
-      <AlertDialog open={showSkipConfirmDialog} onOpenChange={setShowSkipConfirmDialog}>
+      <AlertDialog
+        open={showSkipConfirmDialog}
+        onOpenChange={setShowSkipConfirmDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to skip?</AlertDialogTitle>
             <AlertDialogDescription>
-              This significantly improves the accuracy of AI categorization. Without it, we
-              can&apos;t distinguish activities within the same desktop app (e.g., work vs. social).
+              This significantly improves the accuracy of AI categorization.
+              Without it, we can&apos;t distinguish activities within the same
+              desktop app (e.g., work vs. social).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -156,20 +160,28 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
       <div
         className="fixed inset-0 bg-background z-50"
-        onClick={isGoalStep ? undefined : () => handleComplete(referralSource, onComplete)}
+        onClick={
+          isGoalStep
+            ? undefined
+            : () => handleComplete(referralSource, onComplete)
+        }
       />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="w-full max-w-2xl max-h-[90vh] overflow-auto flex flex-col">
           <div className="text-center pb-4">
-            <h2 className="text-2xl font-bold text-card-foreground">{currentStepData?.title}</h2>
+            <h2 className="text-2xl font-bold text-card-foreground">
+              {currentStepData?.title}
+            </h2>
           </div>
 
           <div className="space-y-6">
             <div className="w-full bg-muted/60 rounded-full h-2 ">
               <div
                 className="bg-gradient-to-r from-[#213BF7] to-[#8593FB] h-2 rounded-full transition-all duration-700 ease-out"
-                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                style={{
+                  width: `${((currentStep + 1) / steps.length) * 100}%`,
+                }}
               />
             </div>
             {isDev && (
@@ -205,7 +217,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   <Button
                     onClick={() => {
                       // Analytics removed
-                      handleRequestAccessibilityPermission()
+                      handleRequestAccessibilityPermission();
                     }}
                     disabled={isRequestingPermission}
                     variant="default"
@@ -218,7 +230,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                         Requesting...
                       </div>
                     ) : (
-                      'Grant Permission'
+                      "Grant Permission"
                     )}
                   </Button>
                 ) : isScreenRecordingStep && !hasRequestedScreenRecording ? (
@@ -226,7 +238,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     <Button
                       onClick={() => {
                         // Analytics removed
-                        setShowSkipConfirmDialog(true)
+                        setShowSkipConfirmDialog(true);
                       }}
                       variant="outline"
                       size="default"
@@ -237,7 +249,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     <Button
                       onClick={() => {
                         // Analytics removed
-                        handleRequestScreenRecordingPermission()
+                        handleRequestScreenRecordingPermission();
                       }}
                       disabled={isRequestingScreenRecording}
                       variant="default"
@@ -250,7 +262,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                           Requesting...
                         </div>
                       ) : (
-                        'Grant Permission'
+                        "Grant Permission"
                       )}
                     </Button>
                   </>
@@ -268,11 +280,11 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                         Setting up...
                       </div>
                     ) : isLastStep ? (
-                      'Get Started!'
+                      "Get Started!"
                     ) : isWelcomeStep ? (
-                      'Accept'
+                      "Accept"
                     ) : (
-                      'Next'
+                      "Next"
                     )}
                   </Button>
                 )}
@@ -282,5 +294,5 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         </div>
       </div>
     </>
-  )
+  );
 }

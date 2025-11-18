@@ -1,23 +1,23 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   getTimelineSegmentsForDay,
-  type CanonicalBlock
-} from '../../../lib/dayTimelineHelpers'
-import { EventSegments } from './EventSegments'
-import { TimelineGrid } from './TimelineGrid'
-import { TimelineOverlays } from './TimelineOverlays'
+  type CanonicalBlock,
+} from "../../../lib/dayTimelineHelpers";
+import { EventSegments } from "./EventSegments";
+import { TimelineGrid } from "./TimelineGrid";
+import { TimelineOverlays } from "./TimelineOverlays";
 
 interface DayTimelineProps {
-  trackedTimeBlocks: CanonicalBlock[]
-  googleCalendarTimeBlocks: CanonicalBlock[]
-  currentTime: Date
-  dayForEntries: Date
-  isToday: boolean
-  isDarkMode: boolean
-  selectedHour: number | null
-  onHourSelect: (hour: number | null) => void
-  hourHeight: number
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>
+  trackedTimeBlocks: CanonicalBlock[];
+  googleCalendarTimeBlocks: CanonicalBlock[];
+  currentTime: Date;
+  dayForEntries: Date;
+  isToday: boolean;
+  isDarkMode: boolean;
+  selectedHour: number | null;
+  onHourSelect: (hour: number | null) => void;
+  hourHeight: number;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const DayTimeline = ({
@@ -30,75 +30,83 @@ export const DayTimeline = ({
   selectedHour,
   onHourSelect,
   hourHeight,
-  scrollContainerRef
+  scrollContainerRef,
 }: DayTimelineProps) => {
-  const currentHourRef = useRef<HTMLDivElement>(null)
-  const prevHourHeightRef = useRef(hourHeight)
-  const timelineContainerRef = useRef<HTMLDivElement>(null)
+  const currentHourRef = useRef<HTMLDivElement>(null);
+  const prevHourHeightRef = useRef(hourHeight);
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   const daySegments = useMemo(() => {
-    return getTimelineSegmentsForDay(trackedTimeBlocks, 24 * hourHeight * 16, isToday)
-  }, [trackedTimeBlocks, hourHeight, isToday])
+    return getTimelineSegmentsForDay(
+      trackedTimeBlocks,
+      24 * hourHeight * 16,
+      isToday,
+    );
+  }, [trackedTimeBlocks, hourHeight, isToday]);
 
   const calendarSegments = useMemo(() => {
-    return getTimelineSegmentsForDay(googleCalendarTimeBlocks, 24 * hourHeight * 16, isToday)
-  }, [googleCalendarTimeBlocks, hourHeight, isToday])
+    return getTimelineSegmentsForDay(
+      googleCalendarTimeBlocks,
+      24 * hourHeight * 16,
+      isToday,
+    );
+  }, [googleCalendarTimeBlocks, hourHeight, isToday]);
 
   // Auto-scroll to current hour on initial load (only for today)
   useLayoutEffect(() => {
     if (isToday && currentHourRef.current && scrollContainerRef.current) {
-      const parentTop = scrollContainerRef.current.getBoundingClientRect().top
-      const currentTop = currentHourRef.current.getBoundingClientRect().top
-      const relativeTop = currentTop - parentTop
-      const offset = scrollContainerRef.current.clientHeight / 3
+      const parentTop = scrollContainerRef.current.getBoundingClientRect().top;
+      const currentTop = currentHourRef.current.getBoundingClientRect().top;
+      const relativeTop = currentTop - parentTop;
+      const offset = scrollContainerRef.current.clientHeight / 3;
 
-      scrollContainerRef.current.scrollTop = relativeTop - offset
+      scrollContainerRef.current.scrollTop = relativeTop - offset;
     }
-  }, [isToday])
+  }, [isToday]);
 
   // Handle zoom changes - maintain relative scroll position
   useEffect(() => {
-    const prevHeight = prevHourHeightRef.current
-    const newHeight = hourHeight
+    const prevHeight = prevHourHeightRef.current;
+    const newHeight = hourHeight;
 
     if (prevHeight !== newHeight && scrollContainerRef.current) {
-      const scrollRatio = newHeight / prevHeight
-      scrollContainerRef.current.scrollTop *= scrollRatio
+      const scrollRatio = newHeight / prevHeight;
+      scrollContainerRef.current.scrollTop *= scrollRatio;
     }
 
-    prevHourHeightRef.current = hourHeight
-  }, [hourHeight, scrollContainerRef])
+    prevHourHeightRef.current = hourHeight;
+  }, [hourHeight, scrollContainerRef]);
 
   // Calculate current time position
   const currentTimeTop = useMemo(() => {
-    if (!isToday) return null
-    const hours = currentTime.getHours()
-    const minutes = currentTime.getMinutes()
-    return (hours + minutes / 60) * hourHeight
-  }, [currentTime, isToday, hourHeight])
+    if (!isToday) return null;
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    return (hours + minutes / 60) * hourHeight;
+  }, [currentTime, isToday, hourHeight]);
 
   const handleHourClick = (hour: number | null) => {
     if (hour === null) {
-      onHourSelect(null)
+      onHourSelect(null);
     } else if (selectedHour === hour) {
-      onHourSelect(null)
+      onHourSelect(null);
     } else {
-      onHourSelect(hour)
+      onHourSelect(hour);
     }
-  }
+  };
 
   // Calculate current hour
-  const currentHour = currentTime.getHours()
+  const currentHour = currentTime.getHours();
 
   // Calculate hourly activity (which hours have events)
-  const hourlyActivity = new Array(24).fill(false)
-  daySegments.forEach(segment => {
-    const startHour = segment.startTime.getHours()
-    const endHour = segment.endTime.getHours()
+  const hourlyActivity = new Array(24).fill(false);
+  daySegments.forEach((segment) => {
+    const startHour = segment.startTime.getHours();
+    const endHour = segment.endTime.getHours();
     for (let h = startHour; h <= endHour; h++) {
-      hourlyActivity[h] = true
+      hourlyActivity[h] = true;
     }
-  })
+  });
 
   return (
     <div
@@ -146,7 +154,7 @@ export const DayTimeline = ({
         hourHeight={hourHeight}
       />
     </div>
-  )
-}
+  );
+};
 
-export default DayTimeline
+export default DayTimeline;

@@ -1,14 +1,23 @@
-import { app } from 'electron';
-import path from 'path';
-import fs from 'fs/promises';
-import { getOrCreateLocalUser } from '../database/services/users';
-import { getCategoriesByUserId } from '../database/services/categories';
-import { createActiveWindowEvent, updateActiveWindowEvent, recategorizeEventsByIdentifier } from '../database/services/activeWindowEvents';
-import { getAICategoryChoice, getAISummaryForBlock, CategoryChoice, clearCategorizationCacheForIdentifier } from './categorization';
-import { getRuleBasedCategoryChoice } from './ruleBasedCategorization';
-import { getBooleanSetting } from '../database/services/settings';
-import { isAIEnabled } from './ollama';
-import { aiRequestQueue } from './aiRequestQueue';
+import { app } from "electron";
+import path from "path";
+import fs from "fs/promises";
+import { getOrCreateLocalUser } from "../database/services/users";
+import { getCategoriesByUserId } from "../database/services/categories";
+import {
+  createActiveWindowEvent,
+  updateActiveWindowEvent,
+  recategorizeEventsByIdentifier,
+} from "../database/services/activeWindowEvents";
+import {
+  getAICategoryChoice,
+  getAISummaryForBlock,
+  CategoryChoice,
+  clearCategorizationCacheForIdentifier,
+} from "./categorization";
+import { getRuleBasedCategoryChoice } from "./ruleBasedCategorization";
+import { getBooleanSetting } from "../database/services/settings";
+import { isAIEnabled } from "./ollama";
+import { aiRequestQueue } from "./aiRequestQueue";
 
 export interface WindowEventDetails {
   windowId: string;
@@ -29,16 +38,23 @@ const activeEvents = new Map<string, { eventId: string; startTime: Date }>();
 /**
  * Process a new window event
  */
-export async function processWindowEvent(eventDetails: WindowEventDetails): Promise<any | null> {
+export async function processWindowEvent(
+  eventDetails: WindowEventDetails,
+): Promise<any | null> {
   try {
     const user = getOrCreateLocalUser();
-    const screenshotsEnabled = getBooleanSetting('screenshots_enabled', false);
-    const categorizationEnabled = getBooleanSetting('categorization_enabled', true);
+    const screenshotsEnabled = getBooleanSetting("screenshots_enabled", false);
+    const categorizationEnabled = getBooleanSetting(
+      "categorization_enabled",
+      true,
+    );
 
     // Handle screenshot storage
     let screenshotPath: string | undefined;
     if (screenshotsEnabled && eventDetails.localScreenshotPath) {
-      screenshotPath = await saveScreenshotLocally(eventDetails.localScreenshotPath);
+      screenshotPath = await saveScreenshotLocally(
+        eventDetails.localScreenshotPath,
+      );
     }
 
     // Create initial event without categorization
@@ -53,13 +69,13 @@ export async function processWindowEvent(eventDetails: WindowEventDetails): Prom
       content: eventDetails.content,
       timestamp: eventDetails.timestamp.toISOString(),
       screenshot_path: screenshotPath,
-      duration_ms: eventDetails.durationMs || 0
+      duration_ms: eventDetails.durationMs || 0,
     });
 
     // Track this event for duration updates
     activeEvents.set(eventDetails.windowId, {
       eventId: createdEvent.id,
-      startTime: eventDetails.timestamp
+      startTime: eventDetails.timestamp,
     });
 
     // Categorize asynchronously using request queue (prevents overwhelming AI provider)
@@ -68,7 +84,7 @@ export async function processWindowEvent(eventDetails: WindowEventDetails): Prom
         try {
           await categorizeEventAsync(createdEvent.id, eventDetails, user.id);
         } catch (err) {
-          console.error('Error categorizing event:', err);
+          console.error("Error categorizing event:", err);
         }
       });
     }
@@ -96,10 +112,10 @@ export async function processWindowEvent(eventDetails: WindowEventDetails): Prom
       oldCategoryReasoning: createdEvent.old_category_reasoning,
       oldLlmSummary: createdEvent.old_llm_summary,
       createdAt: createdEvent.created_at,
-      updatedAt: createdEvent.updated_at
+      updatedAt: createdEvent.updated_at,
     };
   } catch (error) {
-    console.error('Error processing window event:', error);
+    console.error("Error processing window event:", error);
     return null;
   }
 }
@@ -107,16 +123,19 @@ export async function processWindowEvent(eventDetails: WindowEventDetails): Prom
 /**
  * Update duration for an active window event
  */
-export async function updateEventDuration(windowId: string, durationMs: number): Promise<void> {
+export async function updateEventDuration(
+  windowId: string,
+  durationMs: number,
+): Promise<void> {
   const activeEvent = activeEvents.get(windowId);
   if (!activeEvent) return;
 
   try {
     updateActiveWindowEvent(activeEvent.eventId, {
-      duration_ms: durationMs
+      duration_ms: durationMs,
     });
   } catch (error) {
-    console.error('Error updating event duration:', error);
+    console.error("Error updating event duration:", error);
   }
 }
 
@@ -133,14 +152,14 @@ export async function endWindowEvent(windowId: string): Promise<void> {
 async function categorizeEventAsync(
   eventId: string,
   eventDetails: WindowEventDetails,
-  userId: string
+  userId: string,
 ): Promise<void> {
   try {
     const user = getOrCreateLocalUser();
     const categories = getCategoriesByUserId(userId);
 
     if (categories.length === 0) {
-      console.warn('No categories available for categorization');
+      console.warn("No categories available for categorization");
       return;
     }
 
@@ -150,7 +169,7 @@ async function categorizeEventAsync(
       url: eventDetails.url,
       content: eventDetails.content,
       type: eventDetails.type,
-      browser: eventDetails.browser
+      browser: eventDetails.browser,
     };
 
     let categoryChoice: CategoryChoice | null = null;
@@ -158,46 +177,48 @@ async function categorizeEventAsync(
     // Try AI categorization first if enabled and available
     if (isAIEnabled()) {
       // Parse goals properly for AI categorization
-      let userGoals = '';
+      let userGoals = "";
       try {
-        if (typeof user.user_projects_and_goals === 'string') {
+        if (typeof user.user_projects_and_goals === "string") {
           const parsed = JSON.parse(user.user_projects_and_goals);
           // Convert array to readable string
-          userGoals = Array.isArray(parsed) ? parsed.join('\n') : parsed;
+          userGoals = Array.isArray(parsed) ? parsed.join("\n") : parsed;
         } else if (Array.isArray(user.user_projects_and_goals)) {
-          userGoals = user.user_projects_and_goals.join('\n');
+          userGoals = user.user_projects_and_goals.join("\n");
         } else {
-          userGoals = user.user_projects_and_goals || '';
+          userGoals = user.user_projects_and_goals || "";
         }
       } catch {
         // If parsing fails, use as plain text
-        userGoals = user.user_projects_and_goals || '';
+        userGoals = user.user_projects_and_goals || "";
       }
 
       // getAICategoryChoice now handles provider availability checking internally
       categoryChoice = await getAICategoryChoice(
         userGoals,
-        categories.map(c => ({ name: c.name, description: c.description })),
-        activityDetails
+        categories.map((c) => ({ name: c.name, description: c.description })),
+        activityDetails,
       );
     }
 
     // Fall back to rule-based categorization if AI failed or is disabled
     if (!categoryChoice) {
       categoryChoice = getRuleBasedCategoryChoice(
-        categories.map(c => ({ name: c.name, description: c.description })),
-        activityDetails
+        categories.map((c) => ({ name: c.name, description: c.description })),
+        activityDetails,
       );
     }
 
     if (!categoryChoice) {
-      console.warn('Failed to categorize event');
+      console.warn("Failed to categorize event");
       return;
     }
 
     // Find the category ID by name
     const matchedCategory = categories.find(
-      c => c.name.toLowerCase() === categoryChoice!.chosenCategoryName.toLowerCase()
+      (c) =>
+        c.name.toLowerCase() ===
+        categoryChoice!.chosenCategoryName.toLowerCase(),
     );
 
     if (!matchedCategory) {
@@ -210,28 +231,30 @@ async function categorizeEventAsync(
       category_id: matchedCategory.id,
       category_reasoning: categoryChoice.reasoning,
       llm_summary: categoryChoice.summary,
-      last_categorization_at: new Date().toISOString()
+      last_categorization_at: new Date().toISOString(),
     });
 
     console.log(`Categorized event ${eventId} as ${matchedCategory.name}`);
   } catch (error) {
-    console.error('Error in categorizeEventAsync:', error);
+    console.error("Error in categorizeEventAsync:", error);
   }
 }
 
 /**
  * Save screenshot to local storage
  */
-async function saveScreenshotLocally(sourcePath: string): Promise<string | undefined> {
+async function saveScreenshotLocally(
+  sourcePath: string,
+): Promise<string | undefined> {
   try {
-    const userDataPath = app.getPath('userData');
-    const screenshotsDir = path.join(userDataPath, 'screenshots');
+    const userDataPath = app.getPath("userData");
+    const screenshotsDir = path.join(userDataPath, "screenshots");
 
     // Ensure screenshots directory exists
     await fs.mkdir(screenshotsDir, { recursive: true });
 
     // Generate unique filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `screenshot-${timestamp}.png`;
     const destPath = path.join(screenshotsDir, filename);
 
@@ -245,7 +268,7 @@ async function saveScreenshotLocally(sourcePath: string): Promise<string | undef
 
     return destPath;
   } catch (error) {
-    console.error('Error saving screenshot locally:', error);
+    console.error("Error saving screenshot locally:", error);
     return undefined;
   }
 }
@@ -255,18 +278,18 @@ async function saveScreenshotLocally(sourcePath: string): Promise<string | undef
  */
 export async function recategorizeEvent(
   eventId: string,
-  newCategoryId: string
+  newCategoryId: string,
 ): Promise<boolean> {
   try {
     const result = updateActiveWindowEvent(eventId, {
       old_category_id: undefined, // Will be set from current category_id in a transaction
       category_id: newCategoryId,
-      last_categorization_at: new Date().toISOString()
+      last_categorization_at: new Date().toISOString(),
     });
 
     return result !== undefined;
   } catch (error) {
-    console.error('Error recategorizing event:', error);
+    console.error("Error recategorizing event:", error);
     return false;
   }
 }
@@ -276,10 +299,10 @@ export async function recategorizeEvent(
  */
 export async function recategorizeEventsByIdentifierService(
   identifier: string,
-  itemType: 'app' | 'website',
+  itemType: "app" | "website",
   startDateMs: number,
   endDateMs: number,
-  newCategoryId: string
+  newCategoryId: string,
 ): Promise<number> {
   try {
     const user = getOrCreateLocalUser();
@@ -292,18 +315,23 @@ export async function recategorizeEventsByIdentifierService(
       itemType,
       startDate,
       endDate,
-      newCategoryId
+      newCategoryId,
     );
 
-    console.log(`Recategorized ${updatedCount} events with identifier "${identifier}" to category ${newCategoryId}`);
+    console.log(
+      `Recategorized ${updatedCount} events with identifier "${identifier}" to category ${newCategoryId}`,
+    );
 
     // Clear categorization cache for this identifier so future events use the new category
-    const cacheCleared = clearCategorizationCacheForIdentifier(identifier, itemType);
+    const cacheCleared = clearCategorizationCacheForIdentifier(
+      identifier,
+      itemType,
+    );
     console.log(`Cleared ${cacheCleared} cache entries for "${identifier}"`);
 
     return updatedCount;
   } catch (error) {
-    console.error('Error recategorizing events by identifier:', error);
+    console.error("Error recategorizing events by identifier:", error);
     throw error;
   }
 }

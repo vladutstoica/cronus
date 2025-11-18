@@ -1,149 +1,159 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
-import { Card } from '../components/ui/card'
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { Card } from "../components/ui/card";
 // import { ActiveWindowEvent } from '@shared/types' // No longer directly needed for props
-import { formatDuration } from '../lib/timeFormatting'
-import { getFaviconURL, getGoogleFaviconURL } from '../utils/favicon'
-import AppIcon from './AppIcon'
-import type { ProcessedEventBlock } from './DashboardView' // Import ProcessedEventBlock
-import { Skeleton } from './ui/skeleton'
+import { formatDuration } from "../lib/timeFormatting";
+import { getFaviconURL, getGoogleFaviconURL } from "../utils/favicon";
+import AppIcon from "./AppIcon";
+import type { ProcessedEventBlock } from "./DashboardView"; // Import ProcessedEventBlock
+import { Skeleton } from "./ui/skeleton";
 
 interface WebsiteUsage {
-  domain: string
-  title: string
-  url: string
-  durationMs: number
+  domain: string;
+  title: string;
+  url: string;
+  durationMs: number;
 }
 
 interface AppUsage {
-  name: string
-  durationMs: number
-  percentage?: number
-  iconPath?: string | null
-  websites?: WebsiteUsage[]
-  isExpanded?: boolean
+  name: string;
+  durationMs: number;
+  percentage?: number;
+  iconPath?: string | null;
+  websites?: WebsiteUsage[];
+  isExpanded?: boolean;
 }
 
 interface TopActivityWidgetProps {
   // activityEvents: ActiveWindowEvent[] | null // Old prop
-  processedEvents: ProcessedEventBlock[] | null // New prop
-  isLoadingEvents: boolean
+  processedEvents: ProcessedEventBlock[] | null; // New prop
+  isLoadingEvents: boolean;
 }
 
-const extractWebsiteInfo = (url: string, title: string): { domain: string; title: string } => {
+const extractWebsiteInfo = (
+  url: string,
+  title: string,
+): { domain: string; title: string } => {
   try {
-    const urlObj = new URL(url)
-    const domain = urlObj.hostname.replace('www.', '')
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace("www.", "");
 
     // Clean up title
     let cleanTitle = title
-      .replace(/ - Google Chrome$/i, '')
-      .replace(/ - Chrome$/i, '')
-      .replace(/^\([0-9]+\) /, '') // Remove notification counts like "(2) Gmail"
-      .trim()
+      .replace(/ - Google Chrome$/i, "")
+      .replace(/ - Chrome$/i, "")
+      .replace(/^\([0-9]+\) /, "") // Remove notification counts like "(2) Gmail"
+      .trim();
 
     // Fallback to domain if title is empty
     if (!cleanTitle || cleanTitle.length < 3) {
-      cleanTitle = domain
+      cleanTitle = domain;
     }
 
-    return { domain, title: cleanTitle }
+    return { domain, title: cleanTitle };
   } catch {
-    return { domain: 'unknown', title: title || 'Unknown Website' }
+    return { domain: "unknown", title: title || "Unknown Website" };
   }
-}
+};
 
 const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
   // activityEvents, // old
   processedEvents,
-  isLoadingEvents
+  isLoadingEvents,
 }) => {
-  const [topApps, setTopApps] = useState<AppUsage[]>([])
-  const [totalTrackedTimeMs, setTotalTrackedTimeMs] = useState(0)
-  const [faviconErrors, setFaviconErrors] = useState<Set<string>>(new Set())
+  const [topApps, setTopApps] = useState<AppUsage[]>([]);
+  const [totalTrackedTimeMs, setTotalTrackedTimeMs] = useState(0);
+  const [faviconErrors, setFaviconErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!processedEvents || processedEvents.length === 0) {
       // new
-      setTopApps([])
-      setTotalTrackedTimeMs(0)
-      return
+      setTopApps([]);
+      setTotalTrackedTimeMs(0);
+      return;
     }
 
-    const appDurations: Record<string, number> = {}
+    const appDurations: Record<string, number> = {};
     const chromeDomainDurations: Record<
       string,
       { durationMs: number; title: string; url: string }
-    > = {}
-    let currentTotalTrackedMs = 0
+    > = {};
+    let currentTotalTrackedMs = 0;
 
     for (const block of processedEvents) {
       // new
-      const currentEvent = block.originalEvent // Use originalEvent for properties
-      const durationMs = block.durationMs // Use pre-calculated duration
+      const currentEvent = block.originalEvent; // Use originalEvent for properties
+      const durationMs = block.durationMs; // Use pre-calculated duration
 
-      currentTotalTrackedMs += durationMs
+      currentTotalTrackedMs += durationMs;
 
-      if (currentEvent.ownerName === 'Google Chrome' && currentEvent.url) {
-        const { domain, title } = extractWebsiteInfo(currentEvent.url, currentEvent.title || '')
+      if (currentEvent.ownerName === "Google Chrome" && currentEvent.url) {
+        const { domain, title } = extractWebsiteInfo(
+          currentEvent.url,
+          currentEvent.title || "",
+        );
 
         if (!chromeDomainDurations[domain]) {
           chromeDomainDurations[domain] = {
             durationMs: 0,
             title,
-            url: currentEvent.url
-          }
+            url: currentEvent.url,
+          };
         }
-        chromeDomainDurations[domain].durationMs += durationMs
+        chromeDomainDurations[domain].durationMs += durationMs;
       }
 
       appDurations[currentEvent.ownerName] =
-        (appDurations[currentEvent.ownerName] || 0) + durationMs
+        (appDurations[currentEvent.ownerName] || 0) + durationMs;
     }
 
-    setTotalTrackedTimeMs(currentTotalTrackedMs)
+    setTotalTrackedTimeMs(currentTotalTrackedMs);
 
     const chromeWebsites: WebsiteUsage[] = Object.entries(chromeDomainDurations)
       .map(([domain, data]) => ({
         domain,
         title: data.title,
         url: data.url,
-        durationMs: data.durationMs
+        durationMs: data.durationMs,
       }))
       .sort((a, b) => b.durationMs - a.durationMs)
-      .slice(0, 10)
+      .slice(0, 10);
 
     // Process all apps
     const aggregatedApps = Object.entries(appDurations)
       .map(([name, durationMs]) => ({
         name,
         durationMs,
-        websites: name === 'Google Chrome' ? chromeWebsites : undefined,
-        isExpanded: false
+        websites: name === "Google Chrome" ? chromeWebsites : undefined,
+        isExpanded: false,
       }))
-      .sort((a, b) => b.durationMs - a.durationMs)
+      .sort((a, b) => b.durationMs - a.durationMs);
 
-    const top3 = aggregatedApps.slice(0, 5)
-    const maxDurationOfTop3 = top3.length > 0 ? top3[0].durationMs : 0
+    const top3 = aggregatedApps.slice(0, 5);
+    const maxDurationOfTop3 = top3.length > 0 ? top3[0].durationMs : 0;
 
     setTopApps(
       top3.map((app) => ({
         ...app,
         percentage:
-          maxDurationOfTop3 > 0 ? Math.round((app.durationMs / maxDurationOfTop3) * 100) : 0
-      }))
-    )
-  }, [processedEvents]) // new
+          maxDurationOfTop3 > 0
+            ? Math.round((app.durationMs / maxDurationOfTop3) * 100)
+            : 0,
+      })),
+    );
+  }, [processedEvents]); // new
 
   const toggleChromeExpansion = (appName: string): void => {
     setTopApps((prev) =>
-      prev.map((app) => (app.name === appName ? { ...app, isExpanded: !app.isExpanded } : app))
-    )
-  }
+      prev.map((app) =>
+        app.name === appName ? { ...app, isExpanded: !app.isExpanded } : app,
+      ),
+    );
+  };
 
   const handleFaviconError = (domain: string): void => {
-    setFaviconErrors((prev) => new Set([...prev, domain]))
-  }
+    setFaviconErrors((prev) => new Set([...prev, domain]));
+  };
 
   const renderContent = (): React.ReactNode => {
     if (isLoadingEvents && topApps.length === 0) {
@@ -162,7 +172,7 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
             </div>
           ))}
         </div>
-      )
+      );
     }
 
     if (topApps.length === 0) {
@@ -170,7 +180,7 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
         <p className="text-sm text-muted-foreground">
           No significant activity tracked yet today to show top apps.
         </p>
-      )
+      );
     }
 
     return (
@@ -183,7 +193,7 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
             <div
-              className={`${app.websites ? 'cursor-pointer hover:bg-accent' : ''} rounded-lg p-2 transition-colors`}
+              className={`${app.websites ? "cursor-pointer hover:bg-accent" : ""} rounded-lg p-2 transition-colors`}
               onClick={() => app.websites && toggleChromeExpansion(app.name)}
             >
               <div className="flex items-center justify-between mb-1">
@@ -194,7 +204,10 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
                     size={20}
                     className="flex-shrink-0"
                   />
-                  <span className="text-sm font-medium text-foreground truncate" title={app.name}>
+                  <span
+                    className="text-sm font-medium text-foreground truncate"
+                    title={app.name}
+                  >
                     {app.name}
                   </span>
                   {app.websites && (
@@ -216,7 +229,11 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${app.percentage || 0}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut', delay: index * 0.1 + 0.2 }}
+                  transition={{
+                    duration: 0.5,
+                    ease: "easeOut",
+                    delay: index * 0.1 + 0.2,
+                  }}
                 />
               </div>
             </div>
@@ -225,7 +242,7 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
               {app.isExpanded && app.websites && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
                   className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-3 overflow-hidden"
@@ -246,12 +263,14 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
                             width={20}
                             height={20}
                             onError={(e) => {
-                              const target = e.currentTarget
-                              const fallbackSrc = getGoogleFaviconURL(website.url)
+                              const target = e.currentTarget;
+                              const fallbackSrc = getGoogleFaviconURL(
+                                website.url,
+                              );
                               if (target.src !== fallbackSrc) {
-                                target.src = fallbackSrc
+                                target.src = fallbackSrc;
                               } else {
-                                handleFaviconError(website.domain)
+                                handleFaviconError(website.domain);
                               }
                             }}
                           />
@@ -281,19 +300,20 @@ const TopActivityWidget: React.FC<TopActivityWidgetProps> = ({
           </motion.li>
         ))}
       </ul>
-    )
-  }
+    );
+  };
 
   return (
     <Card className="bg-card border-border p-4">
       {renderContent()}
       {totalTrackedTimeMs > 0 && topApps.length > 0 && (
         <p className="text-xs text-muted-foreground border-t pt-4 border-border">
-          Total actively tracked time today: {formatDuration(totalTrackedTimeMs)}
+          Total actively tracked time today:{" "}
+          {formatDuration(totalTrackedTimeMs)}
         </p>
       )}
     </Card>
-  )
-}
+  );
+};
 
-export default TopActivityWidget
+export default TopActivityWidget;

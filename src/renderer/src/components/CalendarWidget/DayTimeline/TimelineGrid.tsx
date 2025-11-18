@@ -1,13 +1,13 @@
-import React from 'react'
-import { TimelineHour } from './TimelineHour'
+import React from "react";
+import { TimelineHour } from "./TimelineHour";
 
 interface TimelineGridProps {
-  currentHour: number
-  selectedHour: number | null
-  currentHourRef: React.RefObject<HTMLDivElement | null>
-  hourHeight: number
-  onHourSelect: (hour: number | null) => void
-  hourlyActivity: boolean[]
+  currentHour: number;
+  selectedHour: number | null;
+  currentHourRef: React.RefObject<HTMLDivElement | null>;
+  hourHeight: number;
+  onHourSelect: (hour: number | null) => void;
+  hourlyActivity: boolean[];
 }
 
 export const TimelineGrid: React.FC<TimelineGridProps> = ({
@@ -16,7 +16,7 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({
   currentHourRef,
   hourHeight,
   onHourSelect,
-  hourlyActivity
+  hourlyActivity,
 }) => {
   return (
     <>
@@ -35,5 +35,5 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({
         />
       ))}
     </>
-  )
-}
+  );
+};

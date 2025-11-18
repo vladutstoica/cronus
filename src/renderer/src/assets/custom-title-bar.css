@@ -33,14 +33,18 @@
   font-size: 14px; /* Reduced font size */
   font-weight: 600; /* Increased font weight */
   color: hsl(var(--secondary-foreground));
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 
 /* Optional: If you add text inside your .custom-title-bar, like <span class="app-window-title">Title</span> */
 .app-window-title {
   line-height: 32px; /* Vertically center text if .custom-title-bar is 32px high */
   color: hsl(var(--secondary-foreground)); /* Changed from #cccccc */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   font-size: 13px;
   /* This text will appear to the right of the padding-left applied to .custom-title-bar */
 }

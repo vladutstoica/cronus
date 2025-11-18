@@ -1,8 +1,14 @@
-import { AlertTriangle, CheckCircle, Loader2, Shield, XCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import {
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  Shield,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 // Import types from preload - use proper enum imports
 // Define enums locally to match preload definitions
@@ -10,148 +16,158 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 export enum PermissionType {
   Accessibility = 0,
   AppleEvents = 1,
-  ScreenRecording = 2
+  ScreenRecording = 2,
 }
 
 export enum PermissionStatus {
   Denied = 0,
   Granted = 1,
-  Pending = 2
+  Pending = 2,
 }
 
 interface PermissionInfo {
-  type: PermissionType
-  name: string
-  description: string
-  status: PermissionStatus
-  required: boolean
+  type: PermissionType;
+  name: string;
+  description: string;
+  status: PermissionStatus;
+  required: boolean;
 }
 
 export function PermissionsStatus() {
-  const [permissions, setPermissions] = useState<PermissionInfo[]>([])
-  const [permissionRequestsEnabled, setPermissionRequestsEnabled] = useState<boolean>(false)
-  const [loading, setLoading] = useState(true)
-  const [requesting, setRequesting] = useState<PermissionType[]>([])
-  const [polling, setPolling] = useState<PermissionType[]>([]) // Track which permissions we're polling for
+  const [permissions, setPermissions] = useState<PermissionInfo[]>([]);
+  const [permissionRequestsEnabled, setPermissionRequestsEnabled] =
+    useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [requesting, setRequesting] = useState<PermissionType[]>([]);
+  const [polling, setPolling] = useState<PermissionType[]>([]); // Track which permissions we're polling for
 
-  const permissionDefinitions: Omit<PermissionInfo, 'status'>[] = [
+  const permissionDefinitions: Omit<PermissionInfo, "status">[] = [
     {
       type: PermissionType.Accessibility,
-      name: 'Accessibility',
-      description: 'We read window titles and content from other applications.',
-      required: true
+      name: "Accessibility",
+      description: "We read window titles and content from other applications.",
+      required: true,
     },
     {
       type: PermissionType.AppleEvents,
-      name: 'Apple Events',
-      description: 'Required to track system sleep and wake events.',
-      required: false
+      name: "Apple Events",
+      description: "Required to track system sleep and wake events.",
+      required: false,
     },
     {
       type: PermissionType.ScreenRecording,
-      name: 'Screen Recording',
+      name: "Screen Recording",
       description:
-        'We capture your screen and then OCR the content to help categorize your activity. Enhances categorization.',
-      required: false
-    }
-  ]
+        "We capture your screen and then OCR the content to help categorize your activity. Enhances categorization.",
+      required: false,
+    },
+  ];
 
   const loadPermissionStatus = async () => {
     try {
-      const requestsEnabled = await window.api.getPermissionRequestStatus()
-      setPermissionRequestsEnabled(requestsEnabled)
+      const requestsEnabled = await window.api.getPermissionRequestStatus();
+      setPermissionRequestsEnabled(requestsEnabled);
 
       const permissionStatuses = await Promise.all(
         permissionDefinitions.map(async (perm) => ({
           ...perm,
-          status: await window.api.getPermissionStatus(perm.type)
-        }))
-      )
+          status: await window.api.getPermissionStatus(perm.type),
+        })),
+      );
 
-      setPermissions(permissionStatuses)
+      setPermissions(permissionStatuses);
     } catch (error) {
-      console.error('Error loading permission status:', error)
+      console.error("Error loading permission status:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Polling function to check permission status
-  const pollPermissionStatus = (permissionType: PermissionType, maxAttempts: number = 30) => {
-    let attempts = 0
+  const pollPermissionStatus = (
+    permissionType: PermissionType,
+    maxAttempts: number = 30,
+  ) => {
+    let attempts = 0;
 
     const pollInterval = setInterval(async () => {
-      attempts++
+      attempts++;
 
       try {
-        const currentStatus = await window.api.getPermissionStatus(permissionType)
+        const currentStatus =
+          await window.api.getPermissionStatus(permissionType);
 
         // Update the specific permission in our state
         setPermissions((prev) =>
           prev.map((perm) =>
-            perm.type === permissionType ? { ...perm, status: currentStatus } : perm
-          )
-        )
+            perm.type === permissionType
+              ? { ...perm, status: currentStatus }
+              : perm,
+          ),
+        );
 
         // If permission is granted or we've tried too many times, stop polling
-        if (currentStatus === PermissionStatus.Granted || attempts >= maxAttempts) {
-          setPolling((prev) => prev.filter((type) => type !== permissionType))
-          clearInterval(pollInterval)
+        if (
+          currentStatus === PermissionStatus.Granted ||
+          attempts >= maxAttempts
+        ) {
+          setPolling((prev) => prev.filter((type) => type !== permissionType));
+          clearInterval(pollInterval);
 
           if (currentStatus === PermissionStatus.Granted) {
-            console.log(`✅ Permission ${permissionType} was granted!`)
+            console.log(`✅ Permission ${permissionType} was granted!`);
           } else {
             console.log(
-              `⏰ Stopped polling for permission ${permissionType} after ${attempts} attempts`
-            )
+              `⏰ Stopped polling for permission ${permissionType} after ${attempts} attempts`,
+            );
           }
         }
       } catch (error) {
-        console.error('Error polling permission status:', error)
-        setPolling((prev) => prev.filter((type) => type !== permissionType))
-        clearInterval(pollInterval)
+        console.error("Error polling permission status:", error);
+        setPolling((prev) => prev.filter((type) => type !== permissionType));
+        clearInterval(pollInterval);
       }
-    }, 2000) // Check every 2 seconds
+    }, 2000); // Check every 2 seconds
 
     // Cleanup after max time (60 seconds)
     setTimeout(() => {
-      setPolling((prev) => prev.filter((type) => type !== permissionType))
-      clearInterval(pollInterval)
-    }, 60000)
-  }
+      setPolling((prev) => prev.filter((type) => type !== permissionType));
+      clearInterval(pollInterval);
+    }, 60000);
+  };
 
   useEffect(() => {
-    loadPermissionStatus()
-  }, [])
+    loadPermissionStatus();
+  }, []);
 
   const handleRequestPermission = async (permissionType: PermissionType) => {
     try {
-      setRequesting((prev) => [...prev, permissionType])
-      await window.api.requestPermission(permissionType)
+      setRequesting((prev) => [...prev, permissionType]);
+      await window.api.requestPermission(permissionType);
 
       // Start polling for this permission
-      setPolling((prev) => [...prev, permissionType])
-      pollPermissionStatus(permissionType)
+      setPolling((prev) => [...prev, permissionType]);
+      pollPermissionStatus(permissionType);
 
       // Remove from requesting state after a short delay
       setTimeout(() => {
-        setRequesting((prev) => prev.filter((type) => type !== permissionType))
-      }, 2000)
+        setRequesting((prev) => prev.filter((type) => type !== permissionType));
+      }, 2000);
     } catch (error) {
-      console.error('Error requesting permission:', error)
-      setRequesting((prev) => prev.filter((type) => type !== permissionType))
+      console.error("Error requesting permission:", error);
+      setRequesting((prev) => prev.filter((type) => type !== permissionType));
     }
-  }
+  };
 
   const handleForceEnablePermissionRequests = async () => {
     try {
-      await window.api.forceEnablePermissionRequests()
-      setPermissionRequestsEnabled(true)
-      loadPermissionStatus()
+      await window.api.forceEnablePermissionRequests();
+      setPermissionRequestsEnabled(true);
+      loadPermissionStatus();
     } catch (error) {
-      console.error('Error enabling permission requests:', error)
+      console.error("Error enabling permission requests:", error);
     }
-  }
+  };
 
   const getStatusBadge = (status: PermissionStatus) => {
     switch (status) {
@@ -164,14 +180,17 @@ export function PermissionsStatus() {
             <CheckCircle className="w-3 h-3 mr-1" />
             Granted
           </Badge>
-        )
+        );
       case PermissionStatus.Pending:
         return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          <Badge
+            variant="secondary"
+            className="bg-yellow-100 text-yellow-800 border-yellow-200"
+          >
             <Loader2 className="w-3 h-3 mr-1 animate-spin" />
             Pending
           </Badge>
-        )
+        );
       case PermissionStatus.Denied:
       default:
         return (
@@ -182,21 +201,21 @@ export function PermissionsStatus() {
             <XCircle className="w-3 h-3 mr-1" />
             Denied
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   const getStatusIcon = (status: PermissionStatus) => {
     switch (status) {
       case PermissionStatus.Granted:
-        return <CheckCircle className="w-5 h-5 text-green-600" />
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
       case PermissionStatus.Pending:
-        return <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />
+        return <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />;
       case PermissionStatus.Denied:
       default:
-        return <XCircle className="w-5 h-5 text-red-600" />
+        return <XCircle className="w-5 h-5 text-red-600" />;
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -211,12 +230,12 @@ export function PermissionsStatus() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const hasPermissionIssues = permissions.some(
-    (p) => p.required && p.status !== PermissionStatus.Granted
-  )
+    (p) => p.required && p.status !== PermissionStatus.Granted,
+  );
 
   return (
     <Card>
@@ -231,8 +250,9 @@ export function PermissionsStatus() {
           <div className="flex items-start space-x-3 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Some required permissions are missing. This may prevent the app from tracking your
-              activity properly. Optional permissions can enhance functionality but aren't required.
+              Some required permissions are missing. This may prevent the app
+              from tracking your activity properly. Optional permissions can
+              enhance functionality but aren't required.
             </p>
           </div>
         )}
@@ -242,10 +262,14 @@ export function PermissionsStatus() {
             <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
             <div className="flex-1 flex items-center justify-between">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                Permission requests are currently disabled. This may be due to incomplete
-                onboarding.
+                Permission requests are currently disabled. This may be due to
+                incomplete onboarding.
               </p>
-              <Button size="sm" variant="outline" onClick={handleForceEnablePermissionRequests}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleForceEnablePermissionRequests}
+              >
                 Enable Requests
               </Button>
             </div>
@@ -274,40 +298,45 @@ export function PermissionsStatus() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">{permission.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {permission.description}
+                  </p>
                   {polling.includes(permission.type) && (
                     <p className="text-xs text-blue-600 mt-1 flex items-center">
                       <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      Waiting for permission to be granted in System Preferences...
+                      Waiting for permission to be granted in System
+                      Preferences...
                     </p>
                   )}
                 </div>
               </div>
 
-              {permission.status !== PermissionStatus.Granted && permissionRequestsEnabled && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleRequestPermission(permission.type)}
-                  disabled={
-                    requesting.includes(permission.type) || polling.includes(permission.type)
-                  }
-                >
-                  {requesting.includes(permission.type) ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Requesting...
-                    </>
-                  ) : polling.includes(permission.type) ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Waiting...
-                    </>
-                  ) : (
-                    'Request'
-                  )}
-                </Button>
-              )}
+              {permission.status !== PermissionStatus.Granted &&
+                permissionRequestsEnabled && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRequestPermission(permission.type)}
+                    disabled={
+                      requesting.includes(permission.type) ||
+                      polling.includes(permission.type)
+                    }
+                  >
+                    {requesting.includes(permission.type) ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Requesting...
+                      </>
+                    ) : polling.includes(permission.type) ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Waiting...
+                      </>
+                    ) : (
+                      "Request"
+                    )}
+                  </Button>
+                )}
             </div>
           ))}
         </div>
@@ -318,16 +347,18 @@ export function PermissionsStatus() {
               <p className="text-sm font-medium">Permission Requests</p>
               <p className="text-xs text-muted-foreground">
                 {permissionRequestsEnabled
-                  ? 'Permission dialogs will be shown when needed'
-                  : 'Permission dialogs are currently disabled'}
+                  ? "Permission dialogs will be shown when needed"
+                  : "Permission dialogs are currently disabled"}
               </p>
             </div>
-            <Badge variant={permissionRequestsEnabled ? 'secondary' : 'outline'}>
-              {permissionRequestsEnabled ? 'Enabled' : 'Disabled'}
+            <Badge
+              variant={permissionRequestsEnabled ? "secondary" : "outline"}
+            >
+              {permissionRequestsEnabled ? "Enabled" : "Disabled"}
             </Badge>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

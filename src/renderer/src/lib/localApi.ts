@@ -7,137 +7,196 @@ export const localApi = {
   // User operations
   user: {
     get: async () => {
-      return window.electron.ipcRenderer.invoke('local:get-user');
+      return window.electron.ipcRenderer.invoke("local:get-user");
     },
     update: async (updates: any) => {
-      return window.electron.ipcRenderer.invoke('local:update-user', updates);
-    }
+      return window.electron.ipcRenderer.invoke("local:update-user", updates);
+    },
   },
 
   // Category operations
   categories: {
     getAll: async () => {
-      return window.electron.ipcRenderer.invoke('local:get-categories');
+      return window.electron.ipcRenderer.invoke("local:get-categories");
     },
     getById: async (id: string) => {
-      return window.electron.ipcRenderer.invoke('local:get-category-by-id', id);
+      return window.electron.ipcRenderer.invoke("local:get-category-by-id", id);
     },
     create: async (category: any) => {
-      return window.electron.ipcRenderer.invoke('local:create-category', category);
+      return window.electron.ipcRenderer.invoke(
+        "local:create-category",
+        category,
+      );
     },
     update: async (id: string, updates: any) => {
-      return window.electron.ipcRenderer.invoke('local:update-category', id, updates);
+      return window.electron.ipcRenderer.invoke(
+        "local:update-category",
+        id,
+        updates,
+      );
     },
     delete: async (id: string) => {
-      return window.electron.ipcRenderer.invoke('local:delete-category', id);
+      return window.electron.ipcRenderer.invoke("local:delete-category", id);
     },
     deleteRecent: async () => {
-      return window.electron.ipcRenderer.invoke('local:delete-recent-categories');
+      return window.electron.ipcRenderer.invoke(
+        "local:delete-recent-categories",
+      );
     },
     generateAiCategories: async (goals: string) => {
-      return window.electron.ipcRenderer.invoke('local:generate-ai-categories', goals);
-    }
+      return window.electron.ipcRenderer.invoke(
+        "local:generate-ai-categories",
+        goals,
+      );
+    },
   },
 
   // Event operations
   events: {
     getAll: async (limit?: number, offset?: number) => {
-      return window.electron.ipcRenderer.invoke('local:get-events', limit, offset);
+      return window.electron.ipcRenderer.invoke(
+        "local:get-events",
+        limit,
+        offset,
+      );
     },
     getByDateRange: async (startDate: string, endDate: string) => {
-      return window.electron.ipcRenderer.invoke('local:get-events-by-date-range', startDate, endDate);
+      return window.electron.ipcRenderer.invoke(
+        "local:get-events-by-date-range",
+        startDate,
+        endDate,
+      );
     },
     getById: async (id: string) => {
-      return window.electron.ipcRenderer.invoke('local:get-event-by-id', id);
+      return window.electron.ipcRenderer.invoke("local:get-event-by-id", id);
     },
     update: async (id: string, updates: any) => {
-      return window.electron.ipcRenderer.invoke('local:update-event', id, updates);
+      return window.electron.ipcRenderer.invoke(
+        "local:update-event",
+        id,
+        updates,
+      );
     },
     getStatistics: async (startDate: string, endDate: string) => {
-      return window.electron.ipcRenderer.invoke('local:get-user-statistics', startDate, endDate);
+      return window.electron.ipcRenderer.invoke(
+        "local:get-user-statistics",
+        startDate,
+        endDate,
+      );
     },
     recategorize: async (eventId: string, categoryId: string) => {
-      return window.electron.ipcRenderer.invoke('local:recategorize-event', eventId, categoryId);
+      return window.electron.ipcRenderer.invoke(
+        "local:recategorize-event",
+        eventId,
+        categoryId,
+      );
     },
     recategorizeByIdentifier: async (
       identifier: string,
-      itemType: 'app' | 'website',
+      itemType: "app" | "website",
       startDateMs: number,
       endDateMs: number,
-      newCategoryId: string
+      newCategoryId: string,
     ): Promise<number> => {
       return window.electron.ipcRenderer.invoke(
-        'local:recategorize-events-by-identifier',
+        "local:recategorize-events-by-identifier",
         identifier,
         itemType,
         startDateMs,
         endDateMs,
-        newCategoryId
+        newCategoryId,
       );
-    }
+    },
   },
 
   // Window tracking operations
   tracking: {
     processEvent: async (eventDetails: any) => {
-      return window.electron.ipcRenderer.invoke('local:process-window-event', eventDetails);
+      return window.electron.ipcRenderer.invoke(
+        "local:process-window-event",
+        eventDetails,
+      );
     },
     updateDuration: async (windowId: string, durationMs: number) => {
-      return window.electron.ipcRenderer.invoke('local:update-event-duration', windowId, durationMs);
+      return window.electron.ipcRenderer.invoke(
+        "local:update-event-duration",
+        windowId,
+        durationMs,
+      );
     },
     endEvent: async (windowId: string) => {
-      return window.electron.ipcRenderer.invoke('local:end-window-event', windowId);
-    }
+      return window.electron.ipcRenderer.invoke(
+        "local:end-window-event",
+        windowId,
+      );
+    },
   },
 
   // Settings operations
   settings: {
     getAll: async () => {
-      return window.electron.ipcRenderer.invoke('local:get-all-settings');
+      return window.electron.ipcRenderer.invoke("local:get-all-settings");
     },
     get: async (key: string) => {
-      return window.electron.ipcRenderer.invoke('local:get-setting', key);
+      return window.electron.ipcRenderer.invoke("local:get-setting", key);
     },
     set: async (key: string, value: any) => {
-      return window.electron.ipcRenderer.invoke('local:set-setting', key, value);
+      return window.electron.ipcRenderer.invoke(
+        "local:set-setting",
+        key,
+        value,
+      );
     },
     updateMany: async (settings: Record<string, any>) => {
-      return window.electron.ipcRenderer.invoke('local:update-settings', settings);
-    }
+      return window.electron.ipcRenderer.invoke(
+        "local:update-settings",
+        settings,
+      );
+    },
   },
 
   // Ollama/AI operations (deprecated, use ai.* instead)
   ollama: {
     listModels: async () => {
-      return window.electron.ipcRenderer.invoke('local:list-ollama-models');
+      return window.electron.ipcRenderer.invoke("local:list-ollama-models");
     },
     pullModel: async (modelName: string) => {
-      return window.electron.ipcRenderer.invoke('local:pull-ollama-model', modelName);
-    }
+      return window.electron.ipcRenderer.invoke(
+        "local:pull-ollama-model",
+        modelName,
+      );
+    },
   },
 
   // AI Provider operations
   ai: {
     testConnection: async (
-      provider: 'ollama' | 'lmstudio',
-      baseUrl?: string
+      provider: "ollama" | "lmstudio",
+      baseUrl?: string,
     ): Promise<{ success: boolean; message: string; models?: string[] }> => {
       return window.electron.ipcRenderer.invoke(
-        'local:test-ai-provider-connection',
+        "local:test-ai-provider-connection",
         provider,
-        baseUrl
+        baseUrl,
       );
     },
     listModels: async (): Promise<string[]> => {
-      return window.electron.ipcRenderer.invoke('local:list-ai-models');
+      return window.electron.ipcRenderer.invoke("local:list-ai-models");
     },
-    listProviderModels: async (provider: 'ollama' | 'lmstudio'): Promise<string[]> => {
-      return window.electron.ipcRenderer.invoke('local:list-provider-models', provider);
+    listProviderModels: async (
+      provider: "ollama" | "lmstudio",
+    ): Promise<string[]> => {
+      return window.electron.ipcRenderer.invoke(
+        "local:list-provider-models",
+        provider,
+      );
     },
     clearAvailabilityCache: async (): Promise<void> => {
-      return window.electron.ipcRenderer.invoke('local:clear-ai-availability-cache');
-    }
-  }
+      return window.electron.ipcRenderer.invoke(
+        "local:clear-ai-availability-cache",
+      );
+    },
+  },
 };
 
 // Helper hooks for React Query (if needed)
@@ -147,7 +206,8 @@ export const useLocalUser = () => {
   const [error, setError] = React.useState<Error | null>(null);
 
   React.useEffect(() => {
-    localApi.user.get()
+    localApi.user
+      .get()
       .then(setUser)
       .catch(setError)
       .finally(() => setLoading(false));
@@ -162,7 +222,8 @@ export const useLocalCategories = () => {
   const [error, setError] = React.useState<Error | null>(null);
 
   React.useEffect(() => {
-    localApi.categories.getAll()
+    localApi.categories
+      .getAll()
       .then(setCategories)
       .catch(setError)
       .finally(() => setLoading(false));
@@ -184,4 +245,4 @@ export const useLocalCategories = () => {
 };
 
 // Add React import for hooks
-import React from 'react';
+import React from "react";

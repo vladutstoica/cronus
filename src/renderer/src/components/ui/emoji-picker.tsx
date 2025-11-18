@@ -1,7 +1,7 @@
-'use client'
-import { EmojiPicker as FrimousseEmojiPicker } from 'frimousse'
-import * as React from 'react'
-import { cn } from '../../lib/utils'
+"use client";
+import { EmojiPicker as FrimousseEmojiPicker } from "frimousse";
+import * as React from "react";
+import { cn } from "../../lib/utils";
 
 const EmojiPicker = React.forwardRef<
   React.ElementRef<typeof FrimousseEmojiPicker.Root>,
@@ -9,11 +9,11 @@ const EmojiPicker = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <FrimousseEmojiPicker.Root
     ref={ref}
-    className={cn('flex h-full flex-col', className)}
+    className={cn("flex h-full flex-col", className)}
     {...props}
   />
-))
-EmojiPicker.displayName = 'EmojiPicker'
+));
+EmojiPicker.displayName = "EmojiPicker";
 
 const EmojiPickerSearch = React.forwardRef<
   React.ElementRef<typeof FrimousseEmojiPicker.Search>,
@@ -22,13 +22,13 @@ const EmojiPickerSearch = React.forwardRef<
   <FrimousseEmojiPicker.Search
     ref={ref}
     className={cn(
-      'z-10 mx-2 mt-2 appearance-none rounded-md bg-background px-2.5 py-2 text-sm',
-      className
+      "z-10 mx-2 mt-2 appearance-none rounded-md bg-background px-2.5 py-2 text-sm",
+      className,
     )}
     {...props}
   />
-))
-EmojiPickerSearch.displayName = 'EmojiPickerSearch'
+));
+EmojiPickerSearch.displayName = "EmojiPickerSearch";
 
 const EmojiPickerContent = React.forwardRef<
   React.ElementRef<typeof FrimousseEmojiPicker.Viewport>,
@@ -36,7 +36,7 @@ const EmojiPickerContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <FrimousseEmojiPicker.Viewport
     ref={ref}
-    className={cn('relative flex-1 overflow-hidden', className)}
+    className={cn("relative flex-1 overflow-hidden", className)}
     {...props}
   >
     <FrimousseEmojiPicker.List
@@ -62,7 +62,7 @@ const EmojiPickerContent = React.forwardRef<
           >
             {emoji.emoji}
           </button>
-        )
+        ),
       }}
     />
     <FrimousseEmojiPicker.Loading className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
@@ -72,14 +72,24 @@ const EmojiPickerContent = React.forwardRef<
       No emoji found.
     </FrimousseEmojiPicker.Empty>
   </FrimousseEmojiPicker.Viewport>
-))
-EmojiPickerContent.displayName = 'EmojiPickerContent'
+));
+EmojiPickerContent.displayName = "EmojiPickerContent";
 
-const EmojiPickerFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center border-t p-2', className)} {...props} />
-  )
-)
-EmojiPickerFooter.displayName = 'EmojiPickerFooter'
+const EmojiPickerFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center border-t p-2", className)}
+    {...props}
+  />
+));
+EmojiPickerFooter.displayName = "EmojiPickerFooter";
 
-export { EmojiPicker, EmojiPickerContent, EmojiPickerFooter, EmojiPickerSearch }
+export {
+  EmojiPicker,
+  EmojiPickerContent,
+  EmojiPickerFooter,
+  EmojiPickerSearch,
+};

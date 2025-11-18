@@ -1,7 +1,13 @@
 // This file is no longer used - calendar integration has been removed
 // Keeping as stub to avoid import errors
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 export const GoogleCalendarSettings = () => {
   return (
@@ -18,5 +24,5 @@ export const GoogleCalendarSettings = () => {
         </p>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

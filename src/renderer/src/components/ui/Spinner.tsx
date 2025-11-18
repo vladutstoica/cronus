@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
 const Spinner = () => (
   <motion.div
@@ -7,9 +7,9 @@ const Spinner = () => (
     transition={{
       duration: 1,
       repeat: Infinity,
-      ease: 'linear'
+      ease: "linear",
     }}
   />
-)
+);
 
-export default Spinner
+export default Spinner;

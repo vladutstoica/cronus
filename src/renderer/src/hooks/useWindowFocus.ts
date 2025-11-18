@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 
 /**
  * Custom hook that tracks window focus state.
@@ -7,35 +7,35 @@ import { useEffect, useState } from 'react'
 export function useWindowFocus(): boolean {
   const [isWindowFocused, setIsWindowFocused] = useState(() => {
     // Initialize with current focus state
-    return document.hasFocus()
-  })
+    return document.hasFocus();
+  });
 
   useEffect(() => {
     const handleFocus = () => {
-      setIsWindowFocused(true)
-    }
+      setIsWindowFocused(true);
+    };
 
     const handleBlur = () => {
-      setIsWindowFocused(false)
-    }
+      setIsWindowFocused(false);
+    };
 
     // Listen for window focus/blur events
-    window.addEventListener('focus', handleFocus)
-    window.addEventListener('blur', handleBlur)
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
 
     // Also listen for document visibility changes (for when tab is hidden)
     const handleVisibilityChange = () => {
-      setIsWindowFocused(!document.hidden)
-    }
+      setIsWindowFocused(!document.hidden);
+    };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('focus', handleFocus)
-      window.removeEventListener('blur', handleBlur)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [])
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
-  return isWindowFocused
+  return isWindowFocused;
 }

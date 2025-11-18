@@ -1,31 +1,31 @@
-import clsx from 'clsx'
-import { useMemo } from 'react'
-import { formatDuration } from '../../../lib/timeFormatting'
-import type { ProcessedEventBlock } from '../../DashboardView'
-import { notionStyleCategoryColors } from '../../Settings/CategoryForm'
-import { TooltipProvider } from '../../ui/tooltip'
-import { GroupedWeekViewBar } from './GroupedWeekViewBar'
-import { WeekProductivityBarChartSkeleton } from './WeekProductivityBarChartSkeleton'
-import { WeekViewFooter } from './WeekViewFooter'
-import { WeekViewStackedBar } from './WeekViewStackedBar'
+import clsx from "clsx";
+import { useMemo } from "react";
+import { formatDuration } from "../../../lib/timeFormatting";
+import type { ProcessedEventBlock } from "../../DashboardView";
+import { notionStyleCategoryColors } from "../../Settings/CategoryForm";
+import { TooltipProvider } from "../../ui/tooltip";
+import { GroupedWeekViewBar } from "./GroupedWeekViewBar";
+import { WeekProductivityBarChartSkeleton } from "./WeekProductivityBarChartSkeleton";
+import { WeekViewFooter } from "./WeekViewFooter";
+import { WeekViewStackedBar } from "./WeekViewStackedBar";
 
 interface WeekProductivityBarChartProps {
-  processedEvents: ProcessedEventBlock[] | null
-  selectedDate: Date
-  isDarkMode: boolean
-  weekViewMode: 'stacked' | 'grouped'
-  selectedDay: Date | null
-  onDaySelect: (day: Date | null) => void
-  isLoading: boolean
+  processedEvents: ProcessedEventBlock[] | null;
+  selectedDate: Date;
+  isDarkMode: boolean;
+  weekViewMode: "stacked" | "grouped";
+  selectedDay: Date | null;
+  onDaySelect: (day: Date | null) => void;
+  isLoading: boolean;
 }
 
 export interface CategoryTotal {
-  categoryId: string | null
-  name: string
-  categoryColor?: string
-  totalDurationMs: number
-  isProductive?: boolean
-  _otherCategories?: Array<{ name: string; duration: number }>
+  categoryId: string | null;
+  name: string;
+  categoryColor?: string;
+  totalDurationMs: number;
+  isProductive?: boolean;
+  _otherCategories?: Array<{ name: string; duration: number }>;
 }
 
 const WeekProductivityBarChart = ({
@@ -35,74 +35,77 @@ const WeekProductivityBarChart = ({
   weekViewMode,
   selectedDay,
   onDaySelect,
-  isLoading
+  isLoading,
 }: WeekProductivityBarChartProps) => {
   const weekData = useMemo(() => {
     if (!processedEvents) {
-      return []
+      return [];
     }
 
-    const startOfWeek = new Date(selectedDate)
-    const dayOfWeek = startOfWeek.getDay()
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract)
+    const startOfWeek = new Date(selectedDate);
+    const dayOfWeek = startOfWeek.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
 
     const days = Array.from({ length: 7 }).map((_, i) => {
-      const day = new Date(startOfWeek)
-      day.setDate(day.getDate() + i)
-      day.setHours(0, 0, 0, 0) // Set to start of day
-      return day
-    })
+      const day = new Date(startOfWeek);
+      day.setDate(day.getDate() + i);
+      day.setHours(0, 0, 0, 0); // Set to start of day
+      return day;
+    });
 
     return days.map((day) => {
-      const dayStart = day.getTime()
-      const dayEnd = new Date(day)
-      dayEnd.setDate(day.getDate() + 1)
-      const dayEndMs = dayEnd.getTime()
+      const dayStart = day.getTime();
+      const dayEnd = new Date(day);
+      dayEnd.setDate(day.getDate() + 1);
+      const dayEndMs = dayEnd.getTime();
 
       const dayEvents =
         processedEvents?.filter((event) => {
-          const eventTime = event.startTime.getTime()
-          return eventTime >= dayStart && eventTime < dayEndMs
-        }) || []
+          const eventTime = event.startTime.getTime();
+          return eventTime >= dayStart && eventTime < dayEndMs;
+        }) || [];
 
-      const productiveCategoriesMap = new Map<string, CategoryTotal>()
-      const unproductiveCategoriesMap = new Map<string, CategoryTotal>()
+      const productiveCategoriesMap = new Map<string, CategoryTotal>();
+      const unproductiveCategoriesMap = new Map<string, CategoryTotal>();
 
       dayEvents.forEach((event) => {
-        const key = event.categoryId || 'uncategorized'
-        const targetMap = event.isProductive ? productiveCategoriesMap : unproductiveCategoriesMap
+        const key = event.categoryId || "uncategorized";
+        const targetMap = event.isProductive
+          ? productiveCategoriesMap
+          : unproductiveCategoriesMap;
 
-        const existing = targetMap.get(key)
+        const existing = targetMap.get(key);
         if (existing) {
-          existing.totalDurationMs += event.durationMs
+          existing.totalDurationMs += event.durationMs;
         } else {
           targetMap.set(key, {
             categoryId: event.categoryId || null,
-            name: event.categoryName || 'Uncategorized',
-            categoryColor: event.categoryColor || '#808080',
+            name: event.categoryName || "Uncategorized",
+            categoryColor: event.categoryColor || "#808080",
             totalDurationMs: event.durationMs,
-            isProductive: event.isProductive
-          })
+            isProductive: event.isProductive,
+          });
         }
-      })
+      });
 
-      const productiveCategories = Array.from(productiveCategoriesMap.values()).sort(
-        (a, b) => b.totalDurationMs - a.totalDurationMs
-      )
-      const unproductiveCategories = Array.from(unproductiveCategoriesMap.values()).sort(
-        (a, b) => b.totalDurationMs - a.totalDurationMs
-      )
+      const productiveCategories = Array.from(
+        productiveCategoriesMap.values(),
+      ).sort((a, b) => b.totalDurationMs - a.totalDurationMs);
+      const unproductiveCategories = Array.from(
+        unproductiveCategoriesMap.values(),
+      ).sort((a, b) => b.totalDurationMs - a.totalDurationMs);
 
       const totalProductiveDuration = productiveCategories.reduce(
         (sum, cat) => sum + cat.totalDurationMs,
-        0
-      )
+        0,
+      );
       const totalUnproductiveDuration = unproductiveCategories.reduce(
         (sum, cat) => sum + cat.totalDurationMs,
-        0
-      )
-      const totalDayDuration = totalProductiveDuration + totalUnproductiveDuration
+        0,
+      );
+      const totalDayDuration =
+        totalProductiveDuration + totalUnproductiveDuration;
 
       return {
         date: day,
@@ -110,32 +113,36 @@ const WeekProductivityBarChart = ({
         unproductiveCategories,
         totalProductiveDuration,
         totalUnproductiveDuration,
-        totalDayDuration
-      }
-    })
-  }, [processedEvents, selectedDate])
+        totalDayDuration,
+      };
+    });
+  }, [processedEvents, selectedDate]);
 
   // Find the max totalDayDuration for the week (avoid 0 by defaulting to 1)
   const maxDayDurationMs = useMemo(() => {
-    if (!weekData.length) return 1
-    return Math.max(1, ...weekData.map((d) => d.totalDayDuration))
-  }, [weekData])
+    if (!weekData.length) return 1;
+    return Math.max(1, ...weekData.map((d) => d.totalDayDuration));
+  }, [weekData]);
 
   // The tallest bar should be 80% of the height
-  const maxBarHeightPercent = 80
+  const maxBarHeightPercent = 80;
 
   // For grouped view: find the max single bar (productive or unproductive) duration in the week
   const maxSingleBarDuration = useMemo(() => {
-    if (!weekData.length) return 1
-    let max = 1
+    if (!weekData.length) return 1;
+    let max = 1;
     for (const d of weekData) {
-      max = Math.max(max, d.totalProductiveDuration, d.totalUnproductiveDuration)
+      max = Math.max(
+        max,
+        d.totalProductiveDuration,
+        d.totalUnproductiveDuration,
+      );
     }
-    return max
-  }, [weekData])
+    return max;
+  }, [weekData]);
 
   if (isLoading) {
-    return <WeekProductivityBarChartSkeleton weekViewMode={weekViewMode} />
+    return <WeekProductivityBarChartSkeleton weekViewMode={weekViewMode} />;
   }
 
   return (
@@ -150,71 +157,84 @@ const WeekProductivityBarChart = ({
                 unproductiveCategories,
                 totalProductiveDuration,
                 totalUnproductiveDuration,
-                totalDayDuration
+                totalDayDuration,
               },
-              index
+              index,
             ) => {
               // Use dynamic max for both stacked and grouped views
-              const stackedMax = maxDayDurationMs
-              const groupedMax = maxSingleBarDuration
+              const stackedMax = maxDayDurationMs;
+              const groupedMax = maxSingleBarDuration;
               const dayHeightPercentage = Math.min(
                 maxBarHeightPercent,
-                (totalDayDuration / (weekViewMode === 'stacked' ? stackedMax : maxDayDurationMs)) *
-                  maxBarHeightPercent
-              )
-              const isCurrentDay = date.toDateString() === new Date().toDateString()
-              const isSelectedDay = selectedDay?.toDateString() === date.toDateString()
+                (totalDayDuration /
+                  (weekViewMode === "stacked"
+                    ? stackedMax
+                    : maxDayDurationMs)) *
+                  maxBarHeightPercent,
+              );
+              const isCurrentDay =
+                date.toDateString() === new Date().toDateString();
+              const isSelectedDay =
+                selectedDay?.toDateString() === date.toDateString();
 
-              const today = new Date()
-              today.setHours(0, 0, 0, 0)
-              const isFutureDay = date > today
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isFutureDay = date > today;
 
               // For grouped view: scale each bar by maxSingleBarDuration
               const productiveHeight = Math.min(
                 maxBarHeightPercent,
-                (totalProductiveDuration / groupedMax) * maxBarHeightPercent
-              )
+                (totalProductiveDuration / groupedMax) * maxBarHeightPercent,
+              );
               const unproductiveHeight = Math.min(
                 maxBarHeightPercent,
-                (totalUnproductiveDuration / groupedMax) * maxBarHeightPercent
-              )
+                (totalUnproductiveDuration / groupedMax) * maxBarHeightPercent,
+              );
 
               // Combine productive and unproductive categories for stacked view
               const allCategories = [
-                ...productiveCategories.map((cat) => ({ ...cat, isProductive: true })),
-                ...unproductiveCategories.map((cat) => ({ ...cat, isProductive: false }))
-              ]
+                ...productiveCategories.map((cat) => ({
+                  ...cat,
+                  isProductive: true,
+                })),
+                ...unproductiveCategories.map((cat) => ({
+                  ...cat,
+                  isProductive: false,
+                })),
+              ];
 
               return (
                 <div
                   key={index}
                   className={`flex flex-col border-1 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 ${
                     isFutureDay
-                      ? 'cursor-not-allowed opacity-50 pointer-events-none'
-                      : 'cursor-pointer'
+                      ? "cursor-not-allowed opacity-50 pointer-events-none"
+                      : "cursor-pointer"
                   } ${
-                    index === 6 ? 'border-r-0' : 'border-r'
-                  } ${isSelectedDay ? 'bg-blue-200/20 dark:bg-blue-800/30' : ''}`}
+                    index === 6 ? "border-r-0" : "border-r"
+                  } ${isSelectedDay ? "bg-blue-200/20 dark:bg-blue-800/30" : ""}`}
                   onClick={() => {
-                    if (!isFutureDay) onDaySelect(isSelectedDay ? null : date)
+                    if (!isFutureDay) onDaySelect(isSelectedDay ? null : date);
                   }}
                 >
                   <div
                     className={clsx(
-                      'text-center text-xs p-1 border-b dark:border-slate-700',
-                      isCurrentDay && !isSelectedDay ? 'bg-blue-100 dark:bg-blue-900' : ''
+                      "text-center text-xs p-1 border-b dark:border-slate-700",
+                      isCurrentDay && !isSelectedDay
+                        ? "bg-blue-100 dark:bg-blue-900"
+                        : "",
                     )}
                   >
                     <div className="font-semibold">
-                      {date.toLocaleDateString(undefined, { weekday: 'short' })}
+                      {date.toLocaleDateString(undefined, { weekday: "short" })}
                     </div>
                     <div className="text-muted-foreground">
-                      {date.toLocaleDateString(undefined, { day: 'numeric' })}
+                      {date.toLocaleDateString(undefined, { day: "numeric" })}
                     </div>
                   </div>
                   <div className="flex-1 flex flex-col justify-end relative overflow-hidden">
                     {totalDayDuration > 0 &&
-                      (weekViewMode === 'stacked' ? (
+                      (weekViewMode === "stacked" ? (
                         <div
                           className="w-full flex flex-col transition-all duration-500 gap-px"
                           style={{ height: `${dayHeightPercentage}%` }}
@@ -246,13 +266,13 @@ const WeekProductivityBarChart = ({
                     formatDuration={formatDuration}
                   />
                 </div>
-              )
-            }
+              );
+            },
           )}
         </div>
       </div>
     </TooltipProvider>
-  )
-}
+  );
+};
 
-export default WeekProductivityBarChart
+export default WeekProductivityBarChart;

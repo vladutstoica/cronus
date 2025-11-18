@@ -1,18 +1,18 @@
-import { CheckCircle } from 'lucide-react'
-import { Input } from '../ui/input'
+import { CheckCircle } from "lucide-react";
+import { Input } from "../ui/input";
 
 interface CompleteStepProps {
-  hasExistingReferral: boolean
-  referralSource: string
-  setReferralSource: (value: string) => void
-  handleNext: () => void
+  hasExistingReferral: boolean;
+  referralSource: string;
+  setReferralSource: (value: string) => void;
+  handleNext: () => void;
 }
 
 export function CompleteStep({
   hasExistingReferral,
   referralSource,
   setReferralSource,
-  handleNext
+  handleNext,
 }: CompleteStepProps) {
   return (
     <div className="text-center space-y-6 flex flex-col items-center">
@@ -22,13 +22,17 @@ export function CompleteStep({
         </div>
       </div>
       <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
-        You&apos;re all set up. Cronus will now track your activity to help you stay focused.
+        You&apos;re all set up. Cronus will now track your activity to help you
+        stay focused.
       </p>
       {!hasExistingReferral && (
         <div className="w-full max-w-md mx-auto space-y-4">
           <div className="text-left flex flex-col gap-1">
-            <label htmlFor="referral" className="font-medium text-base text-foreground mb-4 block">
-              Btw, how did you hear about Cronus?{' '}
+            <label
+              htmlFor="referral"
+              className="font-medium text-base text-foreground mb-4 block"
+            >
+              Btw, how did you hear about Cronus?{" "}
               <div className="text-xs text-muted-foreground">Optional</div>
             </label>
             <Input
@@ -38,8 +42,8 @@ export function CompleteStep({
               value={referralSource}
               onChange={(e) => setReferralSource(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleNext()
+                if (e.key === "Enter") {
+                  handleNext();
                 }
               }}
               className="w-full"
@@ -48,5 +52,5 @@ export function CompleteStep({
         </div>
       )}
     </div>
-  )
+  );
 }

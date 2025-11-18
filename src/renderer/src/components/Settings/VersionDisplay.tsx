@@ -1,29 +1,35 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 
-export function AppInformation({ onShowPermissions }: { onShowPermissions: () => void }) {
-  const [version, setVersion] = useState('')
-  const [buildDate, setBuildDate] = useState('')
+export function AppInformation({
+  onShowPermissions,
+}: {
+  onShowPermissions: () => void;
+}) {
+  const [version, setVersion] = useState("");
+  const [buildDate, setBuildDate] = useState("");
 
   useEffect(() => {
     const fetchVersionInfo = async () => {
       try {
-        const appVersion = await window.api.getAppVersion()
-        setVersion(appVersion || 'N/A')
-        const buildTimestamp = await window.api.getBuildDate()
-        if (buildTimestamp === 'dev') {
-          setBuildDate('Development Build')
+        const appVersion = await window.api.getAppVersion();
+        setVersion(appVersion || "N/A");
+        const buildTimestamp = await window.api.getBuildDate();
+        if (buildTimestamp === "dev") {
+          setBuildDate("Development Build");
         } else {
-          setBuildDate(buildTimestamp ? new Date(buildTimestamp).toLocaleString() : 'N/A')
+          setBuildDate(
+            buildTimestamp ? new Date(buildTimestamp).toLocaleString() : "N/A",
+          );
         }
       } catch (error) {
-        console.error('Failed to get app version or build date:', error)
-        setVersion('N/A')
-        setBuildDate('N/A')
+        console.error("Failed to get app version or build date:", error);
+        setVersion("N/A");
+        setBuildDate("N/A");
       }
-    }
+    };
 
-    fetchVersionInfo()
-  }, [])
+    fetchVersionInfo();
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -40,5 +46,5 @@ export function AppInformation({ onShowPermissions }: { onShowPermissions: () =>
         </button>
       </div>
     </div>
-  )
+  );
 }

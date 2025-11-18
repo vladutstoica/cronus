@@ -1,38 +1,38 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
-import { resolve } from 'path'
+import react from "@vitejs/plugin-react";
+import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { resolve } from "path";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
     build: {
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/preload/index.ts'),
-          floatingPreload: resolve(__dirname, 'src/preload/floatingPreload.ts')
-        }
-      }
-    }
+          index: resolve(__dirname, "src/preload/index.ts"),
+          floatingPreload: resolve(__dirname, "src/preload/floatingPreload.ts"),
+        },
+      },
+    },
   },
   renderer: {
     resolve: {
       alias: {
-        '@renderer': resolve(__dirname, 'src/renderer/src'),
-        src: resolve(__dirname, 'src/renderer/src')
+        "@renderer": resolve(__dirname, "src/renderer/src"),
+        src: resolve(__dirname, "src/renderer/src"),
       },
-      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+      extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json"],
     },
     plugins: [react()],
     build: {
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/renderer/index.html'),
-          floating: resolve(__dirname, 'src/renderer/floating.html')
-        }
-      }
-    }
-  }
-})
+          index: resolve(__dirname, "src/renderer/index.html"),
+          floating: resolve(__dirname, "src/renderer/floating.html"),
+        },
+      },
+    },
+  },
+});

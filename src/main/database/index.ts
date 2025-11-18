@@ -1,7 +1,7 @@
-import Database from 'better-sqlite3';
-import { app } from 'electron';
-import path from 'path';
-import fs from 'fs';
+import Database from "better-sqlite3";
+import { app } from "electron";
+import path from "path";
+import fs from "fs";
 
 let db: Database.Database | null = null;
 
@@ -13,17 +13,17 @@ export function initDatabase(): Database.Database {
     return db;
   }
 
-  const userDataPath = app.getPath('userData');
-  const dbPath = path.join(userDataPath, 'cronus.db');
+  const userDataPath = app.getPath("userData");
+  const dbPath = path.join(userDataPath, "cronus.db");
 
   // Ensure the directory exists
   fs.mkdirSync(userDataPath, { recursive: true });
 
-  console.log('Initializing database at:', dbPath);
+  console.log("Initializing database at:", dbPath);
 
   db = new Database(dbPath); // Removed verbose logging
-  db.pragma('journal_mode = WAL'); // Enable Write-Ahead Logging for better performance
-  db.pragma('foreign_keys = ON'); // Enable foreign key constraints
+  db.pragma("journal_mode = WAL"); // Enable Write-Ahead Logging for better performance
+  db.pragma("foreign_keys = ON"); // Enable foreign key constraints
 
   // Run migrations
   runMigrations(db);
@@ -66,7 +66,7 @@ function runMigrations(database: Database.Database): void {
 
   const migrations = [
     {
-      name: '001_initial_schema',
+      name: "001_initial_schema",
       up: `
         -- Users table
         CREATE TABLE IF NOT EXISTS users (
@@ -136,10 +136,10 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_events_timestamp ON active_window_events(timestamp);
         CREATE INDEX IF NOT EXISTS idx_events_category_id ON active_window_events(category_id);
         CREATE INDEX IF NOT EXISTS idx_events_user_timestamp ON active_window_events(user_id, timestamp DESC);
-      `
+      `,
     },
     {
-      name: '002_app_settings',
+      name: "002_app_settings",
       up: `
         -- App settings table for configuration
         CREATE TABLE IF NOT EXISTS app_settings (
@@ -154,10 +154,10 @@ function runMigrations(database: Database.Database): void {
           ('screenshots_enabled', 'false'),
           ('ollama_model', 'llama3.2'),
           ('categorization_enabled', 'true');
-      `
+      `,
     },
     {
-      name: '003_ai_provider_settings',
+      name: "003_ai_provider_settings",
       up: `
         -- Add AI provider settings
         INSERT OR IGNORE INTO app_settings (key, value) VALUES
@@ -168,19 +168,23 @@ function runMigrations(database: Database.Database): void {
 
         -- Update ollama_model to use 1b variant for better performance
         UPDATE app_settings SET value = 'llama3.2:1b' WHERE key = 'ollama_model' AND value = 'llama3.2';
-      `
-    }
+      `,
+    },
   ];
 
   // Apply migrations
   for (const migration of migrations) {
-    const existing = database.prepare('SELECT * FROM _migrations WHERE name = ?').get(migration.name);
+    const existing = database
+      .prepare("SELECT * FROM _migrations WHERE name = ?")
+      .get(migration.name);
 
     if (!existing) {
       console.log(`Applying migration: ${migration.name}`);
       try {
         database.exec(migration.up);
-        database.prepare('INSERT INTO _migrations (name) VALUES (?)').run(migration.name);
+        database
+          .prepare("INSERT INTO _migrations (name) VALUES (?)")
+          .run(migration.name);
         console.log(`Migration ${migration.name} applied successfully`);
       } catch (error) {
         console.error(`Error applying migration ${migration.name}:`, error);

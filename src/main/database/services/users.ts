@@ -1,5 +1,5 @@
-import { getDatabase } from '../index';
-import { randomBytes } from 'crypto';
+import { getDatabase } from "../index";
+import { randomBytes } from "crypto";
 
 export interface User {
   id: string;
@@ -24,20 +24,22 @@ export function getOrCreateLocalUser(): User {
   const db = getDatabase();
 
   // Check if a user already exists
-  const existingUser = db.prepare('SELECT * FROM users LIMIT 1').get() as User | undefined;
+  const existingUser = db.prepare("SELECT * FROM users LIMIT 1").get() as
+    | User
+    | undefined;
 
   if (existingUser) {
     return existingUser;
   }
 
   // Create a default local user
-  const userId = randomBytes(16).toString('hex');
+  const userId = randomBytes(16).toString("hex");
   const now = new Date().toISOString();
 
   const user: User = {
     id: userId,
-    email: 'local@cronus.app',
-    name: 'Local User',
+    email: "local@cronus.app",
+    name: "Local User",
     picture: undefined,
     has_subscription: true, // No subscription needed for local
     is_waitlisted: false,
@@ -47,7 +49,7 @@ export function getOrCreateLocalUser(): User {
     electron_app_settings: JSON.stringify({}),
     user_projects_and_goals: JSON.stringify([]),
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 
   const stmt = db.prepare(`
@@ -72,7 +74,7 @@ export function getOrCreateLocalUser(): User {
     user.electron_app_settings,
     user.user_projects_and_goals,
     user.created_at,
-    user.updated_at
+    user.updated_at,
   );
 
   return user;
@@ -83,7 +85,9 @@ export function getOrCreateLocalUser(): User {
  */
 export function getUserById(id: string): User | undefined {
   const db = getDatabase();
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as User | undefined;
+  const user = db.prepare("SELECT * FROM users WHERE id = ?").get(id) as
+    | User
+    | undefined;
 
   if (user) {
     // Convert SQLite integers to booleans
@@ -101,7 +105,7 @@ export function getUserById(id: string): User | undefined {
  */
 export function updateUser(
   id: string,
-  updates: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>
+  updates: Partial<Omit<User, "id" | "created_at" | "updated_at">>,
 ): User | undefined {
   const db = getDatabase();
   const now = new Date().toISOString();
@@ -112,16 +116,19 @@ export function updateUser(
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {
       // Convert snake_case to match DB columns
-      const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const dbKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
       fields.push(`${dbKey} = ?`);
 
       // Convert booleans to integers
-      if (typeof value === 'boolean') {
+      if (typeof value === "boolean") {
         values.push(value ? 1 : 0);
-      } else if (typeof value === 'object' && value !== null) {
+      } else if (typeof value === "object" && value !== null) {
         // Always JSON.stringify objects (including arrays)
         values.push(JSON.stringify(value));
-      } else if (key === 'user_projects_and_goals' && typeof value === 'string') {
+      } else if (
+        key === "user_projects_and_goals" &&
+        typeof value === "string"
+      ) {
         // Special handling: if goals are sent as plain string, wrap in array and stringify
         try {
           JSON.parse(value); // Check if already valid JSON
@@ -140,13 +147,13 @@ export function updateUser(
     return getUserById(id);
   }
 
-  fields.push('updated_at = ?');
+  fields.push("updated_at = ?");
   values.push(now);
   values.push(id);
 
   const stmt = db.prepare(`
     UPDATE users
-    SET ${fields.join(', ')}
+    SET ${fields.join(", ")}
     WHERE id = ?
   `);
 

@@ -29,13 +29,15 @@ class AIRequestQueue {
    */
   add(eventId: string, processor: () => Promise<void>): void {
     // Skip if already in queue
-    if (this.queue.find(item => item.eventId === eventId)) {
+    if (this.queue.find((item) => item.eventId === eventId)) {
       console.log(`🔁 SKIPPED: Event ${eventId} already in queue`);
       return;
     }
 
     this.queue.push({ eventId, processor });
-    console.log(`📥 QUEUED: Event ${eventId} (queue size: ${this.queue.length}, processing: ${this.processing})`);
+    console.log(
+      `📥 QUEUED: Event ${eventId} (queue size: ${this.queue.length}, processing: ${this.processing})`,
+    );
 
     this.processNext();
   }
@@ -61,7 +63,9 @@ class AIRequestQueue {
 
       // Add delay between requests to avoid overwhelming the AI provider
       if (this.delayBetweenRequests > 0) {
-        await new Promise(resolve => setTimeout(resolve, this.delayBetweenRequests));
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.delayBetweenRequests),
+        );
       }
     } catch (error) {
       console.error(`❌ Error processing queue item ${item.eventId}:`, error);
@@ -77,7 +81,7 @@ class AIRequestQueue {
   getStats(): { queueSize: number; processing: number } {
     return {
       queueSize: this.queue.length,
-      processing: this.processing
+      processing: this.processing,
     };
   }
 
@@ -86,7 +90,7 @@ class AIRequestQueue {
    */
   clear(): void {
     this.queue = [];
-    console.log('🧹 Queue cleared');
+    console.log("🧹 Queue cleared");
   }
 }
 

@@ -1,24 +1,34 @@
-import React from 'react'
-import { Button } from './ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
+import React from "react";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface PauseInfoModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
 }
 
-const PauseInfoModal: React.FC<PauseInfoModalProps> = ({ isOpen, onClose, onConfirm }) => {
+const PauseInfoModal: React.FC<PauseInfoModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Pause Tracking</DialogTitle>
           <DialogDescription>
-            Are you sure you want to pause Cronus tracking? We automatically track when your
-            computer goes to sleep/becomes inactive and pause the tracking accordingly. You can
-            still force pause tracking here if you do not want your activity to appear in the
-            timeline.
+            Are you sure you want to pause Cronus tracking? We automatically
+            track when your computer goes to sleep/becomes inactive and pause
+            the tracking accordingly. You can still force pause tracking here if
+            you do not want your activity to appear in the timeline.
           </DialogDescription>
         </DialogHeader>
 
@@ -30,7 +40,7 @@ const PauseInfoModal: React.FC<PauseInfoModalProps> = ({ isOpen, onClose, onConf
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default PauseInfoModal
+export default PauseInfoModal;

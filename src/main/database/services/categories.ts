@@ -1,5 +1,5 @@
-import { getDatabase } from '../index';
-import { randomBytes } from 'crypto';
+import { getDatabase } from "../index";
+import { randomBytes } from "crypto";
 
 export interface Category {
   id: string;
@@ -19,10 +19,10 @@ export interface Category {
  * Create a new category
  */
 export function createCategory(
-  category: Omit<Category, 'id' | 'created_at' | 'updated_at'>
+  category: Omit<Category, "id" | "created_at" | "updated_at">,
 ): Category {
   const db = getDatabase();
-  const id = randomBytes(16).toString('hex');
+  const id = randomBytes(16).toString("hex");
   const now = new Date().toISOString();
 
   const stmt = db.prepare(`
@@ -44,37 +44,40 @@ export function createCategory(
     category.is_default ? 1 : 0,
     category.is_archived ? 1 : 0,
     now,
-    now
+    now,
   );
 
   return {
     ...category,
     id,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
 /**
  * Get all categories for a user
  */
-export function getCategoriesByUserId(userId: string, includeArchived = false): Category[] {
+export function getCategoriesByUserId(
+  userId: string,
+  includeArchived = false,
+): Category[] {
   const db = getDatabase();
 
-  let query = 'SELECT * FROM categories WHERE user_id = ?';
+  let query = "SELECT * FROM categories WHERE user_id = ?";
   if (!includeArchived) {
-    query += ' AND is_archived = 0';
+    query += " AND is_archived = 0";
   }
-  query += ' ORDER BY created_at DESC';
+  query += " ORDER BY created_at DESC";
 
   const categories = db.prepare(query).all(userId) as Category[];
 
   // Convert SQLite integers to booleans
-  return categories.map(cat => ({
+  return categories.map((cat) => ({
     ...cat,
     is_productive: Boolean(cat.is_productive),
     is_default: Boolean(cat.is_default),
-    is_archived: Boolean(cat.is_archived)
+    is_archived: Boolean(cat.is_archived),
   }));
 }
 
@@ -83,7 +86,9 @@ export function getCategoriesByUserId(userId: string, includeArchived = false): 
  */
 export function getCategoryById(id: string): Category | undefined {
   const db = getDatabase();
-  const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined;
+  const category = db
+    .prepare("SELECT * FROM categories WHERE id = ?")
+    .get(id) as Category | undefined;
 
   if (category) {
     category.is_productive = Boolean(category.is_productive);
@@ -99,7 +104,9 @@ export function getCategoryById(id: string): Category | undefined {
  */
 export function updateCategory(
   id: string,
-  updates: Partial<Omit<Category, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+  updates: Partial<
+    Omit<Category, "id" | "user_id" | "created_at" | "updated_at">
+  >,
 ): Category | undefined {
   const db = getDatabase();
   const now = new Date().toISOString();
@@ -112,7 +119,7 @@ export function updateCategory(
       fields.push(`${key} = ?`);
 
       // Convert booleans to integers
-      if (typeof value === 'boolean') {
+      if (typeof value === "boolean") {
         values.push(value ? 1 : 0);
       } else {
         values.push(value);
@@ -124,13 +131,13 @@ export function updateCategory(
     return getCategoryById(id);
   }
 
-  fields.push('updated_at = ?');
+  fields.push("updated_at = ?");
   values.push(now);
   values.push(id);
 
   const stmt = db.prepare(`
     UPDATE categories
-    SET ${fields.join(', ')}
+    SET ${fields.join(", ")}
     WHERE id = ?
   `);
 
@@ -151,7 +158,9 @@ export function deleteCategory(id: string): boolean {
  */
 export function deleteRecentlyCreatedCategories(userId: string): number {
   const db = getDatabase();
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const twentyFourHoursAgo = new Date(
+    Date.now() - 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   const stmt = db.prepare(`
     DELETE FROM categories
@@ -168,52 +177,52 @@ export function deleteRecentlyCreatedCategories(userId: string): number {
 export function createDefaultCategories(userId: string): Category[] {
   const defaultCategories = [
     {
-      name: 'Work',
-      description: 'Work-related activities',
-      color: '#3b82f6',
-      emoji: '💼',
+      name: "Work",
+      description: "Work-related activities",
+      color: "#3b82f6",
+      emoji: "💼",
       is_productive: true,
-      is_default: true
+      is_default: true,
     },
     {
-      name: 'Personal',
-      description: 'Personal activities',
-      color: '#8b5cf6',
-      emoji: '🏠',
+      name: "Personal",
+      description: "Personal activities",
+      color: "#8b5cf6",
+      emoji: "🏠",
       is_productive: true,
-      is_default: true
+      is_default: true,
     },
     {
-      name: 'Entertainment',
-      description: 'Entertainment and leisure',
-      color: '#ec4899',
-      emoji: '🎮',
+      name: "Entertainment",
+      description: "Entertainment and leisure",
+      color: "#ec4899",
+      emoji: "🎮",
       is_productive: false,
-      is_default: true
+      is_default: true,
     },
     {
-      name: 'Communication',
-      description: 'Email, messaging, meetings',
-      color: '#10b981',
-      emoji: '💬',
+      name: "Communication",
+      description: "Email, messaging, meetings",
+      color: "#10b981",
+      emoji: "💬",
       is_productive: true,
-      is_default: true
+      is_default: true,
     },
     {
-      name: 'Uncategorized',
-      description: 'Uncategorized activities',
-      color: '#6b7280',
-      emoji: '❓',
+      name: "Uncategorized",
+      description: "Uncategorized activities",
+      color: "#6b7280",
+      emoji: "❓",
       is_productive: false,
-      is_default: true
-    }
+      is_default: true,
+    },
   ];
 
-  return defaultCategories.map(cat =>
+  return defaultCategories.map((cat) =>
     createCategory({
       ...cat,
       user_id: userId,
-      is_archived: false
-    })
+      is_archived: false,
+    }),
   );
 }

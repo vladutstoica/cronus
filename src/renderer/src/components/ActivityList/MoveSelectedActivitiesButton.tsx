@@ -1,32 +1,37 @@
-import { PlusCircle } from 'lucide-react'
-import { Category as SharedCategory } from '@shared/types'
-import { Button } from '../ui/button'
+import { PlusCircle } from "lucide-react";
+import { Category as SharedCategory } from "@shared/types";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '../ui/dropdown-menu'
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 interface MoveSelectedActivitiesButtonProps {
-  otherCategories: SharedCategory[]
-  handleMove: (targetCategoryId: string) => void
-  isMoving: boolean
-  onAddNewCategory: () => void
+  otherCategories: SharedCategory[];
+  handleMove: (targetCategoryId: string) => void;
+  isMoving: boolean;
+  onAddNewCategory: () => void;
 }
 
 export const MoveSelectedActivitiesButton = ({
   otherCategories,
   handleMove,
   isMoving,
-  onAddNewCategory
+  onAddNewCategory,
 }: MoveSelectedActivitiesButtonProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-6 px-2 py-1 text-xs" disabled={isMoving}>
-          {isMoving ? 'Moving...' : 'Move selected'}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 py-1 text-xs"
+          disabled={isMoving}
+        >
+          {isMoving ? "Moving..." : "Move selected"}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
@@ -56,5 +61,5 @@ export const MoveSelectedActivitiesButton = ({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
+  );
+};

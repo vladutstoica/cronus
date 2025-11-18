@@ -1,150 +1,167 @@
-import { AlertCircle, CheckCircle, Download, Loader2, RefreshCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { localApi } from '../../lib/localApi'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Switch } from '../ui/switch'
+import {
+  AlertCircle,
+  CheckCircle,
+  Download,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { localApi } from "../../lib/localApi";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Switch } from "../ui/switch";
 
-type AIProvider = 'ollama' | 'lmstudio'
+type AIProvider = "ollama" | "lmstudio";
 
 interface ConnectionStatus {
-  tested: boolean
-  connected: boolean
-  message: string
+  tested: boolean;
+  connected: boolean;
+  message: string;
 }
 
 export function AISettings() {
   // General AI settings
-  const [aiEnabled, setAiEnabled] = useState(true)
-  const [screenshotsEnabled, setScreenshotsEnabled] = useState(false)
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('ollama')
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [screenshotsEnabled, setScreenshotsEnabled] = useState(false);
+  const [selectedProvider, setSelectedProvider] =
+    useState<AIProvider>("ollama");
 
   // Ollama settings
-  const [ollamaBaseUrl, setOllamaBaseUrl] = useState('http://localhost:11434')
-  const [ollamaModel, setOllamaModel] = useState('llama3.2:1b')
-  const [ollamaModels, setOllamaModels] = useState<string[]>([])
+  const [ollamaBaseUrl, setOllamaBaseUrl] = useState("http://localhost:11434");
+  const [ollamaModel, setOllamaModel] = useState("llama3.2:1b");
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [ollamaStatus, setOllamaStatus] = useState<ConnectionStatus>({
     tested: false,
     connected: false,
-    message: ''
-  })
+    message: "",
+  });
 
   // LM Studio settings
-  const [lmstudioBaseUrl, setLmstudioBaseUrl] = useState('http://localhost:1234/v1')
-  const [lmstudioModel, setLmstudioModel] = useState('')
-  const [lmstudioModels, setLmstudioModels] = useState<string[]>([])
+  const [lmstudioBaseUrl, setLmstudioBaseUrl] = useState(
+    "http://localhost:1234/v1",
+  );
+  const [lmstudioModel, setLmstudioModel] = useState("");
+  const [lmstudioModels, setLmstudioModels] = useState<string[]>([]);
   const [lmstudioStatus, setLmstudioStatus] = useState<ConnectionStatus>({
     tested: false,
     connected: false,
-    message: ''
-  })
+    message: "",
+  });
 
   // Loading states
-  const [isTestingConnection, setIsTestingConnection] = useState(false)
-  const [isLoadingModels, setIsLoadingModels] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Load settings on mount
   useEffect(() => {
-    loadSettings()
-  }, [])
+    loadSettings();
+  }, []);
 
   const loadSettings = async () => {
     try {
-      const settings = await localApi.settings.getAll()
-      setAiEnabled(settings.ai_enabled === 'true')
-      setScreenshotsEnabled(settings.screenshots_enabled === 'true')
-      const provider = (settings.ai_provider as AIProvider) || 'ollama'
-      setSelectedProvider(provider)
-      setOllamaBaseUrl(settings.ollama_base_url || 'http://localhost:11434')
-      setOllamaModel(settings.ollama_model || 'llama3.2:1b')
-      setLmstudioBaseUrl(settings.lmstudio_base_url || 'http://localhost:1234/v1')
-      setLmstudioModel(settings.lmstudio_model || '')
+      const settings = await localApi.settings.getAll();
+      setAiEnabled(settings.ai_enabled === "true");
+      setScreenshotsEnabled(settings.screenshots_enabled === "true");
+      const provider = (settings.ai_provider as AIProvider) || "ollama";
+      setSelectedProvider(provider);
+      setOllamaBaseUrl(settings.ollama_base_url || "http://localhost:11434");
+      setOllamaModel(settings.ollama_model || "llama3.2:1b");
+      setLmstudioBaseUrl(
+        settings.lmstudio_base_url || "http://localhost:1234/v1",
+      );
+      setLmstudioModel(settings.lmstudio_model || "");
 
       // Auto-test connection and load models if provider is configured
-      if (settings.ai_enabled === 'true') {
+      if (settings.ai_enabled === "true") {
         // Test connection for the active provider
         const baseUrl =
-          provider === 'ollama'
-            ? settings.ollama_base_url || 'http://localhost:11434'
-            : settings.lmstudio_base_url || 'http://localhost:1234/v1'
+          provider === "ollama"
+            ? settings.ollama_base_url || "http://localhost:11434"
+            : settings.lmstudio_base_url || "http://localhost:1234/v1";
 
-        const result = await localApi.ai.testConnection(provider, baseUrl)
+        const result = await localApi.ai.testConnection(provider, baseUrl);
 
         const status = {
           tested: true,
           connected: result.success,
-          message: result.success ? 'Connected' : result.message
-        }
+          message: result.success ? "Connected" : result.message,
+        };
 
-        if (provider === 'ollama') {
-          setOllamaStatus(status)
+        if (provider === "ollama") {
+          setOllamaStatus(status);
           if (result.success && result.models) {
-            setOllamaModels(result.models)
+            setOllamaModels(result.models);
           }
         } else {
-          setLmstudioStatus(status)
+          setLmstudioStatus(status);
           if (result.success && result.models) {
-            setLmstudioModels(result.models)
+            setLmstudioModels(result.models);
           }
         }
       }
     } catch (error) {
-      console.error('Failed to load settings:', error)
+      console.error("Failed to load settings:", error);
     }
-  }
+  };
 
   const handleAIToggle = async (checked: boolean) => {
-    setAiEnabled(checked)
-    await localApi.settings.set('ai_enabled', checked)
-  }
+    setAiEnabled(checked);
+    await localApi.settings.set("ai_enabled", checked);
+  };
 
   const handleScreenshotsToggle = async (checked: boolean) => {
-    setScreenshotsEnabled(checked)
-    await localApi.settings.set('screenshots_enabled', checked)
-  }
+    setScreenshotsEnabled(checked);
+    await localApi.settings.set("screenshots_enabled", checked);
+  };
 
   const handleProviderChange = async (provider: AIProvider) => {
-    setSelectedProvider(provider)
-    await localApi.settings.set('ai_provider', provider)
+    setSelectedProvider(provider);
+    await localApi.settings.set("ai_provider", provider);
 
     // Clear availability cache when provider changes
-    await localApi.ai.clearAvailabilityCache()
-  }
+    await localApi.ai.clearAvailabilityCache();
+  };
 
   const handleTestConnection = async (provider: AIProvider) => {
-    setIsTestingConnection(true)
-    const baseUrl = provider === 'ollama' ? ollamaBaseUrl : lmstudioBaseUrl
+    setIsTestingConnection(true);
+    const baseUrl = provider === "ollama" ? ollamaBaseUrl : lmstudioBaseUrl;
 
     try {
-      const result = await localApi.ai.testConnection(provider, baseUrl)
+      const result = await localApi.ai.testConnection(provider, baseUrl);
 
       const status: ConnectionStatus = {
         tested: true,
         connected: result.success,
-        message: result.message
-      }
+        message: result.message,
+      };
 
-      if (provider === 'ollama') {
-        setOllamaStatus(status)
+      if (provider === "ollama") {
+        setOllamaStatus(status);
         if (result.success && result.models) {
-          setOllamaModels(result.models)
+          setOllamaModels(result.models);
           // Auto-select first model if none selected
           if (!ollamaModel && result.models.length > 0) {
-            setOllamaModel(result.models[0])
-            await localApi.settings.set('ollama_model', result.models[0])
+            setOllamaModel(result.models[0]);
+            await localApi.settings.set("ollama_model", result.models[0]);
           }
         }
       } else {
-        setLmstudioStatus(status)
+        setLmstudioStatus(status);
         if (result.success && result.models) {
-          setLmstudioModels(result.models)
+          setLmstudioModels(result.models);
           // Auto-select first model if none selected
           if (!lmstudioModel && result.models.length > 0) {
-            setLmstudioModel(result.models[0])
-            await localApi.settings.set('lmstudio_model', result.models[0])
+            setLmstudioModel(result.models[0]);
+            await localApi.settings.set("lmstudio_model", result.models[0]);
           }
         }
       }
@@ -152,87 +169,104 @@ export function AISettings() {
       const status: ConnectionStatus = {
         tested: true,
         connected: false,
-        message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      }
+        message: `Connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      };
 
-      if (provider === 'ollama') {
-        setOllamaStatus(status)
+      if (provider === "ollama") {
+        setOllamaStatus(status);
       } else {
-        setLmstudioStatus(status)
+        setLmstudioStatus(status);
       }
     } finally {
-      setIsTestingConnection(false)
+      setIsTestingConnection(false);
     }
-  }
+  };
 
   const handleRefreshModels = async (provider: AIProvider) => {
-    setIsLoadingModels(true)
+    setIsLoadingModels(true);
     try {
-      const models = await localApi.ai.listProviderModels(provider)
-      if (provider === 'ollama') {
-        setOllamaModels(models)
+      const models = await localApi.ai.listProviderModels(provider);
+      if (provider === "ollama") {
+        setOllamaModels(models);
       } else {
-        setLmstudioModels(models)
+        setLmstudioModels(models);
       }
     } catch (error) {
-      console.error('Failed to refresh models:', error)
+      console.error("Failed to refresh models:", error);
     } finally {
-      setIsLoadingModels(false)
+      setIsLoadingModels(false);
     }
-  }
+  };
 
   const handleOllamaBaseUrlChange = async (url: string) => {
-    setOllamaBaseUrl(url)
-    await localApi.settings.set('ollama_base_url', url)
+    setOllamaBaseUrl(url);
+    await localApi.settings.set("ollama_base_url", url);
     // Reset connection status when URL changes
-    setOllamaStatus({ tested: false, connected: false, message: '' })
-  }
+    setOllamaStatus({ tested: false, connected: false, message: "" });
+  };
 
   const handleLmstudioBaseUrlChange = async (url: string) => {
-    setLmstudioBaseUrl(url)
-    await localApi.settings.set('lmstudio_base_url', url)
+    setLmstudioBaseUrl(url);
+    await localApi.settings.set("lmstudio_base_url", url);
     // Reset connection status when URL changes
-    setLmstudioStatus({ tested: false, connected: false, message: '' })
-  }
+    setLmstudioStatus({ tested: false, connected: false, message: "" });
+  };
 
   const handleOllamaModelChange = async (model: string) => {
-    setOllamaModel(model)
-    await localApi.settings.set('ollama_model', model)
-  }
+    setOllamaModel(model);
+    await localApi.settings.set("ollama_model", model);
+  };
 
   const handleLmstudioModelChange = async (model: string) => {
-    setLmstudioModel(model)
-    await localApi.settings.set('lmstudio_model', model)
-  }
+    setLmstudioModel(model);
+    await localApi.settings.set("lmstudio_model", model);
+  };
 
   const handleDownloadModel = async (modelName: string) => {
-    setIsDownloading(true)
+    setIsDownloading(true);
     try {
-      await localApi.ollama.pullModel(modelName)
-      await handleRefreshModels('ollama')
+      await localApi.ollama.pullModel(modelName);
+      await handleRefreshModels("ollama");
     } catch (error) {
-      console.error('Failed to download model:', error)
+      console.error("Failed to download model:", error);
     } finally {
-      setIsDownloading(false)
+      setIsDownloading(false);
     }
-  }
+  };
 
   const popularModels = [
-    { name: 'llama3.2:1b', description: 'Fastest & lightweight (~1.3GB)', recommended: true },
-    { name: 'llama3.2:3b', description: 'Fast & balanced (~2GB)', recommended: false },
-    { name: 'llama3.1', description: 'More accurate (~4.7GB)', recommended: false },
-    { name: 'mistral', description: 'Alternative model (~4GB)', recommended: false }
-  ]
+    {
+      name: "llama3.2:1b",
+      description: "Fastest & lightweight (~1.3GB)",
+      recommended: true,
+    },
+    {
+      name: "llama3.2:3b",
+      description: "Fast & balanced (~2GB)",
+      recommended: false,
+    },
+    {
+      name: "llama3.1",
+      description: "More accurate (~4.7GB)",
+      recommended: false,
+    },
+    {
+      name: "mistral",
+      description: "Alternative model (~4GB)",
+      recommended: false,
+    },
+  ];
 
-  const currentStatus = selectedProvider === 'ollama' ? ollamaStatus : lmstudioStatus
+  const currentStatus =
+    selectedProvider === "ollama" ? ollamaStatus : lmstudioStatus;
 
   return (
     <div className="bg-muted/30 rounded-lg p-6 border border-border space-y-6">
       <div>
         <h2 className="text-xl font-semibold mb-2">Third-party AI Providers</h2>
         <p className="text-sm text-muted-foreground mb-3">
-          Use local AI models with Ollama or LM Studio for intelligent categorization. No API keys
-          needed!
+          Use local AI models with Ollama or LM Studio for intelligent
+          categorization. No API keys needed!
         </p>
         <div className="flex gap-3 text-xs">
           <a
@@ -262,7 +296,11 @@ export function AISettings() {
             Use AI to intelligently categorize your activities
           </p>
         </div>
-        <Switch id="ai-enabled" checked={aiEnabled} onCheckedChange={handleAIToggle} />
+        <Switch
+          id="ai-enabled"
+          checked={aiEnabled}
+          onCheckedChange={handleAIToggle}
+        />
       </div>
 
       {/* Provider Selection */}
@@ -270,7 +308,10 @@ export function AISettings() {
         <>
           <div className="space-y-2">
             <Label htmlFor="provider-select">AI Provider</Label>
-            <Select value={selectedProvider} onValueChange={handleProviderChange}>
+            <Select
+              value={selectedProvider}
+              onValueChange={handleProviderChange}
+            >
               <SelectTrigger id="provider-select">
                 <SelectValue placeholder="Select a provider" />
               </SelectTrigger>
@@ -282,7 +323,7 @@ export function AISettings() {
           </div>
 
           {/* Ollama Configuration */}
-          {selectedProvider === 'ollama' && (
+          {selectedProvider === "ollama" && (
             <div className="space-y-4 p-4 border rounded-lg bg-background">
               <h3 className="text-sm font-medium">Ollama Configuration</h3>
 
@@ -303,13 +344,13 @@ export function AISettings() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleTestConnection('ollama')}
+                  onClick={() => handleTestConnection("ollama")}
                   disabled={isTestingConnection}
                 >
                   {isTestingConnection ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : (
-                    'Test Connection'
+                    "Test Connection"
                   )}
                 </Button>
 
@@ -318,12 +359,16 @@ export function AISettings() {
                     {currentStatus.connected ? (
                       <>
                         <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-green-600">{currentStatus.message}</span>
+                        <span className="text-sm text-green-600">
+                          {currentStatus.message}
+                        </span>
                       </>
                     ) : (
                       <>
                         <AlertCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-red-600">{currentStatus.message}</span>
+                        <span className="text-sm text-red-600">
+                          {currentStatus.message}
+                        </span>
                       </>
                     )}
                   </div>
@@ -338,14 +383,19 @@ export function AISettings() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRefreshModels('ollama')}
+                      onClick={() => handleRefreshModels("ollama")}
                       disabled={isLoadingModels}
                       className="h-6 px-2"
                     >
-                      <RefreshCw className={`w-3 h-3 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                      <RefreshCw
+                        className={`w-3 h-3 ${isLoadingModels ? "animate-spin" : ""}`}
+                      />
                     </Button>
                   </div>
-                  <Select value={ollamaModel} onValueChange={handleOllamaModelChange}>
+                  <Select
+                    value={ollamaModel}
+                    onValueChange={handleOllamaModelChange}
+                  >
                     <SelectTrigger id="ollama-model">
                       <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
@@ -370,14 +420,18 @@ export function AISettings() {
               {currentStatus.connected && (
                 <div className="space-y-3 pt-2 border-t">
                   <div>
-                    <h4 className="text-sm font-medium mb-1">Download Models</h4>
+                    <h4 className="text-sm font-medium mb-1">
+                      Download Models
+                    </h4>
                     <p className="text-xs text-muted-foreground">
                       Install popular models for AI categorization
                     </p>
                   </div>
                   <div className="grid gap-2">
                     {popularModels.map((model) => {
-                      const isInstalled = ollamaModels.some((m) => m.includes(model.name))
+                      const isInstalled = ollamaModels.some((m) =>
+                        m.includes(model.name),
+                      );
                       return (
                         <div
                           key={model.name}
@@ -385,15 +439,21 @@ export function AISettings() {
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">{model.name}</span>
+                              <span className="text-sm font-medium">
+                                {model.name}
+                              </span>
                               {model.recommended && (
                                 <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                                   Recommended
                                 </span>
                               )}
-                              {isInstalled && <CheckCircle className="w-4 h-4 text-green-500" />}
+                              {isInstalled && (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              )}
                             </div>
-                            <p className="text-xs text-muted-foreground">{model.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {model.description}
+                            </p>
                           </div>
                           {!isInstalled && (
                             <Button
@@ -413,7 +473,7 @@ export function AISettings() {
                             </Button>
                           )}
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -422,7 +482,7 @@ export function AISettings() {
           )}
 
           {/* LM Studio Configuration */}
-          {selectedProvider === 'lmstudio' && (
+          {selectedProvider === "lmstudio" && (
             <div className="space-y-4 p-4 border rounded-lg bg-background">
               <h3 className="text-sm font-medium">LM Studio Configuration</h3>
 
@@ -443,13 +503,13 @@ export function AISettings() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleTestConnection('lmstudio')}
+                  onClick={() => handleTestConnection("lmstudio")}
                   disabled={isTestingConnection}
                 >
                   {isTestingConnection ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : (
-                    'Test Connection'
+                    "Test Connection"
                   )}
                 </Button>
 
@@ -458,12 +518,16 @@ export function AISettings() {
                     {currentStatus.connected ? (
                       <>
                         <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-green-600">{currentStatus.message}</span>
+                        <span className="text-sm text-green-600">
+                          {currentStatus.message}
+                        </span>
                       </>
                     ) : (
                       <>
                         <AlertCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-red-600">{currentStatus.message}</span>
+                        <span className="text-sm text-red-600">
+                          {currentStatus.message}
+                        </span>
                       </>
                     )}
                   </div>
@@ -478,14 +542,19 @@ export function AISettings() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRefreshModels('lmstudio')}
+                      onClick={() => handleRefreshModels("lmstudio")}
                       disabled={isLoadingModels}
                       className="h-6 px-2"
                     >
-                      <RefreshCw className={`w-3 h-3 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                      <RefreshCw
+                        className={`w-3 h-3 ${isLoadingModels ? "animate-spin" : ""}`}
+                      />
                     </Button>
                   </div>
-                  <Select value={lmstudioModel} onValueChange={handleLmstudioModelChange}>
+                  <Select
+                    value={lmstudioModel}
+                    onValueChange={handleLmstudioModelChange}
+                  >
                     <SelectTrigger id="lmstudio-model">
                       <SelectValue placeholder="Select a model" />
                     </SelectTrigger>
@@ -504,7 +573,8 @@ export function AISettings() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Load a model in LM Studio first, then refresh the list above.
+                    Load a model in LM Studio first, then refresh the list
+                    above.
                   </p>
                 </div>
               )}
@@ -531,10 +601,11 @@ export function AISettings() {
       {/* Info Section */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
         <p className="text-xs text-foreground">
-          <strong>Privacy First:</strong> All AI processing happens on your machine. No data is sent
-          to external servers. Both Ollama and LM Studio are free and open-source.
+          <strong>Privacy First:</strong> All AI processing happens on your
+          machine. No data is sent to external servers. Both Ollama and LM
+          Studio are free and open-source.
         </p>
       </div>
     </div>
-  )
+  );
 }

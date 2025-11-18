@@ -1,14 +1,14 @@
-import { processColor } from '../../../lib/colors'
+import { processColor } from "../../../lib/colors";
 
 interface GroupedWeekViewBarProps {
-  productiveHeight: number
-  unproductiveHeight: number
-  isDarkMode: boolean
-  productiveColor: string
-  unproductiveColor: string
-  totalProductiveDuration: number
-  totalUnproductiveDuration: number
-  isLoading?: boolean
+  productiveHeight: number;
+  unproductiveHeight: number;
+  isDarkMode: boolean;
+  productiveColor: string;
+  unproductiveColor: string;
+  totalProductiveDuration: number;
+  totalUnproductiveDuration: number;
+  isLoading?: boolean;
 }
 
 export const GroupedWeekViewBar = ({
@@ -18,7 +18,7 @@ export const GroupedWeekViewBar = ({
   productiveColor,
   unproductiveColor,
   totalProductiveDuration,
-  totalUnproductiveDuration
+  totalUnproductiveDuration,
 }: GroupedWeekViewBarProps) => {
   return (
     <div className="w-full h-full flex flex-row justify-evenly items-end">
@@ -29,8 +29,8 @@ export const GroupedWeekViewBar = ({
             height: `${productiveHeight}%`,
             backgroundColor: processColor(productiveColor, {
               isDarkMode,
-              opacity: isDarkMode ? 0.7 : 0.6
-            })
+              opacity: isDarkMode ? 0.7 : 0.6,
+            }),
           }}
         />
       )}
@@ -41,11 +41,11 @@ export const GroupedWeekViewBar = ({
             height: `${unproductiveHeight}%`,
             backgroundColor: processColor(unproductiveColor, {
               isDarkMode,
-              opacity: isDarkMode ? 0.7 : 0.6
-            })
+              opacity: isDarkMode ? 0.7 : 0.6,
+            }),
           }}
         />
       )}
     </div>
-  )
-}
+  );
+};

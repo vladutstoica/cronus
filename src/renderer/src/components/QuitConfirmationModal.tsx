@@ -1,21 +1,27 @@
-import { X } from 'lucide-react'
-import { Button } from './ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { X } from "lucide-react";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 
 interface QuitConfirmationModalProps {
-  isOpen: boolean
-  onQuit: () => void
-  onKeepRunning: () => void
-  onOpenSettings: () => void
+  isOpen: boolean;
+  onQuit: () => void;
+  onKeepRunning: () => void;
+  onOpenSettings: () => void;
 }
 
 export function QuitConfirmationModal({
   isOpen,
   onQuit,
   onKeepRunning,
-  onOpenSettings
+  onOpenSettings,
 }: QuitConfirmationModalProps) {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <>
@@ -33,19 +39,23 @@ export function QuitConfirmationModal({
           <CardHeader>
             <CardTitle>Are you sure you want to quit Cronus?</CardTitle>
             <CardDescription>
-              We automatically pause tracking when your computer sleeps. You can also pause tracking
-              manually instead of quitting.
+              We automatically pause tracking when your computer sleeps. You can
+              also pause tracking manually instead of quitting.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-col gap-2">
-              <Button onClick={onOpenSettings} variant="outline" className="w-full">
+              <Button
+                onClick={onOpenSettings}
+                variant="outline"
+                className="w-full"
+              >
                 Pause Tracking
               </Button>
               <Button
                 onClick={() =>
                   window.open(
-                    'mailto:wallawitsch@gmail.com, arne.strickmann@googlemail.com?subject=Cronus%20Feedback'
+                    "mailto:wallawitsch@gmail.com, arne.strickmann@googlemail.com?subject=Cronus%20Feedback",
                   )
                 }
                 variant="outline"
@@ -61,5 +71,5 @@ export function QuitConfirmationModal({
         </Card>
       </div>
     </>
-  )
+  );
 }

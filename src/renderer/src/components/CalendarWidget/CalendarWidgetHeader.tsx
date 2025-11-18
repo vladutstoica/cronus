@@ -1,23 +1,23 @@
-import clsx from 'clsx'
-import { Layers } from 'lucide-react'
-import { useMemo } from 'react'
-import { Button } from '../ui/button'
-import { Toggle } from '../ui/toggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
-import { CalendarHeaderDateNavigation } from './DayTimeline/CalendarHeaderDateNavigation'
+import clsx from "clsx";
+import { Layers } from "lucide-react";
+import { useMemo } from "react";
+import { Button } from "../ui/button";
+import { Toggle } from "../ui/toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { CalendarHeaderDateNavigation } from "./DayTimeline/CalendarHeaderDateNavigation";
 
 interface CalendarWidgetHeaderProps {
-  handlePrev: () => void
-  width: number
-  formattedDate: string
-  selectedDate: Date
-  handleNext: () => void
-  canGoNext: () => boolean
-  viewMode: 'day' | 'week'
-  onViewModeChange: (mode: 'day' | 'week') => void
-  weekViewMode: 'stacked' | 'grouped'
-  setWeekViewMode: (mode: 'stacked' | 'grouped') => void
-  onDateSelect: (date: Date) => void
+  handlePrev: () => void;
+  width: number;
+  formattedDate: string;
+  selectedDate: Date;
+  handleNext: () => void;
+  canGoNext: () => boolean;
+  viewMode: "day" | "week";
+  onViewModeChange: (mode: "day" | "week") => void;
+  weekViewMode: "stacked" | "grouped";
+  setWeekViewMode: (mode: "stacked" | "grouped") => void;
+  onDateSelect: (date: Date) => void;
 }
 
 export const CalendarWidgetHeader = ({
@@ -31,39 +31,41 @@ export const CalendarWidgetHeader = ({
   onViewModeChange,
   weekViewMode,
   setWeekViewMode,
-  onDateSelect
+  onDateSelect,
 }: CalendarWidgetHeaderProps) => {
   const compactDate = useMemo(() => {
-    if (viewMode === 'week') {
-      const match = formattedDate.match(/(\w{3})\s+(\d+)\s*-\s*(\w{3}?\s*)?(\d+)/)
+    if (viewMode === "week") {
+      const match = formattedDate.match(
+        /(\w{3})\s+(\d+)\s*-\s*(\w{3}?\s*)?(\d+)/,
+      );
       if (match) {
-        const [, startMonth, startDay, endMonth, endDay] = match
+        const [, startMonth, startDay, endMonth, endDay] = match;
         if (endMonth && endMonth.trim()) {
-          return `${startMonth} ${startDay}-${endMonth.trim()} ${endDay}`
+          return `${startMonth} ${startDay}-${endMonth.trim()} ${endDay}`;
         }
-        return `${startMonth} ${startDay}-${endDay}`
+        return `${startMonth} ${startDay}-${endDay}`;
       }
-      return formattedDate
+      return formattedDate;
     }
     // Use selectedDate for an accurate, simple, and timezone-correct date format.
     return selectedDate.toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    })
-  }, [formattedDate, selectedDate, viewMode])
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  }, [formattedDate, selectedDate, viewMode]);
 
   const fullDate = useMemo(() => {
-    if (viewMode === 'week') {
-      return formattedDate
+    if (viewMode === "week") {
+      return formattedDate;
     }
     // Use selectedDate for an accurate, simple, and timezone-correct date format.
     return selectedDate.toLocaleDateString(undefined, {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric'
-    })
-  }, [formattedDate, selectedDate, viewMode])
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  }, [formattedDate, selectedDate, viewMode]);
 
   return (
     <div className="p-2 border-b border-1 border border-border rounded-t-lg shadow-sm sticky top-0 bg-card z-10">
@@ -83,21 +85,25 @@ export const CalendarWidgetHeader = ({
         </div>
 
         <div className="flex gap-2 items-center">
-          {viewMode === 'week' && (
+          {viewMode === "week" && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Toggle
                   variant="outline"
                   size="xs"
                   id="week-view-mode"
-                  pressed={weekViewMode === 'stacked'}
-                  onPressedChange={(pressed) => setWeekViewMode(pressed ? 'stacked' : 'grouped')}
+                  pressed={weekViewMode === "stacked"}
+                  onPressedChange={(pressed) =>
+                    setWeekViewMode(pressed ? "stacked" : "grouped")
+                  }
                   aria-label="Toggle stacked view"
                 >
                   <Layers
                     size={16}
                     className={clsx(
-                      weekViewMode === 'stacked' ? 'text-primary' : 'text-muted-foreground'
+                      weekViewMode === "stacked"
+                        ? "text-primary"
+                        : "text-muted-foreground",
                     )}
                   />
                 </Toggle>
@@ -110,12 +116,14 @@ export const CalendarWidgetHeader = ({
           <Button
             variant="outline"
             size="xs"
-            onClick={() => onViewModeChange(viewMode === 'day' ? 'week' : 'day')}
+            onClick={() =>
+              onViewModeChange(viewMode === "day" ? "week" : "day")
+            }
           >
-            {viewMode === 'day' ? 'Stats' : 'Day'}
+            {viewMode === "day" ? "Stats" : "Day"}
           </Button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,47 +1,49 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { DashboardView } from './components/DashboardView'
-import DistractionStatusBar from './components/DistractionStatusBar'
-import { TutorialModal } from './components/Onboarding/TutorialModal'
-import { OnboardingModal } from './components/OnboardingModal'
-import { QuitConfirmationModal } from './components/QuitConfirmationModal'
-import RecategorizeDialog from './components/RecategorizeDialog'
-import { SettingsPage } from './components/SettingsPage'
-import { Toaster } from './components/ui/toaster'
-import { TooltipProvider } from './components/ui/tooltip'
-import { UpdateNotification } from './components/UpdateNotification'
-import { useAuth } from './contexts/AuthContext'
-import { useSettings } from './contexts/SettingsContext'
-import { useAccessibilityPermission } from './hooks/useAccessibilityPermission'
-import { useActivityTracking } from './hooks/useActivityTracking'
-import { useOnboardingLogic } from './hooks/useOnboardingLogicApp'
-import { cn } from './lib/utils'
+import React, { useCallback, useEffect, useState } from "react";
+import { DashboardView } from "./components/DashboardView";
+import DistractionStatusBar from "./components/DistractionStatusBar";
+import { TutorialModal } from "./components/Onboarding/TutorialModal";
+import { OnboardingModal } from "./components/OnboardingModal";
+import { QuitConfirmationModal } from "./components/QuitConfirmationModal";
+import RecategorizeDialog from "./components/RecategorizeDialog";
+import { SettingsPage } from "./components/SettingsPage";
+import { Toaster } from "./components/ui/toaster";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { UpdateNotification } from "./components/UpdateNotification";
+import { useAuth } from "./contexts/AuthContext";
+import { useSettings } from "./contexts/SettingsContext";
+import { useAccessibilityPermission } from "./hooks/useAccessibilityPermission";
+import { useActivityTracking } from "./hooks/useActivityTracking";
+import { useOnboardingLogic } from "./hooks/useOnboardingLogicApp";
+import { cn } from "./lib/utils";
 
-export const APP_NAME = 'Cronus' + (process.env.NODE_ENV === 'development' ? ' Dev' : '')
-export const APP_USP = 'The first context-aware, AI distraction and time tracker.'
+export const APP_NAME =
+  "Cronus" + (process.env.NODE_ENV === "development" ? " Dev" : "");
+export const APP_USP =
+  "The first context-aware, AI distraction and time tracker.";
 
 export interface ActivityToRecategorize {
-  identifier: string
-  nameToDisplay: string
-  itemType: 'app' | 'website'
-  currentCategoryId: string
-  currentCategoryName: string
-  currentCategoryColor: string
-  categoryReasoning?: string
-  originalUrl?: string
+  identifier: string;
+  nameToDisplay: string;
+  itemType: "app" | "website";
+  currentCategoryId: string;
+  currentCategoryName: string;
+  currentCategoryColor: string;
+  categoryReasoning?: string;
+  originalUrl?: string;
 }
 
 export function MainAppContent(): React.ReactElement {
-  const { isAuthenticated } = useAuth()
-  const { isSettingsOpen, setIsSettingsOpen, setFocusOn } = useSettings()
+  const { isAuthenticated } = useAuth();
+  const { isSettingsOpen, setIsSettingsOpen, setFocusOn } = useSettings();
 
-  const [isMiniTimerVisible, setIsMiniTimerVisible] = useState(false)
-  const [isTrackingPaused, setIsTrackingPaused] = useState(false)
-  const [showQuitModal, setShowQuitModal] = useState(false)
-  const [isSystemRestarting, setIsSystemRestarting] = useState(false)
+  const [isMiniTimerVisible, setIsMiniTimerVisible] = useState(false);
+  const [isTrackingPaused, setIsTrackingPaused] = useState(false);
+  const [showQuitModal, setShowQuitModal] = useState(false);
+  const [isSystemRestarting, setIsSystemRestarting] = useState(false);
 
   // Use the accessibility permission hook
   const { accessibilityPermissionChecked, missingAccessibilityPermissions } =
-    useAccessibilityPermission()
+    useAccessibilityPermission();
 
   // Use the onboarding logic hook
   const {
@@ -49,12 +51,12 @@ export function MainAppContent(): React.ReactElement {
     showTutorial,
     setShowTutorial,
     handleOnboardingComplete,
-    handleResetOnboarding
+    handleResetOnboarding,
   } = useOnboardingLogic({
     permissionsChecked: accessibilityPermissionChecked,
     missingAccessibilityPermissions,
-    isAuthenticated
-  })
+    isAuthenticated,
+  });
 
   // Use the activity tracking hook
   const {
@@ -67,67 +69,77 @@ export function MainAppContent(): React.ReactElement {
     isLoadingAllCategories,
     openRecategorizeDialog,
     handleSaveRecategorize,
-    updateActivityCategoryMutation
+    updateActivityCategoryMutation,
   } = useActivityTracking({
     isAuthenticated,
     isTrackingPaused,
     setIsSettingsOpen,
-    setFocusOn
-  })
+    setFocusOn,
+  });
 
   const handleSettingsClick = useCallback(() => {
-    setIsSettingsOpen(!isSettingsOpen)
-  }, [setIsSettingsOpen, isSettingsOpen])
+    setIsSettingsOpen(!isSettingsOpen);
+  }, [setIsSettingsOpen, isSettingsOpen]);
 
   const handleToggleTracking = useCallback(async () => {
     try {
       if (isTrackingPaused) {
-        await window.api.resumeWindowTracking()
-        setIsTrackingPaused(false)
+        await window.api.resumeWindowTracking();
+        setIsTrackingPaused(false);
       } else {
-        await window.api.pauseWindowTracking()
-        setIsTrackingPaused(true)
+        await window.api.pauseWindowTracking();
+        setIsTrackingPaused(true);
       }
     } catch (error) {
-      console.error('Failed to toggle tracking:', error)
+      console.error("Failed to toggle tracking:", error);
     }
-  }, [isTrackingPaused])
+  }, [isTrackingPaused]);
 
   const handleOpenMiniTimer = (): void => {
     if (window.electron?.ipcRenderer) {
-      window.electron.ipcRenderer.send('show-floating-window')
+      window.electron.ipcRenderer.send("show-floating-window");
     }
-  }
+  };
 
   // Mini timer visibility management
   useEffect(() => {
     const fetchInitialVisibility = async (): Promise<void> => {
       if (window.api?.getFloatingWindowVisibility) {
         try {
-          const isVisible = await window.api.getFloatingWindowVisibility()
-          setIsMiniTimerVisible(isVisible)
+          const isVisible = await window.api.getFloatingWindowVisibility();
+          setIsMiniTimerVisible(isVisible);
         } catch (error) {
-          console.error('Failed to get mini timer visibility', error)
+          console.error("Failed to get mini timer visibility", error);
         }
       }
-    }
+    };
 
-    fetchInitialVisibility()
+    fetchInitialVisibility();
 
-    const handleVisibilityChange = (_event: unknown, isVisible: boolean): void => {
-      setIsMiniTimerVisible(isVisible)
-    }
+    const handleVisibilityChange = (
+      _event: unknown,
+      isVisible: boolean,
+    ): void => {
+      setIsMiniTimerVisible(isVisible);
+    };
 
-    const ipcRenderer = window.electron?.ipcRenderer
-    ipcRenderer?.on('floating-window-visibility-changed', handleVisibilityChange)
+    const ipcRenderer = window.electron?.ipcRenderer;
+    ipcRenderer?.on(
+      "floating-window-visibility-changed",
+      handleVisibilityChange,
+    );
     return () => {
-      ipcRenderer?.removeListener('floating-window-visibility-changed', handleVisibilityChange)
-    }
-  }, [])
+      ipcRenderer?.removeListener(
+        "floating-window-visibility-changed",
+        handleVisibilityChange,
+      );
+    };
+  }, []);
 
   // Auto-show floating window only after user completes onboarding and is authenticated
   useEffect(() => {
-    const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding') === 'true'
+    const hasCompletedOnboarding =
+      localStorage.getItem("hasCompletedOnboarding") === "true";
 
     if (
       isAuthenticated &&
@@ -135,73 +147,75 @@ export function MainAppContent(): React.ReactElement {
       hasCompletedOnboarding &&
       window.electron?.ipcRenderer
     ) {
-      window.electron.ipcRenderer.send('show-floating-window')
+      window.electron.ipcRenderer.send("show-floating-window");
     }
-  }, [isAuthenticated, showOnboarding])
+  }, [isAuthenticated, showOnboarding]);
 
   const handleTutorialClose = (): void => {
-    setShowTutorial(false)
-    localStorage.setItem('hasSeenTutorial', 'true')
-  }
+    setShowTutorial(false);
+    localStorage.setItem("hasSeenTutorial", "true");
+  };
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('hasSeenTutorial') === 'true'
-    const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding') === 'true'
+    const hasSeenTutorial = localStorage.getItem("hasSeenTutorial") === "true";
+    const hasCompletedOnboarding =
+      localStorage.getItem("hasCompletedOnboarding") === "true";
 
     if (hasCompletedOnboarding && !hasSeenTutorial) {
-      setShowTutorial(true)
+      setShowTutorial(true);
     }
-  }, [])
+  }, []);
 
   // Listen for Cmd+Q keyboard shortcut to show quit confirmation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'q') {
-        event.preventDefault()
+      if ((event.metaKey || event.ctrlKey) && event.key === "q") {
+        event.preventDefault();
 
-        const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding') === 'true'
+        const hasCompletedOnboarding =
+          localStorage.getItem("hasCompletedOnboarding") === "true";
         if (isSystemRestarting || !hasCompletedOnboarding) {
-          return
+          return;
         }
 
-        setShowQuitModal(true)
+        setShowQuitModal(true);
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isSystemRestarting])
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSystemRestarting]);
 
   const handleQuitConfirm = async () => {
     try {
-      await window.api.confirmQuit()
+      await window.api.confirmQuit();
     } catch (error) {}
-  }
+  };
 
   const handleKeepRunning = () => {
-    setShowQuitModal(false)
-  }
+    setShowQuitModal(false);
+  };
 
   const handleOpenSettingsFromModal = () => {
-    setShowQuitModal(false)
-    setIsSettingsOpen(true)
-    setFocusOn('pause-tracking')
-  }
+    setShowQuitModal(false);
+    setIsSettingsOpen(true);
+    setFocusOn("pause-tracking");
+  };
 
   const handleSystemRestartBegin = useCallback(() => {
-    setIsSystemRestarting(true)
-  }, [])
+    setIsSystemRestarting(true);
+  }, []);
 
   useEffect(() => {
-    document.title = APP_NAME
-  }, [])
+    document.title = APP_NAME;
+  }, []);
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className={cn('flex flex-col', !isSettingsOpen && 'h-screen')}>
+      <div className={cn("flex flex-col", !isSettingsOpen && "h-screen")}>
         <div className="sticky top-0 z-50 bg-white dark:bg-black">
           <div className="custom-title-bar">
             <span className="app-window-title">{APP_NAME}</span>
@@ -221,10 +235,14 @@ export function MainAppContent(): React.ReactElement {
         </div>
 
         <div className="flex-1 flex flex-col overflow-auto">
-          <div className={`flex-1 flex-col min-h-0 ${isSettingsOpen ? 'hidden' : 'flex'}`}>
+          <div
+            className={`flex-1 flex-col min-h-0 ${isSettingsOpen ? "hidden" : "flex"}`}
+          >
             <DashboardView />
           </div>
-          <div className={`flex-1 flex-col ${isSettingsOpen ? 'flex' : 'hidden'}`}>
+          <div
+            className={`flex-1 flex-col ${isSettingsOpen ? "flex" : "hidden"}`}
+          >
             <SettingsPage
               onResetOnboarding={handleResetOnboarding}
               isTrackingPaused={isTrackingPaused}
@@ -233,7 +251,9 @@ export function MainAppContent(): React.ReactElement {
           </div>
         </div>
 
-        {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
+        {showOnboarding && (
+          <OnboardingModal onComplete={handleOnboardingComplete} />
+        )}
 
         <QuitConfirmationModal
           isOpen={showQuitModal}
@@ -243,26 +263,31 @@ export function MainAppContent(): React.ReactElement {
         />
 
         <UpdateNotification onRestartBegin={handleSystemRestartBegin} />
-        <TutorialModal isFirstVisit={showTutorial} onClose={handleTutorialClose} />
+        <TutorialModal
+          isFirstVisit={showTutorial}
+          onClose={handleTutorialClose}
+        />
         <Toaster />
         {allCategories && recategorizeTarget && (
           <RecategorizeDialog
             open={isRecategorizeDialogOpen}
             onOpenChange={(isOpen) => {
               if (!isOpen) {
-                setRecategorizeTarget(null)
+                setRecategorizeTarget(null);
               }
-              setIsRecategorizeDialogOpen(isOpen)
+              setIsRecategorizeDialogOpen(isOpen);
             }}
             activityTarget={recategorizeTarget}
             allCategories={allCategories}
             onSave={handleSaveRecategorize}
-            isLoading={updateActivityCategoryMutation.isLoading || isLoadingAllCategories}
+            isLoading={
+              updateActivityCategoryMutation.isLoading || isLoadingAllCategories
+            }
             onAddNewCategory={() => {
-              setIsRecategorizeDialogOpen(false)
-              setRecategorizeTarget(null)
-              setIsSettingsOpen(true)
-              setFocusOn('categories')
+              setIsRecategorizeDialogOpen(false);
+              setRecategorizeTarget(null);
+              setIsSettingsOpen(true);
+              setFocusOn("categories");
             }}
             setIsSettingsOpen={setIsSettingsOpen}
             setFocusOn={setFocusOn}
@@ -270,5 +295,5 @@ export function MainAppContent(): React.ReactElement {
         )}
       </div>
     </TooltipProvider>
-  )
+  );
 }

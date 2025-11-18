@@ -1,38 +1,42 @@
-import { Check, Loader2, Smile } from 'lucide-react'
-import { JSX, useState } from 'react'
-import { Category } from '@shared/types'
-import { Button } from '../ui/button'
-import { EmojiPicker, EmojiPickerContent, EmojiPickerSearch } from '../ui/emoji-picker'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
-import { Switch } from '../ui/switch'
-import { Textarea } from '../ui/textarea'
-import { IsProductiveTooltip } from './IsProductiveTooltip'
+import { Check, Loader2, Smile } from "lucide-react";
+import { JSX, useState } from "react";
+import { Category } from "@shared/types";
+import { Button } from "../ui/button";
+import {
+  EmojiPicker,
+  EmojiPickerContent,
+  EmojiPickerSearch,
+} from "../ui/emoji-picker";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Switch } from "../ui/switch";
+import { Textarea } from "../ui/textarea";
+import { IsProductiveTooltip } from "./IsProductiveTooltip";
 
 export const notionStyleCategoryColors = [
-  '#3B82F6', // Blue - default productive
-  '#EC4899', // Pink - default unproductive
-  '#A855F7', // Purple
-  '#F97316', // Orange
-  '#CA8A04', // Gold
-  '#10B981', // Green
-  '#06B6D4', // Cyan
-  '#6B7280', // Gray
-  '#8B5CF6', // Violet
-  '#D946EF', // Fuchsia
-  '#F59E0B', // Amber
-  '#22C55E' // Lime
-]
+  "#3B82F6", // Blue - default productive
+  "#EC4899", // Pink - default unproductive
+  "#A855F7", // Purple
+  "#F97316", // Orange
+  "#CA8A04", // Gold
+  "#10B981", // Green
+  "#06B6D4", // Cyan
+  "#6B7280", // Gray
+  "#8B5CF6", // Violet
+  "#D946EF", // Fuchsia
+  "#F59E0B", // Amber
+  "#22C55E", // Lime
+];
 
 interface CategoryColorPickerProps {
-  selectedColor: string
-  onColorChange: (color: string) => void
+  selectedColor: string;
+  onColorChange: (color: string) => void;
 }
 
 function CategoryColorPicker({
   selectedColor,
-  onColorChange
+  onColorChange,
 }: CategoryColorPickerProps): JSX.Element {
   return (
     <Popover>
@@ -40,7 +44,10 @@ function CategoryColorPicker({
         <Button
           variant="outline"
           className="w-10 h-10 p-0 border-border hover:border-ring flex-shrink-0"
-          style={{ backgroundColor: selectedColor, transition: 'background-color 0.2s' }}
+          style={{
+            backgroundColor: selectedColor,
+            transition: "background-color 0.2s",
+          }}
           aria-label="Pick a color"
           title={selectedColor}
         ></Button>
@@ -54,70 +61,81 @@ function CategoryColorPicker({
               className={`w-8 h-8 rounded-full flex items-center justify-center focus:outline-none ring-1 ring-border hover:ring-2 hover:ring-ring transition-all`}
               style={{ backgroundColor: bgColor }}
               onClick={() => {
-                onColorChange(bgColor)
+                onColorChange(bgColor);
               }}
               title={bgColor}
             >
-              {selectedColor === bgColor && <Check size={18} className="text-white" />}
+              {selectedColor === bgColor && (
+                <Check size={18} className="text-white" />
+              )}
             </button>
           ))}
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
 
 // Basic Form for Create/Edit
 interface CategoryFormProps {
-  initialData?: Partial<Category>
-  onSave: (data: Omit<Category, '_id' | 'userId' | 'createdAt' | 'updatedAt'>) => void
-  onCancel: () => void
-  isSaving: boolean
+  initialData?: Partial<Category>;
+  onSave: (
+    data: Omit<Category, "_id" | "userId" | "createdAt" | "updatedAt">,
+  ) => void;
+  onCancel: () => void;
+  isSaving: boolean;
 }
 
 export function CategoryForm({
   initialData,
   onSave,
   onCancel,
-  isSaving
+  isSaving,
 }: CategoryFormProps): JSX.Element {
-  const [name, setName] = useState(initialData?.name || '')
-  const [description, setDescription] = useState(initialData?.description || '')
+  const [name, setName] = useState(initialData?.name || "");
+  const [description, setDescription] = useState(
+    initialData?.description || "",
+  );
   const [color, setColor] = useState(
     initialData?.color ||
-      notionStyleCategoryColors[Math.floor(Math.random() * notionStyleCategoryColors.length)]
-  )
-  const [emoji, setEmoji] = useState(initialData?.emoji || '')
+      notionStyleCategoryColors[
+        Math.floor(Math.random() * notionStyleCategoryColors.length)
+      ],
+  );
+  const [emoji, setEmoji] = useState(initialData?.emoji || "");
   const [isProductive, setIsProductive] = useState(
-    initialData?.isProductive === undefined ? true : initialData.isProductive
-  )
-  const [error, setError] = useState('')
+    initialData?.isProductive === undefined ? true : initialData.isProductive,
+  );
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!name.trim()) {
-      setError('Name is required.')
-      return
+      setError("Name is required.");
+      return;
     }
     if (!emoji) {
-      setError('Emoji is required.')
-      return
+      setError("Emoji is required.");
+      return;
     }
-    setError('')
+    setError("");
     onSave({
       name,
       description,
       color,
       emoji,
       isProductive,
-      isDefault: initialData?.isDefault ?? false
-    })
-  }
+      isDefault: initialData?.isDefault ?? false,
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <Label htmlFor="categoryName" className="block text-sm font-medium text-foreground mb-1">
+        <Label
+          htmlFor="categoryName"
+          className="block text-sm font-medium text-foreground mb-1"
+        >
           Name <span className="text-red-500">*</span>
         </Label>
         <Input
@@ -156,7 +174,11 @@ export function CategoryForm({
           <div className="flex items-center space-x-2 mt-1">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10 w-10 p-0 text-lg">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 w-10 p-0 text-lg"
+                >
                   {emoji || <Smile className="h-4 w-4" />}
                 </Button>
               </PopoverTrigger>
@@ -164,7 +186,7 @@ export function CategoryForm({
                 <EmojiPicker
                   className="h-[342px]"
                   onEmojiSelect={({ emoji: newEmoji }) => {
-                    setEmoji(newEmoji)
+                    setEmoji(newEmoji);
                   }}
                 >
                   <EmojiPickerSearch />
@@ -172,13 +194,18 @@ export function CategoryForm({
                 </EmojiPicker>
               </PopoverContent>
             </Popover>
-            <span className="text-sm text-muted-foreground">Choose an emoji for this category</span>
+            <span className="text-sm text-muted-foreground">
+              Choose an emoji for this category
+            </span>
           </div>
         </div>
         <div>
           <Label>Color</Label>
           <div className="flex items-start space-x-2 mt-1">
-            <CategoryColorPicker selectedColor={color} onColorChange={setColor} />
+            <CategoryColorPicker
+              selectedColor={color}
+              onColorChange={setColor}
+            />
             <span className="text-red-500">*</span>
           </div>
         </div>
@@ -188,9 +215,16 @@ export function CategoryForm({
         <Label>Type</Label>
         <IsProductiveTooltip>
           <div className="flex items-center space-x-2 mt-1 cursor-help">
-            <Switch id="isProductive" checked={isProductive} onCheckedChange={setIsProductive} />
-            <Label htmlFor="isProductive" className="text-foreground text-sm font-medium">
-              {isProductive ? 'Productive' : 'Unproductive'}
+            <Switch
+              id="isProductive"
+              checked={isProductive}
+              onCheckedChange={setIsProductive}
+            />
+            <Label
+              htmlFor="isProductive"
+              className="text-foreground text-sm font-medium"
+            >
+              {isProductive ? "Productive" : "Unproductive"}
             </Label>
           </div>
         </IsProductiveTooltip>
@@ -199,7 +233,12 @@ export function CategoryForm({
       {error && <p className="text-sm text-destructive-foreground">{error}</p>}
 
       <div className="flex justify-end space-x-4">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSaving}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSaving} className="flex items-center">
@@ -209,10 +248,10 @@ export function CategoryForm({
               Saving...
             </>
           ) : (
-            'Save Category'
+            "Save Category"
           )}
         </Button>
       </div>
     </form>
-  )
+  );
 }

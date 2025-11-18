@@ -1,5 +1,5 @@
-import { getDatabase } from '../index';
-import { randomBytes } from 'crypto';
+import { getDatabase } from "../index";
+import { randomBytes } from "crypto";
 
 export interface ActiveWindowEvent {
   id: string;
@@ -30,10 +30,10 @@ export interface ActiveWindowEvent {
  * Create a new active window event
  */
 export function createActiveWindowEvent(
-  event: Omit<ActiveWindowEvent, 'id' | 'created_at' | 'updated_at'>
+  event: Omit<ActiveWindowEvent, "id" | "created_at" | "updated_at">,
 ): ActiveWindowEvent {
   const db = getDatabase();
-  const id = randomBytes(16).toString('hex');
+  const id = randomBytes(16).toString("hex");
   const now = new Date().toISOString();
 
   const stmt = db.prepare(`
@@ -68,14 +68,14 @@ export function createActiveWindowEvent(
     event.old_category_reasoning,
     event.old_llm_summary,
     now,
-    now
+    now,
   );
 
   return {
     ...event,
     id,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
@@ -85,7 +85,7 @@ export function createActiveWindowEvent(
 export function getEventsByUserAndTimeRange(
   userId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ): ActiveWindowEvent[] {
   const db = getDatabase();
 
@@ -97,7 +97,11 @@ export function getEventsByUserAndTimeRange(
     ORDER BY timestamp DESC
   `);
 
-  return stmt.all(userId, startDate.toISOString(), endDate.toISOString()) as ActiveWindowEvent[];
+  return stmt.all(
+    userId,
+    startDate.toISOString(),
+    endDate.toISOString(),
+  ) as ActiveWindowEvent[];
 }
 
 /**
@@ -106,7 +110,7 @@ export function getEventsByUserAndTimeRange(
 export function getEventsByUserId(
   userId: string,
   limit = 100,
-  offset = 0
+  offset = 0,
 ): ActiveWindowEvent[] {
   const db = getDatabase();
 
@@ -125,7 +129,9 @@ export function getEventsByUserId(
  */
 export function getEventById(id: string): ActiveWindowEvent | undefined {
   const db = getDatabase();
-  return db.prepare('SELECT * FROM active_window_events WHERE id = ?').get(id) as ActiveWindowEvent | undefined;
+  return db
+    .prepare("SELECT * FROM active_window_events WHERE id = ?")
+    .get(id) as ActiveWindowEvent | undefined;
 }
 
 /**
@@ -133,7 +139,9 @@ export function getEventById(id: string): ActiveWindowEvent | undefined {
  */
 export function updateActiveWindowEvent(
   id: string,
-  updates: Partial<Omit<ActiveWindowEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+  updates: Partial<
+    Omit<ActiveWindowEvent, "id" | "user_id" | "created_at" | "updated_at">
+  >,
 ): ActiveWindowEvent | undefined {
   const db = getDatabase();
   const now = new Date().toISOString();
@@ -152,13 +160,13 @@ export function updateActiveWindowEvent(
     return getEventById(id);
   }
 
-  fields.push('updated_at = ?');
+  fields.push("updated_at = ?");
   values.push(now);
   values.push(id);
 
   const stmt = db.prepare(`
     UPDATE active_window_events
-    SET ${fields.join(', ')}
+    SET ${fields.join(", ")}
     WHERE id = ?
   `);
 
@@ -172,7 +180,7 @@ export function updateActiveWindowEvent(
  */
 export function deleteEvent(id: string): boolean {
   const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM active_window_events WHERE id = ?');
+  const stmt = db.prepare("DELETE FROM active_window_events WHERE id = ?");
   const result = stmt.run(id);
   return result.changes > 0;
 }
@@ -180,7 +188,10 @@ export function deleteEvent(id: string): boolean {
 /**
  * Get events by category ID
  */
-export function getEventsByCategoryId(categoryId: string, limit = 100): ActiveWindowEvent[] {
+export function getEventsByCategoryId(
+  categoryId: string,
+  limit = 100,
+): ActiveWindowEvent[] {
   const db = getDatabase();
 
   const stmt = db.prepare(`
@@ -196,7 +207,11 @@ export function getEventsByCategoryId(categoryId: string, limit = 100): ActiveWi
 /**
  * Get total duration for a category
  */
-export function getTotalDurationByCategoryId(categoryId: string, startDate?: Date, endDate?: Date): number {
+export function getTotalDurationByCategoryId(
+  categoryId: string,
+  startDate?: Date,
+  endDate?: Date,
+): number {
   const db = getDatabase();
 
   let query = `
@@ -208,7 +223,7 @@ export function getTotalDurationByCategoryId(categoryId: string, startDate?: Dat
   const params: any[] = [categoryId];
 
   if (startDate && endDate) {
-    query += ' AND timestamp >= ? AND timestamp <= ?';
+    query += " AND timestamp >= ? AND timestamp <= ?";
     params.push(startDate.toISOString(), endDate.toISOString());
   }
 
@@ -219,7 +234,11 @@ export function getTotalDurationByCategoryId(categoryId: string, startDate?: Dat
 /**
  * Get statistics for a user
  */
-export function getUserStatistics(userId: string, startDate: Date, endDate: Date): {
+export function getUserStatistics(
+  userId: string,
+  startDate: Date,
+  endDate: Date,
+): {
   totalEvents: number;
   totalDuration: number;
   categorizedEvents: number;
@@ -227,36 +246,54 @@ export function getUserStatistics(userId: string, startDate: Date, endDate: Date
 } {
   const db = getDatabase();
 
-  const totalEvents = db.prepare(`
+  const totalEvents = db
+    .prepare(
+      `
     SELECT COUNT(*) as count
     FROM active_window_events
     WHERE user_id = ?
       AND timestamp >= ?
       AND timestamp <= ?
-  `).get(userId, startDate.toISOString(), endDate.toISOString()) as { count: number };
+  `,
+    )
+    .get(userId, startDate.toISOString(), endDate.toISOString()) as {
+    count: number;
+  };
 
-  const totalDuration = db.prepare(`
+  const totalDuration = db
+    .prepare(
+      `
     SELECT COALESCE(SUM(duration_ms), 0) as total
     FROM active_window_events
     WHERE user_id = ?
       AND timestamp >= ?
       AND timestamp <= ?
-  `).get(userId, startDate.toISOString(), endDate.toISOString()) as { total: number };
+  `,
+    )
+    .get(userId, startDate.toISOString(), endDate.toISOString()) as {
+    total: number;
+  };
 
-  const categorizedEvents = db.prepare(`
+  const categorizedEvents = db
+    .prepare(
+      `
     SELECT COUNT(*) as count
     FROM active_window_events
     WHERE user_id = ?
       AND category_id IS NOT NULL
       AND timestamp >= ?
       AND timestamp <= ?
-  `).get(userId, startDate.toISOString(), endDate.toISOString()) as { count: number };
+  `,
+    )
+    .get(userId, startDate.toISOString(), endDate.toISOString()) as {
+    count: number;
+  };
 
   return {
     totalEvents: totalEvents.count,
     totalDuration: totalDuration.total,
     categorizedEvents: categorizedEvents.count,
-    uncategorizedEvents: totalEvents.count - categorizedEvents.count
+    uncategorizedEvents: totalEvents.count - categorizedEvents.count,
   };
 }
 
@@ -266,25 +303,26 @@ export function getUserStatistics(userId: string, startDate: Date, endDate: Date
 export function recategorizeEventsByIdentifier(
   userId: string,
   identifier: string,
-  itemType: 'app' | 'website',
+  itemType: "app" | "website",
   startDate: Date,
   endDate: Date,
-  newCategoryId: string
+  newCategoryId: string,
 ): number {
   const db = getDatabase();
   const now = new Date().toISOString();
 
   // For apps, match by owner_name; for websites, match by url
   // Build the query with the correct field name
-  const query = itemType === 'app'
-    ? `UPDATE active_window_events
+  const query =
+    itemType === "app"
+      ? `UPDATE active_window_events
        SET category_id = ?,
            updated_at = ?
        WHERE user_id = ?
          AND owner_name = ?
          AND timestamp >= ?
          AND timestamp <= ?`
-    : `UPDATE active_window_events
+      : `UPDATE active_window_events
        SET category_id = ?,
            updated_at = ?
        WHERE user_id = ?
@@ -300,7 +338,7 @@ export function recategorizeEventsByIdentifier(
     userId,
     identifier,
     startDate.toISOString(),
-    endDate.toISOString()
+    endDate.toISOString(),
   );
 
   return result.changes;
