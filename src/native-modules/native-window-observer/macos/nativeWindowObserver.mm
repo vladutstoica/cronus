@@ -99,7 +99,7 @@ Napi::Value GetAppIconPathMethod(const Napi::CallbackInfo& info) {
   }
 }
 
-Napi::Object NativeWindows(Napi::Env env, Napi::Object exports) {
+Napi::Object NativeWindowObserver(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "startActiveWindowObserver"),
               Napi::Function::New(env, StartActiveWindowObserverMethod));
   exports.Set(Napi::String::New(env, "stopActiveWindowObserver"),
@@ -121,4 +121,4 @@ Napi::Object NativeWindows(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
-NODE_API_MODULE(nativeWindows, NativeWindows)
+NODE_API_MODULE(nativeWindowObserver, NativeWindowObserver)

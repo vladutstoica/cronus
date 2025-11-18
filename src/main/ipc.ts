@@ -5,9 +5,9 @@ import { join } from "path";
 import { Category } from "@shared/types";
 import icon from "../../resources/icon.png?asset";
 import {
-  nativeWindows,
+  nativeWindowObserver,
   PermissionType,
-} from "../native-modules/native-windows";
+} from "../native-modules/native-window-observer";
 import { logMainToFile } from "./logging";
 import { redactSensitiveContent } from "./redaction";
 import { setAllowForcedQuit } from "./windows";
@@ -77,7 +77,7 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("get-app-icon-path", (_event, appName: string) => {
-    return nativeWindows.getAppIconPath(appName);
+    return nativeWindowObserver.getAppIconPath(appName);
   });
 
   ipcMain.on("hide-floating-window", () => {
@@ -126,7 +126,7 @@ export function registerIpcHandlers(
     logMainToFile(
       "Enabling explicit permission requests after onboarding completion",
     );
-    nativeWindows.setPermissionDialogsEnabled(true);
+    nativeWindowObserver.setPermissionDialogsEnabled(true);
   });
 
   ipcMain.handle("start-window-tracking", () => {
@@ -194,35 +194,35 @@ export function registerIpcHandlers(
 
   // Permission-related IPC handlers
   ipcMain.handle("get-permission-request-status", () => {
-    return nativeWindows.getPermissionDialogsEnabled();
+    return nativeWindowObserver.getPermissionDialogsEnabled();
   });
 
   ipcMain.handle(
     "get-permission-status",
     (_event, permissionType: PermissionType) => {
-      return nativeWindows.getPermissionStatus(permissionType);
+      return nativeWindowObserver.getPermissionStatus(permissionType);
     },
   );
 
   ipcMain.handle("get-permissions-for-title-extraction", () => {
-    return nativeWindows.hasPermissionsForTitleExtraction();
+    return nativeWindowObserver.hasPermissionsForTitleExtraction();
   });
 
   ipcMain.handle("get-permissions-for-content-extraction", () => {
-    return nativeWindows.hasPermissionsForContentExtraction();
+    return nativeWindowObserver.hasPermissionsForContentExtraction();
   });
 
   ipcMain.handle(
     "request-permission",
     (_event, permissionType: PermissionType) => {
       logMainToFile(`Manually requesting permission: ${permissionType}`);
-      nativeWindows.requestPermission(permissionType);
+      nativeWindowObserver.requestPermission(permissionType);
     },
   );
 
   ipcMain.handle("force-enable-permission-requests", () => {
     logMainToFile("Force enabling explicit permission requests via settings");
-    nativeWindows.setPermissionDialogsEnabled(true);
+    nativeWindowObserver.setPermissionDialogsEnabled(true);
   });
 
   ipcMain.on("open-external-url", (_event, url: string) => {
@@ -309,7 +309,7 @@ export function registerIpcHandlers(
 
   ipcMain.handle("capture-screenshot-and-ocr", async () => {
     try {
-      const result = nativeWindows.captureScreenshotAndOCRForCurrentWindow();
+      const result = nativeWindowObserver.captureScreenshotAndOCRForCurrentWindow();
       logMainToFile("Screenshot + OCR captured", {
         success: result.success,
         textLength: result.ocrText?.length || 0,

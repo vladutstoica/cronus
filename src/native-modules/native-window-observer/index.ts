@@ -37,17 +37,17 @@ const addonPath = isDevelopment
       process.cwd(),
       "src",
       "native-modules",
-      "native-windows",
+      "native-window-observer",
       "build",
       "Release",
-      "nativeWindows.node",
+      "nativeWindowObserver.node",
     )
-  : path.join(process.resourcesPath, "nativeWindows.node");
+  : path.join(process.resourcesPath, "nativeWindowObserver.node");
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const addon: Addon = require(addonPath);
 
-class NativeWindows {
+class NativeWindowObserver {
   /**
    * Subscribes to active window changes
    */
@@ -58,7 +58,7 @@ class NativeWindows {
       try {
         if (jsonString) {
           // Log the raw JSON string received from the native module
-          // console.log('[NativeWindowsWrapper] Received from native module:', jsonString)
+          // console.log('[NativeWindowObserver] Received from native module:', jsonString)
           const detailsJson = JSON.parse(jsonString);
           // Ensure that the id field from the native module is mapped to windowId
           const details: ActiveWindowDetails = {
@@ -66,10 +66,10 @@ class NativeWindows {
             windowId: detailsJson.id || 0, // Default to 0 if id is missing
           };
           delete (details as any).id; // remove original id if it exists to avoid confusion
-          // console.log('[NativeWindowsWrapper] Processed event:', details)
+          // console.log('[NativeWindowObserver] Processed event:', details)
           callback(details);
         } else {
-          // console.log('[NativeWindowsWrapper] Received null event')
+          // console.log('[NativeWindowObserver] Received null event')
           callback(null);
         }
       } catch (error) {
@@ -153,4 +153,4 @@ class NativeWindows {
   }
 }
 
-export const nativeWindows = new NativeWindows();
+export const nativeWindowObserver = new NativeWindowObserver();

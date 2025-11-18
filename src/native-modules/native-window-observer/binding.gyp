@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "nativeWindows",
+      "target_name": "nativeWindowObserver",
       "cflags!": ["-fno-exceptions"],
       "cflags_cc!": ["-fno-exceptions"],
       "include_dirs": ["<!@(node -p \"require('node-addon-api').include\")"],
@@ -12,7 +12,7 @@
           {
             "sources": [
               "<!@(node -p \"require('fs').readdirSync('./macos').map(f=>'macos/'+f).join(' ')\")",
-              "macos/nativeWindows.mm",
+              "macos/nativeWindowObserver.mm",
               "macos/activeWindowObserver.mm",
               "macos/sleepAndLockObserver.mm",
               "macos/titleExtractor.mm",

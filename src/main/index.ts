@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { app, BrowserWindow, session } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { ActiveWindowDetails } from "@shared/types";
-import { nativeWindows } from "../native-modules/native-windows";
+import { nativeWindowObserver } from "../native-modules/native-window-observer";
 import {
   initializeAutoUpdater,
   registerAutoUpdaterHandlers,
@@ -152,11 +152,11 @@ function App() {
     // Make the callback available to IPC handlers
     (global as any).stopActiveWindowObserver = () => {
       isTrackingPaused = true;
-      nativeWindows.stopActiveWindowObserver();
+      nativeWindowObserver.stopActiveWindowObserver();
     };
     (global as any).startActiveWindowObserver = () => {
       isTrackingPaused = false;
-      nativeWindows.startActiveWindowObserver(windowChangeCallback);
+      nativeWindowObserver.startActiveWindowObserver(windowChangeCallback);
     };
 
     // Handle app activation (e.g., clicking the dock icon on macOS)

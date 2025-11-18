@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if native modules exist and have the correct architecture for ARM64 builds
-NATIVE_MODULE_PATH="src/native-modules/native-windows/build/Release/nativeWindows.node"
+NATIVE_MODULE_PATH="src/native-modules/native-window-observer/build/Release/nativeWindowObserver.node"
 
 # Check if the native module exists
 if [ ! -f "$NATIVE_MODULE_PATH" ]; then
