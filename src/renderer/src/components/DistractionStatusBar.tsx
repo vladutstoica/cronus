@@ -93,6 +93,7 @@ const DistractionStatusBar = ({
   const [isNarrowView, setIsNarrowView] = useState(false)
   const [showPauseModal, setShowPauseModal] = useState(false)
   const lastSentData = useRef<string | null>(null)
+  const lastSuccessfulUpdate = useRef<number>(Date.now())
 
   const [latestEvent, setLatestEvent] = useState<ActiveWindowEvent | null>(null)
   const [isLoadingLatestEvent, setIsLoadingLatestEvent] = useState(true)
@@ -155,10 +156,12 @@ const DistractionStatusBar = ({
             categoryReasoning: event.categoryReasoning
           })
         } else {
-          setLatestEvent(null)
+          // Don't clear state on empty results - preserve previous value as fallback
+          console.warn('[DistractionStatusBar] Database query returned empty, keeping previous latestEvent')
         }
       } catch (error) {
-        console.error('Error loading latest event:', error)
+        console.error('[DistractionStatusBar] Error loading latest event:', error)
+        // Don't update state on error - keep previous value
       } finally {
         setIsLoadingLatestEvent(false)
       }
@@ -294,60 +297,80 @@ const DistractionStatusBar = ({
 
   useEffect(() => {
     const sendUpdate = async (): Promise<void> => {
-      if (!latestEvent || !userCategories || !todayEvents || !window.electron?.ipcRenderer) {
-        return
-      }
-
-      let latestStatus: 'productive' | 'unproductive' | 'maybe' = 'maybe'
-      let categoryDetailsForFloatingWindow: Category | undefined
-
-      if (categoryDetails && typeof categoryDetails === 'object' && '_id' in categoryDetails) {
-        const fullCategoryDetails = categoryDetails as Category
-        if (fullCategoryDetails.isProductive === true) latestStatus = 'productive'
-        else if (fullCategoryDetails.isProductive === false) {
-          latestStatus = 'unproductive'
+      try {
+        // Detailed error logging for silent failures
+        if (!latestEvent) {
+          console.warn('[FloatingWindow] Cannot send update: latestEvent is null')
+          return
         }
-        categoryDetailsForFloatingWindow = fullCategoryDetails
-      } else if (categoryDetails === null) {
-        latestStatus = 'maybe'
-      }
-
-      const { dailyProductiveMs, dailyUnproductiveMs } = calculateProductivityMetrics(
-        todayEvents as ActiveWindowEvent[],
-        (userCategories as unknown as Category[]) || []
-      )
-
-      const itemType = displayWindowInfo.url ? 'website' : 'app'
-      const activityIdentifier = displayWindowInfo.isApp
-        ? displayWindowInfo.ownerName
-        : displayWindowInfo.url
-      const activityName = displayWindowInfo.ownerName
-
-      const dataToSend = {
-        latestStatus,
-        dailyProductiveMs,
-        dailyUnproductiveMs,
-        categoryDetails: categoryDetailsForFloatingWindow,
-        itemType,
-        activityIdentifier,
-        activityName,
-        activityUrl: displayWindowInfo.url,
-        categoryReasoning: latestEvent?.categoryReasoning,
-        isTrackingPaused
-      }
-
-      const currentDataString = JSON.stringify(dataToSend)
-
-      if (currentDataString === lastSentData.current) {
-        return // Data hasn't changed, no need to send.
-      }
-
-      if (window.api?.getFloatingWindowVisibility) {
-        const isVisible = await window.api.getFloatingWindowVisibility()
-        if (isVisible) {
-          window.electron.ipcRenderer.send('update-floating-window-status', dataToSend)
-          lastSentData.current = currentDataString
+        if (!userCategories) {
+          console.warn('[FloatingWindow] Cannot send update: userCategories is null')
+          return
         }
+        if (!todayEvents) {
+          console.warn('[FloatingWindow] Cannot send update: todayEvents is null')
+          return
+        }
+        if (!window.electron?.ipcRenderer) {
+          console.error('[FloatingWindow] Cannot send update: IPC renderer not available')
+          return
+        }
+
+        let latestStatus: 'productive' | 'unproductive' | 'maybe' = 'maybe'
+        let categoryDetailsForFloatingWindow: Category | undefined
+
+        if (categoryDetails && typeof categoryDetails === 'object' && '_id' in categoryDetails) {
+          const fullCategoryDetails = categoryDetails as Category
+          if (fullCategoryDetails.isProductive === true) latestStatus = 'productive'
+          else if (fullCategoryDetails.isProductive === false) {
+            latestStatus = 'unproductive'
+          }
+          categoryDetailsForFloatingWindow = fullCategoryDetails
+        } else if (categoryDetails === null) {
+          latestStatus = 'maybe'
+        }
+
+        const { dailyProductiveMs, dailyUnproductiveMs } = calculateProductivityMetrics(
+          todayEvents as ActiveWindowEvent[],
+          (userCategories as unknown as Category[]) || []
+        )
+
+        const itemType = displayWindowInfo.url ? 'website' : 'app'
+        const activityIdentifier = displayWindowInfo.isApp
+          ? displayWindowInfo.ownerName
+          : displayWindowInfo.url
+        const activityName = displayWindowInfo.ownerName
+
+        const dataToSend = {
+          latestStatus,
+          dailyProductiveMs,
+          dailyUnproductiveMs,
+          categoryDetails: categoryDetailsForFloatingWindow,
+          itemType,
+          activityIdentifier,
+          activityName,
+          activityUrl: displayWindowInfo.url,
+          categoryReasoning: latestEvent?.categoryReasoning,
+          isTrackingPaused
+        }
+
+        const currentDataString = JSON.stringify(dataToSend)
+
+        if (currentDataString === lastSentData.current) {
+          return // Data hasn't changed, no need to send.
+        }
+
+        if (window.api?.getFloatingWindowVisibility) {
+          const isVisible = await window.api.getFloatingWindowVisibility()
+          if (isVisible) {
+            window.electron.ipcRenderer.send('update-floating-window-status', dataToSend)
+            lastSentData.current = currentDataString
+            lastSuccessfulUpdate.current = Date.now() // Track successful update
+          }
+        }
+      } catch (error) {
+        console.error('[FloatingWindow] Error in sendUpdate:', error)
+        // Don't break the update chain - continue trying on next dependency change
       }
     }
 
@@ -360,6 +383,26 @@ const DistractionStatusBar = ({
     displayWindowInfo,
     isTrackingPaused
   ])
+
+  // Health check system: monitor and report when updates stop
+  useEffect(() => {
+    const healthCheck = setInterval(() => {
+      const timeSinceUpdate = Date.now() - lastSuccessfulUpdate.current
+
+      if (timeSinceUpdate > 30000) {
+        console.error('[HealthCheck] No floating window updates sent for 30+ seconds')
+        console.error('[HealthCheck] Current state:', {
+          hasLatestEvent: !!latestEvent,
+          hasUserCategories: !!userCategories && userCategories.length > 0,
+          hasTodayEvents: !!todayEvents && todayEvents.length > 0,
+          hasIpcRenderer: !!window.electron?.ipcRenderer,
+          isTrackingPaused
+        })
+      }
+    }, 10000) // Check every 10 seconds
+
+    return () => clearInterval(healthCheck)
+  }, [latestEvent, userCategories, todayEvents, isTrackingPaused])
 
   const statusText = useMemo(
     () =>

@@ -53,6 +53,7 @@ const FloatingDisplay: React.FC = () => {
 
   const draggableRef = useRef<HTMLDivElement>(null)
   const dragStartInfoRef = useRef<{ initialMouseX: number; initialMouseY: number } | null>(null)
+  const lastBackendUpdateTime = useRef<number>(Date.now())
 
   useEffect(() => {
     if (window.floatingApi) {
@@ -70,11 +71,38 @@ const FloatingDisplay: React.FC = () => {
           categoryReasoning: data.categoryReasoning
         })
         setIsVisible(true)
+        // Update last backend update timestamp
+        lastBackendUpdateTime.current = Date.now()
       })
       return cleanup
     }
     return () => {}
   }, [])
+
+  // Fallback timer: increment locally if no backend update for 10+ seconds
+  // This provides continuity when backend updates stop (prevents freezing)
+  useEffect(() => {
+    const fallbackInterval = setInterval(() => {
+      if (isTrackingPaused || latestStatus === 'maybe') {
+        return // Don't increment when paused or in "maybe" state
+      }
+
+      const timeSinceLastUpdate = Date.now() - lastBackendUpdateTime.current
+
+      // If no update for 10 seconds, start fallback local increments
+      if (timeSinceLastUpdate > 10000) {
+        console.warn('[FloatingDisplay] No backend update for 10s, using fallback local timer')
+
+        if (latestStatus === 'productive') {
+          setDisplayedProductiveTimeMs((prev) => prev + 1000)
+        } else if (latestStatus === 'unproductive') {
+          setDailyUnproductiveMs((prev) => prev + 1000)
+        }
+      }
+    }, 1000)
+
+    return () => clearInterval(fallbackInterval)
+  }, [latestStatus, isTrackingPaused])
 
   // Handle state transitions and freeze/unfreeze timers
   useEffect(() => {
