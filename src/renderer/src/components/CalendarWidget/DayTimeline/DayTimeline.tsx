@@ -65,11 +65,18 @@ export const DayTimeline = ({
 
   // Auto-scroll to current hour on initial load (only for today)
   useLayoutEffect(() => {
-    if (isToday && currentHourRef.current && scrollContainerRef.current && currentTimeTop !== null && !hasScrolledToCurrentTime.current) {
+    if (
+      isToday &&
+      currentHourRef.current &&
+      scrollContainerRef.current &&
+      currentTimeTop !== null &&
+      !hasScrolledToCurrentTime.current
+    ) {
       // Use requestAnimationFrame to ensure DOM is fully painted
       requestAnimationFrame(() => {
         if (currentHourRef.current && scrollContainerRef.current) {
-          const parentTop = scrollContainerRef.current.getBoundingClientRect().top;
+          const parentTop =
+            scrollContainerRef.current.getBoundingClientRect().top;
           const currentTop = currentHourRef.current.getBoundingClientRect().top;
           const relativeTop = currentTop - parentTop;
           const offset = scrollContainerRef.current.clientHeight / 2;

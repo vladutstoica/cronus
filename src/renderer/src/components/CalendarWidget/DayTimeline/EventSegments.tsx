@@ -1,9 +1,6 @@
 import React from "react";
 import Color from "color";
-import {
-  getDarkerColor,
-  getLighterColor,
-} from "../../../lib/colors";
+import { getDarkerColor, getLighterColor } from "../../../lib/colors";
 import { type DaySegment } from "../../../lib/dayTimelineHelpers";
 import TimelineSegmentContent from "./TimelineSegmentContent";
 

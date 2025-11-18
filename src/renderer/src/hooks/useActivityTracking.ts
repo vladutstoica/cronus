@@ -92,7 +92,7 @@ export function useActivityTracking({
           variables.itemType,
           variables.startDateMs,
           variables.endDateMs,
-          variables.newCategoryId
+          variables.newCategoryId,
         );
 
         const targetCategory = allCategories?.find(
