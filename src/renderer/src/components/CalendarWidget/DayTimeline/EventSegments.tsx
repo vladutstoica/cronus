@@ -28,7 +28,6 @@ export const EventSegments: React.FC<EventSegmentsProps> = ({
 
   const segmentBackgroundColor = (segment: DaySegment) => {
     if (!segment.categoryColor) {
-      console.warn('[EventSegments] No categoryColor for segment:', segment.name, segment);
       return isDarkMode ? "#374151" : "#e5e7eb";
     }
     // getDarkerColor and getLighterColor already return color strings, don't pass through hexToRgba
@@ -37,9 +36,7 @@ export const EventSegments: React.FC<EventSegmentsProps> = ({
       : getLighterColor(segment.categoryColor, 0.8);
 
     // Apply opacity using Color library
-    const color = Color(baseColor).alpha(0.9).string();
-    console.log('[EventSegments] Segment color:', segment.name, 'categoryColor:', segment.categoryColor, 'computed:', color);
-    return color;
+    return Color(baseColor).alpha(0.9).string();
   };
 
   const getTopPosition = (segment: DaySegment) => {
