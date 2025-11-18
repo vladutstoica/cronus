@@ -41,28 +41,43 @@ export const DayTimeline = ({
       trackedTimeBlocks,
       24 * hourHeight * 16,
       isToday,
+      currentTime,
     );
-  }, [trackedTimeBlocks, hourHeight, isToday]);
+  }, [trackedTimeBlocks, hourHeight, isToday, currentTime]);
 
   const calendarSegments = useMemo(() => {
     return getTimelineSegmentsForDay(
       googleCalendarTimeBlocks,
       24 * hourHeight * 16,
       isToday,
+      currentTime,
     );
-  }, [googleCalendarTimeBlocks, hourHeight, isToday]);
+  }, [googleCalendarTimeBlocks, hourHeight, isToday, currentTime]);
+
+  // Calculate current time position
+  const currentTimeTop = useMemo(() => {
+    if (!isToday) return null;
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    return (hours + minutes / 60) * hourHeight;
+  }, [currentTime, isToday, hourHeight]);
 
   // Auto-scroll to current hour on initial load (only for today)
   useLayoutEffect(() => {
-    if (isToday && currentHourRef.current && scrollContainerRef.current) {
-      const parentTop = scrollContainerRef.current.getBoundingClientRect().top;
-      const currentTop = currentHourRef.current.getBoundingClientRect().top;
-      const relativeTop = currentTop - parentTop;
-      const offset = scrollContainerRef.current.clientHeight / 3;
+    if (isToday && currentHourRef.current && scrollContainerRef.current && currentTimeTop !== null) {
+      // Use requestAnimationFrame to ensure DOM is fully painted
+      requestAnimationFrame(() => {
+        if (currentHourRef.current && scrollContainerRef.current) {
+          const parentTop = scrollContainerRef.current.getBoundingClientRect().top;
+          const currentTop = currentHourRef.current.getBoundingClientRect().top;
+          const relativeTop = currentTop - parentTop;
+          const offset = scrollContainerRef.current.clientHeight / 2;
 
-      scrollContainerRef.current.scrollTop = relativeTop - offset;
+          scrollContainerRef.current.scrollTop = relativeTop - offset;
+        }
+      });
     }
-  }, [isToday]);
+  }, [isToday, currentTimeTop, scrollContainerRef]);
 
   // Handle zoom changes - maintain relative scroll position
   useEffect(() => {
@@ -76,14 +91,6 @@ export const DayTimeline = ({
 
     prevHourHeightRef.current = hourHeight;
   }, [hourHeight, scrollContainerRef]);
-
-  // Calculate current time position
-  const currentTimeTop = useMemo(() => {
-    if (!isToday) return null;
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
-    return (hours + minutes / 60) * hourHeight;
-  }, [currentTime, isToday, hourHeight]);
 
   const handleHourClick = (hour: number | null) => {
     if (hour === null) {
