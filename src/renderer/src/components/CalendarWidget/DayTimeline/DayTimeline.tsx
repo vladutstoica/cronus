@@ -35,6 +35,7 @@ export const DayTimeline = ({
   const currentHourRef = useRef<HTMLDivElement>(null);
   const prevHourHeightRef = useRef(hourHeight);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToCurrentTime = useRef(false);
 
   const daySegments = useMemo(() => {
     return getTimelineSegmentsForDay(
@@ -64,7 +65,7 @@ export const DayTimeline = ({
 
   // Auto-scroll to current hour on initial load (only for today)
   useLayoutEffect(() => {
-    if (isToday && currentHourRef.current && scrollContainerRef.current && currentTimeTop !== null) {
+    if (isToday && currentHourRef.current && scrollContainerRef.current && currentTimeTop !== null && !hasScrolledToCurrentTime.current) {
       // Use requestAnimationFrame to ensure DOM is fully painted
       requestAnimationFrame(() => {
         if (currentHourRef.current && scrollContainerRef.current) {
@@ -74,6 +75,7 @@ export const DayTimeline = ({
           const offset = scrollContainerRef.current.clientHeight / 2;
 
           scrollContainerRef.current.scrollTop = relativeTop - offset;
+          hasScrolledToCurrentTime.current = true;
         }
       });
     }
