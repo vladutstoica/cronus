@@ -13,7 +13,8 @@ const config: ForgeConfig = {
     appBundleId: "com.cronus.app",
     icon: "./resources/icon",
     asar: {
-      unpack: "{**/*.node,**/node_modules/better-sqlite3/**/*,**/node_modules/native-window-observer/**/*,**/node_modules/bindings/**/*,**/node_modules/file-uri-to-path/**/*}",
+      unpack:
+        "{**/*.node,**/node_modules/better-sqlite3/**/*,**/node_modules/native-window-observer/**/*,**/node_modules/bindings/**/*,**/node_modules/file-uri-to-path/**/*}",
     },
   },
   rebuildConfig: {},
@@ -56,13 +57,23 @@ const config: ForgeConfig = {
   hooks: {
     prePackage: async () => {
       // Replace native-window-observer symlink with actual files BEFORE packaging
-      const nwoPath = path.join(__dirname, "node_modules", "native-window-observer");
-      const nwoSourcePath = path.join(__dirname, "native-modules", "native-window-observer");
+      const nwoPath = path.join(
+        __dirname,
+        "node_modules",
+        "native-window-observer",
+      );
+      const nwoSourcePath = path.join(
+        __dirname,
+        "native-modules",
+        "native-window-observer",
+      );
 
       // Check if it's a symlink
       const stats = await fs.promises.lstat(nwoPath);
       if (stats.isSymbolicLink()) {
-        console.log("Replacing native-window-observer symlink with actual files...");
+        console.log(
+          "Replacing native-window-observer symlink with actual files...",
+        );
         await fs.promises.rm(nwoPath, { recursive: true, force: true });
         await fs.promises.cp(nwoSourcePath, nwoPath, { recursive: true });
 
@@ -85,13 +96,23 @@ const config: ForgeConfig = {
       }
 
       // Copy native-window-observer FIRST (removing symlink if it exists)
-      const nwoSourcePath = path.join(__dirname, "native-modules", "native-window-observer");
-      const nwoTargetPath = path.join(buildPath, "node_modules", "native-window-observer");
+      const nwoSourcePath = path.join(
+        __dirname,
+        "native-modules",
+        "native-window-observer",
+      );
+      const nwoTargetPath = path.join(
+        buildPath,
+        "node_modules",
+        "native-window-observer",
+      );
 
       // Remove symlink or directory if it exists
       if (fs.existsSync(nwoTargetPath)) {
         await fs.promises.rm(nwoTargetPath, { recursive: true, force: true });
-        console.log(`Removed existing native-window-observer (likely symlink) at ${nwoTargetPath}`);
+        console.log(
+          `Removed existing native-window-observer (likely symlink) at ${nwoTargetPath}`,
+        );
       }
 
       await fs.promises.cp(nwoSourcePath, nwoTargetPath, { recursive: true });
@@ -106,11 +127,21 @@ const config: ForgeConfig = {
       console.log("native-window-observer dependencies installed successfully");
 
       // Copy better-sqlite3 to the build (native module)
-      const sqliteSourcePath = path.join(__dirname, "node_modules", "better-sqlite3");
-      const sqliteTargetPath = path.join(buildPath, "node_modules", "better-sqlite3");
+      const sqliteSourcePath = path.join(
+        __dirname,
+        "node_modules",
+        "better-sqlite3",
+      );
+      const sqliteTargetPath = path.join(
+        buildPath,
+        "node_modules",
+        "better-sqlite3",
+      );
 
       if (fs.existsSync(sqliteSourcePath)) {
-        await fs.promises.cp(sqliteSourcePath, sqliteTargetPath, { recursive: true });
+        await fs.promises.cp(sqliteSourcePath, sqliteTargetPath, {
+          recursive: true,
+        });
         console.log(`Copied better-sqlite3 to ${sqliteTargetPath}`);
 
         // Install its dependencies (bindings and its transitive deps)
@@ -137,9 +168,20 @@ const config: ForgeConfig = {
       const outputDir = packageResult.outputPaths[0];
       const appPath = path.join(outputDir, "Cronus.app");
       const asarPath = path.join(appPath, "Contents/Resources/app.asar");
-      const asarUnpackedPath = path.join(appPath, "Contents/Resources/app.asar.unpacked");
-      const nwoSourcePath = path.join(__dirname, "native-modules", "native-window-observer");
-      const nwoTargetPath = path.join(asarUnpackedPath, "node_modules", "native-window-observer");
+      const asarUnpackedPath = path.join(
+        appPath,
+        "Contents/Resources/app.asar.unpacked",
+      );
+      const nwoSourcePath = path.join(
+        __dirname,
+        "native-modules",
+        "native-window-observer",
+      );
+      const nwoTargetPath = path.join(
+        asarUnpackedPath,
+        "node_modules",
+        "native-window-observer",
+      );
 
       console.log("Manually unpacking native-window-observer...");
 
@@ -151,7 +193,9 @@ const config: ForgeConfig = {
 
       // Copy native-window-observer to unpacked directory
       await fs.promises.cp(nwoSourcePath, nwoTargetPath, { recursive: true });
-      console.log(`Manually unpacked native-window-observer to ${nwoTargetPath}`);
+      console.log(
+        `Manually unpacked native-window-observer to ${nwoTargetPath}`,
+      );
     },
   },
 };

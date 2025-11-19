@@ -105,23 +105,20 @@ export function createFloatingWindow(
   // Use Forge-provided variables for loading renderer
   // In dev: FLOATING_WINDOW_VITE_DEV_SERVER_URL is set
   // In prod: FLOATING_WINDOW_VITE_NAME is set
-  console.log('[FLOATING] Dev URL:', FLOATING_WINDOW_VITE_DEV_SERVER_URL);
-  console.log('[FLOATING] Prod Name:', FLOATING_WINDOW_VITE_NAME);
+  console.log("[FLOATING] Dev URL:", FLOATING_WINDOW_VITE_DEV_SERVER_URL);
+  console.log("[FLOATING] Prod Name:", FLOATING_WINDOW_VITE_NAME);
 
   if (FLOATING_WINDOW_VITE_DEV_SERVER_URL) {
     // In dev mode, we need to load floating.html specifically, not the root
     const floatingUrl = `${FLOATING_WINDOW_VITE_DEV_SERVER_URL}/floating.html`;
-    console.log('[FLOATING] Loading URL:', floatingUrl);
+    console.log("[FLOATING] Loading URL:", floatingUrl);
     floatingWindow
       .loadURL(floatingUrl)
       .catch((err) => console.error("Failed to load floating URL (dev):", err));
   } else {
     floatingWindow
       .loadFile(
-        join(
-          __dirname,
-          `../renderer/${FLOATING_WINDOW_VITE_NAME}/index.html`,
-        ),
+        join(__dirname, `../renderer/${FLOATING_WINDOW_VITE_NAME}/index.html`),
       )
       .catch((err) =>
         console.error("Failed to load floating file (prod):", err),
@@ -178,8 +175,8 @@ export function createMainWindow(
   // Use Forge-provided variables for loading renderer
   // In dev: MAIN_WINDOW_VITE_DEV_SERVER_URL is set
   // In prod: MAIN_WINDOW_VITE_NAME is set
-  console.log('[MAIN] Dev URL:', MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  console.log('[MAIN] Prod Name:', MAIN_WINDOW_VITE_NAME);
+  console.log("[MAIN] Dev URL:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  console.log("[MAIN] Prod Name:", MAIN_WINDOW_VITE_NAME);
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
