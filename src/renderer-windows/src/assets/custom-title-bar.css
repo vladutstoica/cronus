@@ -1,0 +1,100 @@
+/* electron-app/src/renderer/src/assets/custom-title-bar.css */
+
+.custom-title-bar {
+  height: 32px;
+  width: 100%;
+  background-color: hsl(var(--secondary)); /* Changed from #111827 */
+
+  /* --- THIS IS THE CRUCIAL CSS PROPERTY FOR DRAGGING --- */
+  -webkit-app-region: drag;
+  /* ---------------------------------------------------- */
+
+  position: sticky; /* Makes it stick to the top as user scrolls the content below */
+  top: 0;
+  left: 0;
+  z-index: 1000; /* Ensure it's above other content if there's any overlap potential */
+  -webkit-user-select: none; /* For Safari */
+  user-select: none; /* Prevent text selection within the title bar area */
+  box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+
+  /* For macOS with titleBarStyle: 'hidden' in main.ts:
+     The OS places "traffic light" buttons in the top-left.
+     This padding-left on your .custom-title-bar ensures that:
+     1. If your bar has a background color, it doesn't draw *under* the traffic lights.
+     2. If you put text (like an app title) inside .custom-title-bar, it starts *after* the traffic lights.
+     The draggable area itself (defined by the div's bounds before padding) still covers the full width,
+     allowing dragging around and to the right of the traffic lights.
+  */
+  padding-left: 78px; /* Adjust this value based on testing and traffic light size */
+  padding-right: 78px; /* Match left padding to truly center the title */
+  display: flex; /* Added to allow for centering */
+  align-items: center; /* Vertically center content */
+  justify-content: center; /* Horizontally center content */
+  font-size: 14px; /* Reduced font size */
+  font-weight: 600; /* Increased font weight */
+  color: hsl(var(--secondary-foreground));
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+/* Optional: If you add text inside your .custom-title-bar, like <span class="app-window-title">Title</span> */
+.app-window-title {
+  line-height: 32px; /* Vertically center text if .custom-title-bar is 32px high */
+  color: hsl(var(--secondary-foreground)); /* Changed from #cccccc */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  font-size: 13px;
+  /* This text will appear to the right of the padding-left applied to .custom-title-bar */
+}
+
+/* IMPORTANT: If you ever add interactive elements (buttons, links, inputs)
+   DIRECTLY INSIDE the .custom-title-bar div, you MUST give them this CSS
+   property, or they won't be clickable. */
+.custom-title-bar button,
+.custom-title-bar input,
+.custom-title-bar select,
+.custom-title-bar a,
+.custom-title-bar [onclick] {
+  /* A general catch-all for elements with click handlers */
+  -webkit-app-region: no-drag;
+}
+
+/* --- Adjustments for your existing AppHeader --- */
+/* Your AppHeader component (which contains the Settings icon) might need its styling adjusted.
+   If AppHeader was previously using `position: sticky` or `fixed` to be at the very top,
+   its `top` value might need to be `32px` (the height of .custom-title-bar) now,
+   or it should just be part of the normal document flow below .custom-title-bar.
+   
+   Example if AppHeader needs to remain sticky below the new title bar:
+*/
+/* 
+.app-header-selector { /* Replace with the actual class/selector for your AppHeader's root element */
+/*   position: sticky;
+/*   top: 32px; /* Height of .custom-title-bar */
+/*   z-index: 999; /* Below .custom-title-bar but above content */
+/* }
+*/
+
+/* The main content area below the title bar and AppHeader also might need adjustment
+   to ensure it's not obscured. For example, if both .custom-title-bar (32px) and 
+   AppHeader (e.g., 48px) are sticky or fixed:
+*/
+/*
+.main-content-wrapper-selector { /* Replace with your actual main content wrapper selector */
+/*  padding-top: calc(32px + 48px); /* Sum of sticky/fixed header heights */
+/* }
+*/
+
+.hidden {
+  display: none;
+}
+
+.draggable-area {
+  -webkit-app-region: drag;
+}
+
+.non-draggable-area {
+  -webkit-app-region: no-drag;
+}

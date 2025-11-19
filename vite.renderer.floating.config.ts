@@ -3,16 +3,23 @@ import { defineConfig } from "vite";
 import { resolve } from "path";
 
 export default defineConfig({
-  root: resolve(__dirname, "src/floating-window"),
+  root: resolve(__dirname, "src/renderer-windows"),
   plugins: [react()],
+  server: {
+    port: 5174,
+    strictPort: true,
+  },
   build: {
     outDir: resolve(__dirname, ".vite/renderer/floating_window"),
     emptyOutDir: true,
+    rollupOptions: {
+      input: resolve(__dirname, "src/renderer-windows/floating.html"),
+    },
   },
   resolve: {
     alias: {
-      "@renderer": resolve(__dirname, "src/renderer/src"),
-      src: resolve(__dirname, "src/renderer/src"),
+      "@renderer": resolve(__dirname, "src/renderer-windows/src"),
+      src: resolve(__dirname, "src/renderer-windows/src"),
     },
   },
 });
