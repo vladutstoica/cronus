@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "description": "Privacy-first local time tracking desktop app",
-  "main": "./out/main/index.js",
+  "main": ".vite/build/index.js",
   "author": "Cronus Team",
   "homepage": "https://github.com/moritzWa/cronus",
   "repository": {
@@ -11,7 +11,7 @@
     "url": "https://github.com/moritzWa/cronus.git"
   },
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "electron-forge start",
     "build": "electron-vite build",
     "rebuild": "electron-rebuild",
     "postinstall": "electron-rebuild",

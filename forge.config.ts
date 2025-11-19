@@ -13,7 +13,7 @@ const config: ForgeConfig = {
     appBundleId: "com.cronus.app",
     icon: "./resources/icon",
     asar: {
-      unpack: "**/*.node",
+      unpack: "{**/*.node,**/node_modules/better-sqlite3/**/*,**/node_modules/native-window-observer/**/*}",
     },
   },
   rebuildConfig: {},
@@ -32,7 +32,7 @@ const config: ForgeConfig = {
           config: "vite.main.config.ts",
         },
         {
-          entry: "src/preload/index.ts",
+          entry: "src/preload/preload.ts",
           config: "vite.preload.config.ts",
         },
         {
@@ -43,11 +43,11 @@ const config: ForgeConfig = {
       renderer: [
         {
           name: "main_window",
-          config: "vite.renderer.config.ts",
+          config: "vite.renderer.main.config.ts",
         },
         {
           name: "floating_window",
-          config: "vite.renderer.config.ts",
+          config: "vite.renderer.floating.config.ts",
         },
       ],
     }),
@@ -55,24 +55,46 @@ const config: ForgeConfig = {
   ],
   hooks: {
     packageAfterPrune: async (_config, buildPath) => {
-      // Install external dependencies that Vite didn't bundle
-      const externalDeps = ["native-window-observer"];
+      const { execSync } = require("child_process");
 
-      console.log("Installing external dependencies:", externalDeps);
+      // Create node_modules directory if it doesn't exist
+      const nodeModulesPath = path.join(buildPath, "node_modules");
+      if (!fs.existsSync(nodeModulesPath)) {
+        fs.mkdirSync(nodeModulesPath, { recursive: true });
+      }
 
-      for (const dep of externalDeps) {
-        const sourcePath = path.join(__dirname, "native-modules", dep);
-        const targetPath = path.join(buildPath, "node_modules", dep);
+      // Copy native-window-observer to the build
+      const nwoSourcePath = path.join(__dirname, "native-modules", "native-window-observer");
+      const nwoTargetPath = path.join(buildPath, "node_modules", "native-window-observer");
 
-        // Create node_modules directory if it doesn't exist
-        const nodeModulesPath = path.join(buildPath, "node_modules");
-        if (!fs.existsSync(nodeModulesPath)) {
-          fs.mkdirSync(nodeModulesPath, { recursive: true });
-        }
+      await fs.promises.cp(nwoSourcePath, nwoTargetPath, { recursive: true });
+      console.log(`Copied native-window-observer to ${nwoTargetPath}`);
 
-        // Copy the native module directory
-        await fs.promises.cp(sourcePath, targetPath, { recursive: true });
-        console.log(`Copied ${dep} to ${targetPath}`);
+      // Install its dependencies (bindings and its transitive deps)
+      console.log("Installing native-window-observer dependencies...");
+      execSync("npm install --omit=dev --ignore-scripts", {
+        cwd: nwoTargetPath,
+        stdio: "inherit",
+      });
+      console.log("native-window-observer dependencies installed successfully");
+
+      // Copy better-sqlite3 to the build (native module)
+      const sqliteSourcePath = path.join(__dirname, "node_modules", "better-sqlite3");
+      const sqliteTargetPath = path.join(buildPath, "node_modules", "better-sqlite3");
+
+      if (fs.existsSync(sqliteSourcePath)) {
+        await fs.promises.cp(sqliteSourcePath, sqliteTargetPath, { recursive: true });
+        console.log(`Copied better-sqlite3 to ${sqliteTargetPath}`);
+
+        // Install its dependencies (bindings and its transitive deps)
+        console.log("Installing better-sqlite3 dependencies...");
+        execSync("npm install --omit=dev --ignore-scripts", {
+          cwd: sqliteTargetPath,
+          stdio: "inherit",
+        });
+        console.log("better-sqlite3 dependencies installed successfully");
+      } else {
+        console.error("better-sqlite3 not found in node_modules!");
       }
     },
   },

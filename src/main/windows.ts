@@ -50,7 +50,7 @@ export function createFloatingWindow(
     show: false,
     type: process.platform === "darwin" ? "panel" : "normal",
     webPreferences: {
-      preload: join(__dirname, "../preload/floatingPreload.js"),
+      preload: join(__dirname, "floatingPreload.js"),
       sandbox: false,
       contextIsolation: true,
     },
@@ -102,15 +102,21 @@ export function createFloatingWindow(
     },
   );
 
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    const floatingUrl = `${process.env["ELECTRON_RENDERER_URL"]}/floating.html`;
+  // Use Forge-provided variables for loading renderer
+  // In dev: FLOATING_WINDOW_VITE_DEV_SERVER_URL is set
+  // In prod: FLOATING_WINDOW_VITE_NAME is set
+  if (FLOATING_WINDOW_VITE_DEV_SERVER_URL) {
     floatingWindow
-      .loadURL(floatingUrl)
+      .loadURL(FLOATING_WINDOW_VITE_DEV_SERVER_URL)
       .catch((err) => console.error("Failed to load floating URL (dev):", err));
   } else {
-    const floatingFilePath = join(__dirname, "../renderer/floating.html");
     floatingWindow
-      .loadFile(floatingFilePath)
+      .loadFile(
+        join(
+          __dirname,
+          `../renderer/${FLOATING_WINDOW_VITE_NAME}/index.html`,
+        ),
+      )
       .catch((err) =>
         console.error("Failed to load floating file (prod):", err),
       );
@@ -149,7 +155,7 @@ export function createMainWindow(
     acceptFirstMouse: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "preload.js"),
       sandbox: false,
       contextIsolation: true,
     },
@@ -163,16 +169,16 @@ export function createMainWindow(
     mainWindow.show();
   });
 
-  if (is.dev) {
-    const devUrl =
-      process.env["ELECTRON_RENDERER_URL"] || "http://localhost:5173";
-    mainWindow.loadURL(devUrl);
-  } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
-  }
-
-  if (is.dev) {
+  // Use Forge-provided variables for loading renderer
+  // In dev: MAIN_WINDOW_VITE_DEV_SERVER_URL is set
+  // In prod: MAIN_WINDOW_VITE_NAME is set
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools({ mode: "bottom" });
+  } else {
+    mainWindow.loadFile(
+      join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+    );
   }
 
   mainWindow.webContents.on("did-finish-load", () => {
