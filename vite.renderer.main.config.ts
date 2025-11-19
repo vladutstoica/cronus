@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import { resolve } from "path";
 
 export default defineConfig({
-  root: resolve(__dirname, "src/renderer-windows"),
+  root: resolve(__dirname, "src/renderer"),
   plugins: [react()],
   server: {
     port: 5173,
@@ -13,13 +13,13 @@ export default defineConfig({
     outDir: resolve(__dirname, ".vite/renderer/main_window"),
     emptyOutDir: true,
     rollupOptions: {
-      input: resolve(__dirname, "src/renderer-windows/index.html"),
+      input: resolve(__dirname, "src/renderer/index.html"),
     },
   },
   resolve: {
     alias: {
-      "@renderer": resolve(__dirname, "src/renderer-windows/src"),
-      src: resolve(__dirname, "src/renderer-windows/src"),
+      "@renderer": resolve(__dirname, "src/renderer/src"),
+      src: resolve(__dirname, "src/renderer/src"),
     },
   },
 });
