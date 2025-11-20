@@ -24,7 +24,7 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false"
   },
   "dependencies": {
-    "native-window-observer": "file:./native-modules/native-window-observer",
+    "native-window-observer": "./native-modules/native-window-observer",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-checkbox": "^1.3.2",
