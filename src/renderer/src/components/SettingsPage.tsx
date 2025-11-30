@@ -8,6 +8,7 @@ import { ManualUpdateSettings } from "./Settings/ManualUpdateSettings";
 import { MultiPurposeAppsSettings } from "./Settings/MultiPurposeAppsSettings";
 import PauseTrackingSettings from "./Settings/PauseTrackingSettings";
 import { PermissionsStatus } from "./Settings/PermissionsStatus";
+import { PrivacySettings } from "./Settings/PrivacySettings";
 import {
   SettingsSidebar,
   SettingsSection,
@@ -72,6 +73,8 @@ export const SettingsPage = memo(function SettingsPage({
         );
       case "apps":
         return <MultiPurposeAppsSettings />;
+      case "privacy":
+        return <PrivacySettings />;
       case "about":
         return (
           <div className="space-y-4">

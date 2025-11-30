@@ -1,9 +1,9 @@
 import {
   AppWindow,
-  Brain,
   Info,
   Palette,
   Settings,
+  Shield,
   Tags,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -13,6 +13,7 @@ export type SettingsSection =
   | "categories"
   | "appearance"
   | "apps"
+  | "privacy"
   | "about";
 
 interface SettingsSidebarProps {
@@ -24,11 +25,13 @@ const menuItems: {
   id: SettingsSection;
   label: string;
   icon: React.ElementType;
+  badge?: string;
 }[] = [
   { id: "general", label: "General", icon: Settings },
   { id: "categories", label: "Categories", icon: Tags },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "apps", label: "Apps", icon: AppWindow },
+  { id: "privacy", label: "Privacy", icon: Shield, badge: "Beta" },
   { id: "about", label: "About", icon: Info },
 ];
 
@@ -55,6 +58,11 @@ export function SettingsSidebar({
           >
             <Icon size={18} />
             {item.label}
+            {item.badge && (
+              <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-medium">
+                {item.badge}
+              </span>
+            )}
           </button>
         );
       })}
