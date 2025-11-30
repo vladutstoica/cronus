@@ -66,7 +66,9 @@ export function TrayStats({ workStarted, totalMs, isLoading }: TrayStatsProps) {
           <Clock size={12} className="text-chart-accent" />
           <span className="text-xs text-muted-foreground">Total hours</span>
         </div>
-        <p className="text-lg font-semibold text-foreground">{formattedTotalTime}</p>
+        <p className="text-lg font-semibold text-foreground">
+          {formattedTotalTime}
+        </p>
       </div>
     </div>
   );

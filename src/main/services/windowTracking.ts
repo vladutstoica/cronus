@@ -208,7 +208,8 @@ async function categorizeEventAsync(
     // Find the category ID by name
     const matchedCategory = categories.find(
       (c) =>
-        c.name.toLowerCase() === categoryChoice.chosenCategoryName.toLowerCase(),
+        c.name.toLowerCase() ===
+        categoryChoice.chosenCategoryName.toLowerCase(),
     );
 
     if (!matchedCategory) {

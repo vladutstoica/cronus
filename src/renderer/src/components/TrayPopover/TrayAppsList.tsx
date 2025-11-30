@@ -57,7 +57,13 @@ const getAppColor = (name: string): string => {
 };
 
 // Simple app icon component for tray
-function TrayAppIcon({ appName, size = 20 }: { appName: string; size?: number }) {
+function TrayAppIcon({
+  appName,
+  size = 20,
+}: {
+  appName: string;
+  size?: number;
+}) {
   // Try to find exact match or partial match in curated icons
   let iconSrc = iconMap[appName];
 
@@ -158,7 +164,9 @@ export function TrayAppsList({ topApps, isLoading }: TrayAppsListProps) {
 
               {/* App name and progress bar */}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-foreground truncate mb-0.5">{app.name}</p>
+                <p className="text-xs text-foreground truncate mb-0.5">
+                  {app.name}
+                </p>
                 <div className="h-1 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-chart-accent rounded-full transition-all"
