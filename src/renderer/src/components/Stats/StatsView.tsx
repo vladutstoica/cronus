@@ -8,7 +8,6 @@ import {
   Tooltip,
 } from "recharts";
 import { ProcessedEventBlock } from "../DashboardView";
-import { isCollaborationApp } from "../../lib/constants";
 import { formatDuration } from "../../lib/timeFormatting";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useDarkMode } from "../../hooks/useDarkMode";
@@ -71,7 +70,7 @@ export function StatsView({
       const categoryName = event.categoryName || "Uncategorized";
       const color = event.categoryColor || "#6b7280";
       const duration = event.durationMs;
-      const isCollab = isCollaborationApp(event.name);
+      const isCollab = categoryName.toLowerCase() === "communication";
 
       totalTime += duration;
 
