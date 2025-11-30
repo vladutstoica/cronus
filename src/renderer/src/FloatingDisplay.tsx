@@ -349,7 +349,7 @@ const FloatingDisplay: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={handleClose}
-          className="close-button-area p-1 w-5 h-5 mr-1 rounded-[7px]"
+          className="close-button-area p-1 w-5 h-5 mr-1 rounded-[8px]"
           title="Close Mini Timer"
         >
           <X className="w-[8px] h-[8px] text-muted-foreground hover:text-primary" />
@@ -359,7 +359,7 @@ const FloatingDisplay: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={handleOpenMainAppWindow}
-          className="open-main-app-window-butto p-1 w-5 h-5 mr-1 rounded-[7px]"
+          className="open-main-app-window-button p-1 w-5 h-5 mr-1 rounded-[8px]"
           title={
             showOcrIndicator ? "Screen text captured" : "Open Main App Window"
           }
