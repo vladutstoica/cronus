@@ -1,52 +1,46 @@
 /* electron-app/src/renderer/src/assets/custom-title-bar.css */
 
 .custom-title-bar {
-  height: 32px;
+  height: 38px;
   width: 100%;
-  background-color: hsl(var(--secondary)); /* Changed from #111827 */
+  background-color: transparent;
 
   /* --- THIS IS THE CRUCIAL CSS PROPERTY FOR DRAGGING --- */
   -webkit-app-region: drag;
   /* ---------------------------------------------------- */
 
-  position: sticky; /* Makes it stick to the top as user scrolls the content below */
+  position: sticky;
   top: 0;
   left: 0;
-  z-index: 1000; /* Ensure it's above other content if there's any overlap potential */
-  -webkit-user-select: none; /* For Safari */
-  user-select: none; /* Prevent text selection within the title bar area */
-  box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+  z-index: 1000;
+  -webkit-user-select: none;
+  user-select: none;
+  box-sizing: border-box;
 
-  /* For macOS with titleBarStyle: 'hidden' in main.ts:
-     The OS places "traffic light" buttons in the top-left.
-     This padding-left on your .custom-title-bar ensures that:
-     1. If your bar has a background color, it doesn't draw *under* the traffic lights.
-     2. If you put text (like an app title) inside .custom-title-bar, it starts *after* the traffic lights.
-     The draggable area itself (defined by the div's bounds before padding) still covers the full width,
-     allowing dragging around and to the right of the traffic lights.
-  */
-  padding-left: 78px; /* Adjust this value based on testing and traffic light size */
-  padding-right: 78px; /* Match left padding to truly center the title */
-  display: flex; /* Added to allow for centering */
-  align-items: center; /* Vertically center content */
-  justify-content: center; /* Horizontally center content */
-  font-size: 14px; /* Reduced font size */
-  font-weight: 600; /* Increased font weight */
-  color: hsl(var(--secondary-foreground));
+  /* Padding for macOS traffic light buttons */
+  padding-left: 78px;
+  padding-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
 }
 
-/* Optional: If you add text inside your .custom-title-bar, like <span class="app-window-title">Title</span> */
+/* App title text - subtle and unobtrusive */
 .app-window-title {
-  line-height: 32px; /* Vertically center text if .custom-title-bar is 32px high */
-  color: hsl(var(--secondary-foreground)); /* Changed from #cccccc */
+  line-height: 38px;
+  color: hsl(var(--muted-foreground));
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   font-size: 13px;
-  /* This text will appear to the right of the padding-left applied to .custom-title-bar */
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 /* IMPORTANT: If you ever add interactive elements (buttons, links, inputs)

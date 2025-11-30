@@ -216,11 +216,9 @@ export function MainAppContent(): React.ReactElement {
   return (
     <TooltipProvider delayDuration={150}>
       <div className={cn("flex flex-col", !isSettingsOpen && "h-screen")}>
-        <div className="sticky top-0 z-50 bg-white dark:bg-black">
-          <div className="custom-title-bar">
-            <span className="app-window-title">{APP_NAME}</span>
-          </div>
-          <div className="flex-none p-2">
+        <div className="sticky top-0 z-50 bg-background">
+          <div className="custom-title-bar" />
+          <div className="flex-none px-3 pb-2">
             <DistractionStatusBar
               activeWindow={activeWindow}
               onOpenMiniTimerClick={handleOpenMiniTimer}
