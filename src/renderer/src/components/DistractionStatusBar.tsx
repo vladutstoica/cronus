@@ -3,15 +3,11 @@ import clsx from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
-  CircleQuestionMark,
   EditIcon,
   ExternalLink,
-  Mail,
-  MessageCircle,
   Pause,
   Play,
   Settings as SettingsIcon,
-  Youtube,
 } from "lucide-react";
 import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -35,12 +31,6 @@ import { ActivityIcon } from "./ActivityList/ActivityIcon";
 import DistractionStatusLoadingSkeleton from "./DistractionStatusLoadingSkeleton";
 import PauseInfoModal from "./PauseInfoModal";
 import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
 
 interface DistractionStatusBarProps {
   activeWindow: ActiveWindowDetails | null;
@@ -593,68 +583,6 @@ const DistractionStatusBar = ({
           </Button>
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="hover:bg-gray-200 dark:hover:bg-gray-700/50"
-              variant="ghost"
-              title="Open Feedback"
-            >
-              <CircleQuestionMark size={20} />
-            </Button>
-          </DropdownMenuTrigger>
-          <AnimatePresence>
-            <DropdownMenuContent
-              className="w-56 border border-black/[0.03] dark:border-white/[0.03] shadow-[0_2px_4px_0_rgb(0,0,0,0.05)] dark:shadow-[0_2px_4px_0_rgb(255,255,255,0.02)]"
-              align="end"
-              sideOffset={8}
-              asChild
-            >
-              <motion.div
-                initial={{ opacity: 0, y: -4, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <DropdownMenuItem
-                  className="flex items-center gap-2 cursor-pointer transition-colors data-[highlighted]:bg-black/[0.02] dark:data-[highlighted]:bg-white/[0.02]"
-                  onClick={() =>
-                    window.open(
-                      "mailto:wallawitsch@gmail.com, arne.strickmann@googlemail.com?subject=Cronus%20Feedback",
-                    )
-                  }
-                >
-                  <Mail size={20} />
-                  Email Feedback
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2 cursor-pointer transition-colors data-[highlighted]:bg-black/[0.02] dark:data-[highlighted]:bg-white/[0.02]"
-                  onClick={() =>
-                    window.open(
-                      "https://chat.whatsapp.com/Lrge0tDN19THKld1kCjdwB",
-                      "_blank",
-                    )
-                  }
-                >
-                  <MessageCircle size={20} />
-                  WhatsApp Us
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2 cursor-pointer transition-colors data-[highlighted]:bg-black/[0.02] dark:data-[highlighted]:bg-white/[0.02]"
-                  onClick={() =>
-                    window.open(
-                      "https://www.loom.com/share/34531aee1ce94343a2c4c7cee04a0dc8?sid=a601c97f-9d16-4a7d-97e3-d8fc3db96679",
-                      "_blank",
-                    )
-                  }
-                >
-                  <Youtube size={20} />
-                  1.5m Tutorial Video
-                </DropdownMenuItem>
-              </motion.div>
-            </DropdownMenuContent>
-          </AnimatePresence>
-        </DropdownMenu>
         <Button
           variant="ghost"
           size={isNarrowView ? "icon" : "default"}

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { DashboardView } from "./components/DashboardView";
 import DistractionStatusBar from "./components/DistractionStatusBar";
-import { TutorialModal } from "./components/Onboarding/TutorialModal";
 import { OnboardingModal } from "./components/OnboardingModal";
 import { QuitConfirmationModal } from "./components/QuitConfirmationModal";
 import RecategorizeDialog from "./components/RecategorizeDialog";
@@ -48,8 +47,6 @@ export function MainAppContent(): React.ReactElement {
   // Use the onboarding logic hook
   const {
     showOnboarding,
-    showTutorial,
-    setShowTutorial,
     handleOnboardingComplete,
     handleResetOnboarding,
   } = useOnboardingLogic({
@@ -151,20 +148,6 @@ export function MainAppContent(): React.ReactElement {
     }
   }, [isAuthenticated, showOnboarding]);
 
-  const handleTutorialClose = (): void => {
-    setShowTutorial(false);
-    localStorage.setItem("hasSeenTutorial", "true");
-  };
-
-  useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem("hasSeenTutorial") === "true";
-    const hasCompletedOnboarding =
-      localStorage.getItem("hasCompletedOnboarding") === "true";
-
-    if (hasCompletedOnboarding && !hasSeenTutorial) {
-      setShowTutorial(true);
-    }
-  }, []);
 
   // Listen for Cmd+Q keyboard shortcut to show quit confirmation
   useEffect(() => {
@@ -261,10 +244,6 @@ export function MainAppContent(): React.ReactElement {
         />
 
         <UpdateNotification onRestartBegin={handleSystemRestartBegin} />
-        <TutorialModal
-          isFirstVisit={showTutorial}
-          onClose={handleTutorialClose}
-        />
         <Toaster />
         {allCategories && recategorizeTarget && (
           <RecategorizeDialog
