@@ -263,3 +263,5 @@ dist
 native-modules/**/bin/
 native-modules/**/build/
 native-modules/**/package-lock.json
+
+build/
