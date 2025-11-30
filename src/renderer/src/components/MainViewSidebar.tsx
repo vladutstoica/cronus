@@ -1,7 +1,7 @@
-import { BarChart3, LayoutDashboard } from "lucide-react";
+import { BarChart3, CheckSquare, LayoutDashboard } from "lucide-react";
 import { cn } from "../lib/utils";
 
-export type MainSection = "dashboard" | "stats";
+export type MainSection = "dashboard" | "todos" | "stats";
 
 interface MainViewSidebarProps {
   activeSection: MainSection;
@@ -14,6 +14,7 @@ const menuItems: {
   icon: React.ElementType;
 }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "todos", label: "Todos", icon: CheckSquare },
   { id: "stats", label: "Stats", icon: BarChart3 },
 ];
 

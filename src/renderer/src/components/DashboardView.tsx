@@ -12,6 +12,7 @@ import { activityEventService } from "../lib/activityEventService";
 import { MainViewSidebar, MainSection } from "./MainViewSidebar";
 import { TimeBlocksTimeline } from "./Stats/TimeBlocksTimeline";
 import { StatsView } from "./Stats/StatsView";
+import { TodoView } from "./Todos/TodoView";
 
 export interface ProcessedEventBlock {
   startTime: Date;
@@ -431,6 +432,9 @@ export function DashboardView({
               </div>
             </div>
           </>
+        ) : activeSection === "todos" ? (
+          /* Todos View */
+          <TodoView selectedDate={selectedDate} />
         ) : (
           /* Stats View */
           <StatsView

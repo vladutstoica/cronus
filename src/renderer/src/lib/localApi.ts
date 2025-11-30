@@ -168,6 +168,69 @@ export const localApi = {
     },
   },
 
+  // Todo operations
+  todos: {
+    getByDate: async (date: string) => {
+      return window.electron.ipcRenderer.invoke("local:get-todos-by-date", date);
+    },
+    getByDateRange: async (startDate: string, endDate: string) => {
+      return window.electron.ipcRenderer.invoke(
+        "local:get-todos-by-date-range",
+        startDate,
+        endDate
+      );
+    },
+    getIncompleteBeforeDate: async (beforeDate: string) => {
+      return window.electron.ipcRenderer.invoke(
+        "local:get-incomplete-todos-before-date",
+        beforeDate
+      );
+    },
+    create: async (input: {
+      title: string;
+      description?: string;
+      priority?: "low" | "medium" | "high";
+      is_focus?: boolean;
+      tags?: string[];
+      scheduled_date: string;
+    }) => {
+      return window.electron.ipcRenderer.invoke("local:create-todo", input);
+    },
+    getById: async (id: string) => {
+      return window.electron.ipcRenderer.invoke("local:get-todo-by-id", id);
+    },
+    update: async (
+      id: string,
+      updates: {
+        title?: string;
+        description?: string;
+        priority?: "low" | "medium" | "high";
+        status?: "pending" | "completed";
+        is_focus?: boolean;
+        tags?: string[];
+        scheduled_date?: string;
+      }
+    ) => {
+      return window.electron.ipcRenderer.invoke("local:update-todo", id, updates);
+    },
+    delete: async (id: string) => {
+      return window.electron.ipcRenderer.invoke("local:delete-todo", id);
+    },
+    rollover: async (toDate: string) => {
+      return window.electron.ipcRenderer.invoke("local:rollover-todos", toDate);
+    },
+    getStats: async (startDate: string, endDate: string) => {
+      return window.electron.ipcRenderer.invoke(
+        "local:get-todo-stats",
+        startDate,
+        endDate
+      );
+    },
+    clearFocus: async (date: string) => {
+      return window.electron.ipcRenderer.invoke("local:clear-focus-todos", date);
+    },
+  },
+
   // AI Provider operations
   ai: {
     testConnection: async (

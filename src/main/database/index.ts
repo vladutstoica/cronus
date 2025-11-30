@@ -184,6 +184,34 @@ function runMigrations(database: Database.Database): void {
         WHERE name IN ('Entertainment', 'Uncategorized') AND is_default = 1;
       `,
     },
+    {
+      name: "005_todos_table",
+      up: `
+        -- Todos table
+        CREATE TABLE IF NOT EXISTS todos (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT,
+          priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed')),
+          is_focus INTEGER DEFAULT 0,
+          tags TEXT, -- JSON array of strings
+          scheduled_date TEXT NOT NULL, -- Date in YYYY-MM-DD format
+          original_date TEXT, -- Original creation date if rolled over
+          completed_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        -- Create indexes for better query performance
+        CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);
+        CREATE INDEX IF NOT EXISTS idx_todos_scheduled_date ON todos(scheduled_date);
+        CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status);
+        CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, scheduled_date);
+      `,
+    },
   ];
 
   // Apply migrations
