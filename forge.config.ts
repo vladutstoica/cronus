@@ -1,6 +1,7 @@
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import { MakerDMG } from "@electron-forge/maker-dmg";
+import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import path from "path";
 import fs from "fs";
@@ -10,7 +11,7 @@ const config: ForgeConfig = {
     name: "Cronus",
     executableName: "Cronus",
     appBundleId: "com.cronus.app",
-    icon: "./resources/icon",
+    icon: "./build/icon",
     asar: false, // Disabled to workaround Forge bugs #3917 (external modules) and #3934 (auto-unpack)why
   },
   rebuildConfig: {},
@@ -18,8 +19,14 @@ const config: ForgeConfig = {
     new MakerDMG({
       name: "Cronus",
       format: "ULFO",
+      icon: "./build/icon.icns",
     }),
-    new MakerZIP({}, ["darwin"]),
+    new MakerSquirrel({
+      name: "Cronus",
+      setupIcon: "./build/icon.ico",
+      iconUrl: "https://raw.githubusercontent.com/moritzWa/cronus/main/build/icon.ico",
+    }),
+    new MakerZIP({}, ["darwin", "win32"]),
   ],
   plugins: [
     new VitePlugin({
