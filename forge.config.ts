@@ -52,23 +52,33 @@ const config: ForgeConfig = {
   hooks: {
     // Workaround for Forge+Vite bug #3917: External native modules are not copied to package
     packageAfterPrune: async (_config, buildPath) => {
-      console.log("Copying external native modules to build...");
+      console.log("Copying external native modules and dependencies to build...");
 
-      const nativeModules = ["native-window-observer", "better-sqlite3"];
+      // Native modules and their required dependencies
+      const modulesToCopy = [
+        "native-window-observer",
+        "better-sqlite3",
+        "bindings", // Required by native modules
+        "file-uri-to-path", // Required by bindings
+      ];
 
-      for (const moduleName of nativeModules) {
+      for (const moduleName of modulesToCopy) {
         const sourcePath = path.join(__dirname, "node_modules", moduleName);
         const targetPath = path.join(buildPath, "node_modules", moduleName);
 
         if (fs.existsSync(sourcePath)) {
-          await fs.promises.cp(sourcePath, targetPath, { recursive: true });
+          // dereference: true follows symlinks and copies actual files
+          await fs.promises.cp(sourcePath, targetPath, {
+            recursive: true,
+            dereference: true,
+          });
           console.log(`✓ Copied ${moduleName}`);
         } else {
           console.error(`✗ ${moduleName} not found in node_modules!`);
         }
       }
 
-      console.log("Native modules copied successfully");
+      console.log("Native modules and dependencies copied successfully");
     },
   },
 };
