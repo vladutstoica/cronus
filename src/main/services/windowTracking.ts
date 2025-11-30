@@ -200,16 +200,15 @@ async function categorizeEventAsync(
       );
     }
 
-    if (!categoryChoice) {
-      console.warn("Failed to categorize event");
+    if (!categoryChoice || !categoryChoice.chosenCategoryName) {
+      console.warn("Failed to categorize event or missing category name");
       return;
     }
 
     // Find the category ID by name
     const matchedCategory = categories.find(
       (c) =>
-        c.name.toLowerCase() ===
-        categoryChoice!.chosenCategoryName.toLowerCase(),
+        c.name.toLowerCase() === categoryChoice.chosenCategoryName.toLowerCase(),
     );
 
     if (!matchedCategory) {
