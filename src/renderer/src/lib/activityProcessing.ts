@@ -19,7 +19,6 @@ export interface ProcessedCategory {
   id: string;
   name: string;
   color: string;
-  emoji?: string; // Add emoji field
   isProductive: boolean;
   totalDurationMs: number;
   activities: ActivityItem[];
@@ -78,7 +77,6 @@ export const processActivityEvents = (
     _id: UNCATEGORIZED_ID,
     name: "Uncategorized",
     color: "#808080", // Gray color
-    emoji: "❓", // Add emoji for uncategorized
     isProductive: false,
     userId: "", // Assuming userId is not strictly needed for display
     isDefault: false,
@@ -166,7 +164,6 @@ export const processActivityEvents = (
       id: data.categoryDetails._id,
       name: data.categoryDetails.name,
       color: data.categoryDetails.color,
-      emoji: data.categoryDetails.emoji, // Add emoji to the processed category
       isProductive: data.categoryDetails.isProductive,
       totalDurationMs: totalCategoryDurationMs,
       // Sort activities within this category by duration, descending (longest first).

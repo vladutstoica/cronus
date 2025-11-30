@@ -7,7 +7,6 @@ interface CategoryBadgeProps {
   category: {
     name: string;
     color: string;
-    emoji?: string;
   };
   className?: string;
   onClear?: () => void;
@@ -18,7 +17,7 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
   className,
   onClear,
 }) => {
-  const { name, color, emoji } = category;
+  const { name, color } = category;
   const isDarkMode = useDarkMode();
 
   const textColor = color
@@ -41,7 +40,10 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
         color: textColor,
       }}
     >
-      {emoji && <span className="text-base">{emoji}</span>}
+      <div
+        className="w-2 h-2 rounded-full flex-shrink-0"
+        style={{ backgroundColor: color }}
+      />
       <span>{name}</span>
       {onClear && (
         <button

@@ -1,5 +1,4 @@
 import { memo, useCallback, useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { AISettings } from "./Settings/AISettings";
 import { CategoryManagementSettings } from "./Settings/CategoryManagementSettings";
@@ -9,6 +8,10 @@ import { ManualUpdateSettings } from "./Settings/ManualUpdateSettings";
 import { MultiPurposeAppsSettings } from "./Settings/MultiPurposeAppsSettings";
 import PauseTrackingSettings from "./Settings/PauseTrackingSettings";
 import { PermissionsStatus } from "./Settings/PermissionsStatus";
+import {
+  SettingsSidebar,
+  SettingsSection,
+} from "./Settings/SettingsSidebar";
 import { ThemeSwitcher } from "./Settings/ThemeSwitcher";
 import { AppInformation } from "./Settings/VersionDisplay";
 
@@ -23,9 +26,9 @@ export const SettingsPage = memo(function SettingsPage({
   isTrackingPaused,
   onToggleTracking,
 }: SettingsPageProps) {
-  const { user } = useAuth();
   const { focusOn, setFocusOn } = useSettings();
   const [showPermissions, setShowPermissions] = useState(false);
+  const [activeSection, setActiveSection] = useState<SettingsSection>("general");
 
   useEffect(() => {
     if (focusOn === "goal-input" || focusOn === "pause-tracking") {
@@ -44,23 +47,54 @@ export const SettingsPage = memo(function SettingsPage({
 
   console.log("SettingsPage re-rendered");
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case "general":
+        return (
+          <div className="space-y-4">
+            <GoalInputForm shouldFocus={focusOn === "goal-input"} />
+            <AISettings />
+            <PauseTrackingSettings
+              isTrackingPaused={isTrackingPaused}
+              onToggleTracking={onToggleTracking}
+              shouldFocus={focusOn === "pause-tracking"}
+            />
+          </div>
+        );
+      case "categories":
+        return <CategoryManagementSettings />;
+      case "appearance":
+        return (
+          <div className="space-y-4">
+            <ThemeSwitcher />
+            <DistractionSoundSettings />
+          </div>
+        );
+      case "apps":
+        return <MultiPurposeAppsSettings />;
+      case "about":
+        return (
+          <div className="space-y-4">
+            <AppInformation onShowPermissions={handleShowPermissions} />
+            <ManualUpdateSettings />
+            {showPermissions && <PermissionsStatus />}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 p-2 pt-0 pb-4">
-      <div className="space-y-4">
-        <GoalInputForm shouldFocus={focusOn === "goal-input"} />
-        <AISettings />
-        <CategoryManagementSettings />
-        <PauseTrackingSettings
-          isTrackingPaused={isTrackingPaused}
-          onToggleTracking={onToggleTracking}
-          shouldFocus={focusOn === "pause-tracking"}
+    <div className="flex-1 flex overflow-hidden">
+      <div className="p-4 pr-2 border-r border-border">
+        <SettingsSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
         />
-        <DistractionSoundSettings />
-        <MultiPurposeAppsSettings />
-        <ThemeSwitcher />
-        <ManualUpdateSettings />
-        <AppInformation onShowPermissions={handleShowPermissions} />
-        {showPermissions && <PermissionsStatus />}
+      </div>
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 p-4 pt-4 pb-4">
+        {renderContent()}
       </div>
     </div>
   );

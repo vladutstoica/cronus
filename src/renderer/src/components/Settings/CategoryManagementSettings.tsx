@@ -1,5 +1,4 @@
 import {
-  ChevronDown,
   FolderPlus,
   MoreHorizontal,
   PlusCircle,
@@ -260,27 +259,30 @@ export const CategoryManagementSettings = memo(
     return (
       <div className="space-y-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle className="text-xl mb-1">Manage Categories</CardTitle>
-              <CardDescription>
-                Create from scratch or from templates. Ensure there is no
-                overlap between categories e.g. archive "Work" after you crate
-                more specific work/project categories.
+              <CardTitle className="text-lg">Categories</CardTitle>
+              <CardDescription className="text-sm">
+                Use categories to help organize and filter sessions
               </CardDescription>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8"
                     disabled={isFormOpen || isTemplateViewOpen}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleOpenTemplateView}>
+                    <Rows size={16} className="mr-2" />
+                    Add from Templates
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleDeleteRecent}
                     disabled={
@@ -289,7 +291,7 @@ export const CategoryManagementSettings = memo(
                       updateMutation.isLoading ||
                       deleteMutation.isLoading
                     }
-                    className="text-red-500"
+                    className="text-destructive focus:text-destructive"
                   >
                     Delete Created in last 24 hours
                   </DropdownMenuItem>
@@ -306,28 +308,16 @@ export const CategoryManagementSettings = memo(
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center text-sm font-medium"
-                    disabled={isFormOpen || isTemplateViewOpen}
-                  >
-                    Add Category
-                    <ChevronDown size={18} className="ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={handleOpenTemplateView}>
-                    <Rows size={18} className="mr-2" />
-                    From Templates
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleAddNew}>
-                    <PlusCircle size={18} className="mr-2" />
-                    New Category
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddNew}
+                disabled={isFormOpen || isTemplateViewOpen}
+                className="flex items-center gap-1.5"
+              >
+                <PlusCircle size={16} />
+                Create Category
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -395,10 +385,39 @@ export const CategoryManagementSettings = memo(
             {!isFormOpen &&
               !isTemplateViewOpen &&
               activeCategories.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 w-full mx-auto bg-transparent p-0">
-                  {activeCategories.map((category, idx) => (
-                    <div key={category._id}>
+                <div className="flex flex-col gap-2">
+                  {activeCategories.map((category) => (
+                    <CategoryListItem
+                      key={category._id}
+                      category={category}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onToggleProductive={handleToggleProductive}
+                      onToggleArchive={handleToggleArchive}
+                      isDeleting={
+                        deleteMutation.isLoading &&
+                        deleteMutation.variables?.id === category._id
+                      }
+                      isUpdating={
+                        updateMutation.isLoading &&
+                        updateMutation.variables?.id === category._id
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+
+            {!isFormOpen &&
+              !isTemplateViewOpen &&
+              archivedCategories.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                    Archived
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {archivedCategories.map((category) => (
                       <CategoryListItem
+                        key={category._id}
                         category={category}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
@@ -413,37 +432,6 @@ export const CategoryManagementSettings = memo(
                           updateMutation.variables?.id === category._id
                         }
                       />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-            {!isFormOpen &&
-              !isTemplateViewOpen &&
-              archivedCategories.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium text-foreground mb-4">
-                    Archived Categories
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 w-full mx-auto bg-transparent p-0">
-                    {archivedCategories.map((category, idx) => (
-                      <div key={category._id}>
-                        <CategoryListItem
-                          category={category}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          onToggleProductive={handleToggleProductive}
-                          onToggleArchive={handleToggleArchive}
-                          isDeleting={
-                            deleteMutation.isLoading &&
-                            deleteMutation.variables?.id === category._id
-                          }
-                          isUpdating={
-                            updateMutation.isLoading &&
-                            updateMutation.variables?.id === category._id
-                          }
-                        />
-                      </div>
                     ))}
                   </div>
                 </div>

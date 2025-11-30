@@ -1,12 +1,7 @@
-import { Check, Loader2, Smile } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { JSX, useState } from "react";
 import { Category } from "@shared/types";
 import { Button } from "../ui/button";
-import {
-  EmojiPicker,
-  EmojiPickerContent,
-  EmojiPickerSearch,
-} from "../ui/emoji-picker";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -102,7 +97,6 @@ export function CategoryForm({
         Math.floor(Math.random() * notionStyleCategoryColors.length)
       ],
   );
-  const [emoji, setEmoji] = useState(initialData?.emoji || "");
   const [isProductive, setIsProductive] = useState(
     initialData?.isProductive === undefined ? true : initialData.isProductive,
   );
@@ -114,16 +108,11 @@ export function CategoryForm({
       setError("Name is required.");
       return;
     }
-    if (!emoji) {
-      setError("Emoji is required.");
-      return;
-    }
     setError("");
     onSave({
       name,
       description,
       color,
-      emoji,
       isProductive,
       isDefault: initialData?.isDefault ?? false,
     });
@@ -166,68 +155,35 @@ export function CategoryForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label>
-            Emoji <span className="text-red-500">*</span>
-          </Label>
-          <div className="flex items-center space-x-2 mt-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-10 w-10 p-0 text-lg"
-                >
-                  {emoji || <Smile className="h-4 w-4" />}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-fit p-0">
-                <EmojiPicker
-                  className="h-[342px]"
-                  onEmojiSelect={({ emoji: newEmoji }) => {
-                    setEmoji(newEmoji);
-                  }}
-                >
-                  <EmojiPickerSearch />
-                  <EmojiPickerContent />
-                </EmojiPicker>
-              </PopoverContent>
-            </Popover>
-            <span className="text-sm text-muted-foreground">
-              Choose an emoji for this category
-            </span>
-          </div>
-        </div>
+      <div className="flex items-center gap-6">
         <div>
-          <Label>Color</Label>
-          <div className="flex items-start space-x-2 mt-1">
-            <CategoryColorPicker
-              selectedColor={color}
-              onColorChange={setColor}
-            />
-            <span className="text-red-500">*</span>
-          </div>
+          <Label className="mb-1 block">
+            Color <span className="text-red-500">*</span>
+          </Label>
+          <CategoryColorPicker
+            selectedColor={color}
+            onColorChange={setColor}
+          />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label>Type</Label>
-        <IsProductiveTooltip>
-          <div className="flex items-center space-x-2 mt-1 cursor-help">
-            <Switch
-              id="isProductive"
-              checked={isProductive}
-              onCheckedChange={setIsProductive}
-            />
-            <Label
-              htmlFor="isProductive"
-              className="text-foreground text-sm font-medium"
-            >
-              {isProductive ? "Productive" : "Unproductive"}
-            </Label>
-          </div>
-        </IsProductiveTooltip>
+        <div>
+          <Label className="mb-1 block">Type</Label>
+          <IsProductiveTooltip>
+            <div className="flex items-center space-x-2 cursor-help">
+              <Switch
+                id="isProductive"
+                checked={isProductive}
+                onCheckedChange={setIsProductive}
+              />
+              <Label
+                htmlFor="isProductive"
+                className="text-foreground text-sm font-medium"
+              >
+                {isProductive ? "Productive" : "Unproductive"}
+              </Label>
+            </div>
+          </IsProductiveTooltip>
+        </div>
       </div>
 
       {error && <p className="text-sm text-destructive-foreground">{error}</p>}

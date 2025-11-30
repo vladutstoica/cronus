@@ -446,49 +446,6 @@ CONTENT: ${activityDetails.content ? activityDetails.content.slice(0, 1000) : ""
 }
 
 /**
- * Get emoji for a category
- */
-export async function getEmojiForCategory(
-  categoryName: string,
-  categoryDescription?: string,
-): Promise<string | null> {
-  if (!isAIEnabled()) {
-    return null;
-  }
-
-  const available = await isActiveProviderAvailable();
-
-  if (!available) {
-    return null;
-  }
-
-  const provider = getActiveProvider();
-
-  const prompt = [
-    {
-      role: "system" as const,
-      content: `Suggest a single emoji that represents this category. Respond with only the emoji character, nothing else.`,
-    },
-    {
-      role: "user" as const,
-      content: `Category: "${categoryName}"${categoryDescription ? `\nDescription: ${categoryDescription}` : ""}`,
-    },
-  ];
-
-  try {
-    const response = await provider.generateChatCompletion(prompt, {
-      temperature: 0,
-      maxTokens: 10,
-    });
-
-    return response?.trim() || null;
-  } catch (error) {
-    console.error("Error getting emoji for category:", error);
-    return null;
-  }
-}
-
-/**
  * Generate category suggestions based on user goals
  */
 export async function generateCategorySuggestions(
@@ -498,7 +455,6 @@ export async function generateCategorySuggestions(
   name: string;
   description: string;
   color: string;
-  emoji: string;
   isProductive: boolean;
 }> | null> {
   if (!isAIEnabled()) {
@@ -525,7 +481,6 @@ Respond in JSON format as an array of categories:
     "name": "Category Name",
     "description": "Brief description",
     "color": "#hex color code",
-    "emoji": "single emoji",
     "isProductive": true or false
   }
 ]`,

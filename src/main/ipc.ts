@@ -561,7 +561,6 @@ export function registerIpcHandlers(
     name: category.name,
     description: category.description,
     color: category.color,
-    emoji: category.emoji,
     isProductive: category.is_productive,
     isDefault: category.is_default,
     isArchived: category.is_archived,

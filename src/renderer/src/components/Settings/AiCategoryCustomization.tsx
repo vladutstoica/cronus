@@ -114,11 +114,9 @@ export function AiCategoryCustomization({
         >
           <span className="font-semibold">Simple Categories</span>
           <div className="flex flex-wrap gap-2 mt-2">
+            <CategoryBadge category={{ name: "Work", color: "#22C55E" }} />
             <CategoryBadge
-              category={{ name: "Work", color: "#22C55E", emoji: "💼" }}
-            />
-            <CategoryBadge
-              category={{ name: "Distraction", color: "#EC4899", emoji: "🎮" }}
+              category={{ name: "Distraction", color: "#EC4899" }}
             />
           </div>
         </Button>

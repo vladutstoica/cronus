@@ -152,9 +152,13 @@ const RecategorizeDialog: React.FC<RecategorizeDialogProps> = ({
                         backgroundColor,
                         color: textColor,
                       }}
-                      className={`hover:opacity-80`}
+                      className={`hover:opacity-80 flex items-center gap-2`}
                     >
-                      {cat.emoji} {cat.name}
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      {cat.name}
                     </Button>
                   );
                 })}

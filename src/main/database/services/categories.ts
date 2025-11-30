@@ -7,7 +7,6 @@ export interface Category {
   name: string;
   description?: string;
   color?: string;
-  emoji?: string;
   is_productive: boolean;
   is_default: boolean;
   is_archived: boolean;
@@ -27,10 +26,10 @@ export function createCategory(
 
   const stmt = db.prepare(`
     INSERT INTO categories (
-      id, user_id, name, description, color, emoji,
+      id, user_id, name, description, color,
       is_productive, is_default, is_archived,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -39,7 +38,6 @@ export function createCategory(
     category.name,
     category.description,
     category.color,
-    category.emoji,
     category.is_productive ? 1 : 0,
     category.is_default ? 1 : 0,
     category.is_archived ? 1 : 0,
@@ -180,7 +178,6 @@ export function createDefaultCategories(userId: string): Category[] {
       name: "Work",
       description: "Work-related activities",
       color: "#3b82f6",
-      emoji: "💼",
       is_productive: true,
       is_default: true,
     },
@@ -188,7 +185,6 @@ export function createDefaultCategories(userId: string): Category[] {
       name: "Personal",
       description: "Personal activities",
       color: "#8b5cf6",
-      emoji: "🏠",
       is_productive: true,
       is_default: true,
     },
@@ -196,7 +192,6 @@ export function createDefaultCategories(userId: string): Category[] {
       name: "Entertainment",
       description: "Entertainment and leisure",
       color: "#ec4899",
-      emoji: "🎮",
       is_productive: false,
       is_default: true,
     },
@@ -204,7 +199,6 @@ export function createDefaultCategories(userId: string): Category[] {
       name: "Communication",
       description: "Email, messaging, meetings",
       color: "#10b981",
-      emoji: "💬",
       is_productive: true,
       is_default: true,
     },
@@ -212,7 +206,6 @@ export function createDefaultCategories(userId: string): Category[] {
       name: "Uncategorized",
       description: "Uncategorized activities",
       color: "#6b7280",
-      emoji: "❓",
       is_productive: false,
       is_default: true,
     },

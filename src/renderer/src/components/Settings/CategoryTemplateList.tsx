@@ -19,7 +19,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Working on a project for Contractor work for XYZ including meetings, emails, etc. related to that project",
     color: "#22C55E",
-    emoji: "💼",
     isProductive: true,
     isDefault: false,
   },
@@ -28,7 +27,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Writing or reviewing code, debugging, working in IDEs or terminals",
     color: "#3B82F6",
-    emoji: "💻",
     isProductive: true,
     isDefault: false,
   },
@@ -37,7 +35,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Working in design tools like Figma or Illustrator on UX/UI or visual assets",
     color: "#8B5CF6",
-    emoji: "🎨",
     isProductive: true,
     isDefault: false,
   },
@@ -46,7 +43,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Planning features, writing specs, managing tickets, reviewing user feedback",
     color: "#10B981",
-    emoji: "📈",
     isProductive: true,
     isDefault: false,
   },
@@ -55,7 +51,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Pitching to investors, refining decks, writing emails or grant applications",
     color: "#F97316",
-    emoji: "💰",
     isProductive: true,
     isDefault: false,
   },
@@ -64,7 +59,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Working on campaigns, analytics, user acquisition, SEO or outreach",
     color: "#EAB308",
-    emoji: "🚀",
     isProductive: true,
     isDefault: false,
   },
@@ -73,7 +67,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Responding to emails, Slack, Notion, meetings or async updates",
     color: "#0EA5E9",
-    emoji: "💬",
     isProductive: true,
     isDefault: false,
   },
@@ -82,7 +75,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Scrolling social media, browsing unrelated content, or idle clicking",
     color: "#EC4899",
-    emoji: "딴",
     isProductive: false,
     isDefault: false,
   },
@@ -91,7 +83,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Using dating apps, messaging, browsing profiles, or going on dates",
     color: "#F43F5E",
-    emoji: "❤️",
     isProductive: false,
     isDefault: false,
   },
@@ -100,7 +91,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Eating meals, cooking, groceries, or online/in-person shopping",
     color: "#D97706",
-    emoji: "🍔",
     isProductive: false,
     isDefault: false,
   },
@@ -108,7 +98,6 @@ export const templateCategories: ComparableCategory[] = [
     name: "Sport & Health",
     description: "Exercising, walking, gym, sports, wellness, etc.",
     color: "#6366F1",
-    emoji: "💪",
     isProductive: true,
     isDefault: false,
   },
@@ -117,7 +106,6 @@ export const templateCategories: ComparableCategory[] = [
     description:
       "Spending time with friends or socializing in person or online",
     color: "#A855F7",
-    emoji: "🎉",
     isProductive: false,
     isDefault: false,
   },
@@ -125,7 +113,6 @@ export const templateCategories: ComparableCategory[] = [
     name: "Planning & Reflection",
     description: "Journaling, reflecting on goals, or reviewing personal plans",
     color: "#84CC16",
-    emoji: "📝",
     isProductive: true,
     isDefault: false,
   },
@@ -133,7 +120,6 @@ export const templateCategories: ComparableCategory[] = [
     name: "Commuting",
     description: "Traveling to or from work, errands, or social events",
     color: "#6B7280",
-    emoji: "🚗",
     isProductive: false,
     isDefault: false,
   },
@@ -156,34 +142,31 @@ export function CategoryTemplateList({
   return (
     <div>
       <div className="flex justify-end">
-        <Button onClick={onCancel} variant="outline">
+        <Button onClick={onCancel} variant="outline" size="sm">
           Back to Categories
         </Button>
       </div>
-      <div className="space-y-4 mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {availableTemplates.map((template) => {
-            return (
-              <CategoryItemDisplay
-                key={template.name}
-                name={template.name}
-                description={template.description}
-                color={template.color}
-                emoji={template.emoji}
-                actions={
-                  <Button
-                    variant="ghost"
-                    onClick={() => onAdd(template)}
-                    size="sm"
-                    disabled={isSaving}
-                  >
-                    <PlusCircle size={16} />
-                  </Button>
-                }
-              />
-            );
-          })}
-        </div>
+      <div className="space-y-2 mt-4">
+        {availableTemplates.map((template) => {
+          return (
+            <CategoryItemDisplay
+              key={template.name}
+              name={template.name}
+              color={template.color}
+              actions={
+                <Button
+                  variant="ghost"
+                  onClick={() => onAdd(template)}
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={isSaving}
+                >
+                  <PlusCircle size={16} />
+                </Button>
+              }
+            />
+          );
+        })}
         {availableTemplates.length === 0 && (
           <div className="text-center py-8 px-4 bg-muted/50 rounded-lg border border-dashed border-border">
             <h3 className="text-sm font-medium text-foreground">

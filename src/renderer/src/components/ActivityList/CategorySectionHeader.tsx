@@ -4,7 +4,7 @@ import React from "react";
 import { Category as SharedCategory } from "@shared/types";
 import { useDarkMode } from "../../hooks/useDarkMode";
 import type { ProcessedCategory } from "../../lib/activityProcessing";
-import { getDarkerColor, getLighterColor, hexToRgba } from "../../lib/colors";
+import { getDarkerColor, getLighterColor } from "../../lib/colors";
 import { CategoryBadge } from "../CategoryBadge";
 import { Button } from "../ui/button";
 import { MoveSelectedActivitiesButton } from "./MoveSelectedActivitiesButton";
@@ -40,20 +40,11 @@ export const CategorySectionHeader: React.FC<CategorySectionHeaderProps> = ({
     isMovingActivity !== undefined &&
     onAddNewCategory;
 
-  // Get emoji for the category
-  const categoryEmoji = category.emoji;
-
   // Calculate text color based on category color and theme - same logic as other components
   const textColor = category.color
     ? isDarkMode
       ? getLighterColor(category.color, 0.8)
       : getDarkerColor(category.color, 0.6)
-    : undefined;
-  // Use lighter color for background
-  const backgroundColor = category.color
-    ? isDarkMode
-      ? hexToRgba(category.color, 0.3)
-      : hexToRgba(category.color, 0.1)
     : undefined;
 
   const renderButtons = () => {
@@ -82,8 +73,11 @@ export const CategorySectionHeader: React.FC<CategorySectionHeaderProps> = ({
   if (variant === "empty") {
     return (
       <div className="sticky top-0 z-10 flex select-none items-center justify-between border-b border-border bg-card py-2 pl-2">
-        <div className="flex items-center">
-          <span className="mr-2 text-lg">{categoryEmoji}</span>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: category.color }}
+          />
           <h3 className="text-md font-semibold" style={{ color: textColor }}>
             {category.name.toUpperCase()}
           </h3>
@@ -106,7 +100,6 @@ export const CategorySectionHeader: React.FC<CategorySectionHeaderProps> = ({
           category={{
             name: category.name,
             color: category.color,
-            emoji: category.emoji,
           }}
         />
       </div>

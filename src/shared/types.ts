@@ -53,7 +53,6 @@ export interface Category {
   name: string;
   description?: string;
   color: string; // Hex color code, e.g., "#FF5733"
-  emoji?: string;
   isProductive: boolean;
   isDefault: boolean;
   isArchived?: boolean;

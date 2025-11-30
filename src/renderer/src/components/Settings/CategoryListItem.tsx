@@ -5,6 +5,7 @@ import {
   MoreHorizontal,
   ToggleLeft,
   ToggleRight,
+  Trash2,
 } from "lucide-react";
 import { JSX } from "react";
 import { Category } from "@shared/types";
@@ -30,6 +31,7 @@ interface CategoryListItemProps {
 export function CategoryListItem({
   category,
   onEdit,
+  onDelete,
   onToggleProductive,
   onToggleArchive,
   isDeleting,
@@ -38,9 +40,7 @@ export function CategoryListItem({
   return (
     <CategoryItemDisplay
       name={category.name}
-      description={category.description}
       color={category.color}
-      emoji={category.emoji}
       isArchived={category.isArchived}
       actions={
         <>
@@ -48,11 +48,11 @@ export function CategoryListItem({
             variant="ghost"
             size="icon"
             onClick={() => onEdit(category)}
-            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-background focus:ring-primary"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             title="Edit category"
             disabled={isUpdating}
           >
-            <Edit3 size={18} />
+            <Edit3 size={16} />
           </Button>
 
           <DropdownMenu>
@@ -60,11 +60,11 @@ export function CategoryListItem({
               <Button
                 variant="ghost"
                 size="icon"
-                className="p-1.5 text-muted-foreground data-[state=open]:bg-primary/20 data-[state=open]:text-primary"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 disabled={isUpdating || isDeleting}
               >
                 <span className="sr-only">Open menu</span>
-                <MoreHorizontal size={18} />
+                <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -74,9 +74,9 @@ export function CategoryListItem({
                 className="flex items-center cursor-pointer"
               >
                 {category.isProductive ? (
-                  <ToggleRight size={18} className="mr-2 text-green-500" />
+                  <ToggleRight size={16} className="mr-2 text-green-500" />
                 ) : (
-                  <ToggleLeft size={18} className="mr-2 text-red-500" />
+                  <ToggleLeft size={16} className="mr-2 text-red-500" />
                 )}
                 <span>
                   {category.isProductive
@@ -90,11 +90,19 @@ export function CategoryListItem({
                 className="flex items-center cursor-pointer"
               >
                 {category.isArchived ? (
-                  <ArchiveRestore size={18} className="mr-2" />
+                  <ArchiveRestore size={16} className="mr-2" />
                 ) : (
-                  <Archive size={18} className="mr-2" />
+                  <Archive size={16} className="mr-2" />
                 )}
                 <span>{category.isArchived ? "Unarchive" : "Archive"}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(category._id)}
+                disabled={isDeleting}
+                className="flex items-center cursor-pointer text-destructive focus:text-destructive"
+              >
+                <Trash2 size={16} className="mr-2" />
+                <span>Delete</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
