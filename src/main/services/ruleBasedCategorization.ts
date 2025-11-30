@@ -145,10 +145,14 @@ function matchesRuleCategory(
     score += 3;
   }
 
-  // Check title and content for keywords
-  const textToCheck = [title, content].filter(Boolean).join(" ");
-  if (textToCheck && containsKeywords(textToCheck, rule.keywords)) {
+  // Check title for keywords
+  if (title && containsKeywords(title, rule.keywords)) {
     score += 1;
+  }
+
+  // Check content for keywords (weighted higher since OCR provides richer context)
+  if (content && containsKeywords(content, rule.keywords)) {
+    score += 2;
   }
 
   return score;

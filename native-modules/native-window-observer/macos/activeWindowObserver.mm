@@ -531,7 +531,7 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
         
         VNRecognizeTextRequest *request = [[VNRecognizeTextRequest alloc] init];
         request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
-        request.usesLanguageCorrection = NO;
+        request.usesLanguageCorrection = YES;
         
         VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] 
             initWithCGImage:screenshot options:@{}];
@@ -540,22 +540,42 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
         BOOL success = [handler performRequests:@[request] error:&error];
         
         NSTimeInterval ocrDuration = ([[NSDate date] timeIntervalSince1970] - startTime) * 1000;
-        MyLog(@"🚀 OCR completed in %.1fms (langCorrection=NO)", ocrDuration);
-        
+        MyLog(@"🚀 OCR completed in %.1fms", ocrDuration);
+
         NSString *result = @"";
         if (success && !error) {
-            NSMutableArray *textSegments = [[NSMutableArray alloc] init];
-            
+            NSMutableArray *textObservations = [[NSMutableArray alloc] init];
+
             for (VNRecognizedTextObservation *observation in request.results) {
                 VNRecognizedText *topCandidate = [observation topCandidates:1].firstObject;
-                if (topCandidate && topCandidate.confidence > 0.3) {
-                    [textSegments addObject:topCandidate.string];
+                if (topCandidate && topCandidate.confidence > 0.5) {
+                    // Store observation with its bounding box for sorting
+                    [textObservations addObject:@{
+                        @"text": topCandidate.string,
+                        @"y": @(1.0 - observation.boundingBox.origin.y), // Flip Y (Vision uses bottom-left origin)
+                        @"x": @(observation.boundingBox.origin.x)
+                    }];
                 }
             }
-            
-            result = [textSegments componentsJoinedByString:@" "];
+
+            // Sort by Y position (top to bottom), then X (left to right)
+            [textObservations sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+                CGFloat yDiff = [a[@"y"] floatValue] - [b[@"y"] floatValue];
+                if (fabs(yDiff) > 0.02) { // Same line threshold
+                    return yDiff < 0 ? NSOrderedAscending : NSOrderedDescending;
+                }
+                return [[a objectForKey:@"x"] compare:[b objectForKey:@"x"]];
+            }];
+
+            // Join with newlines for structure
+            NSMutableArray *lines = [[NSMutableArray alloc] init];
+            for (NSDictionary *obs in textObservations) {
+                [lines addObject:obs[@"text"]];
+            }
+            result = [lines componentsJoinedByString:@"\n"];
             MyLog(@"✅ OCR completed: %lu characters for window %u", (unsigned long)result.length, windowId);
-            [textSegments release];
+            [lines release];
+            [textObservations release];
         } else {
             MyLog(@"❌ OCR failed for window %u: %@", windowId, error ? [error description] : @"Unknown error");
         }
