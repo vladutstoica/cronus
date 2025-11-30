@@ -40,6 +40,13 @@ if (squirrelStartup) {
 // NODE_ENV set in build isn't present in the run-time app
 dotenv.config({ path: is.dev ? ".env.development" : ".env.production" });
 
+// Use separate userData directory for development to avoid corrupting production data
+if (is.dev) {
+  const devUserData = app.getPath("userData") + "-dev";
+  app.setPath("userData", devUserData);
+  console.log("[DEV] Using separate userData directory:", devUserData);
+}
+
 let mainWindow: BrowserWindow | null = null;
 let floatingWindow: BrowserWindow | null = null;
 let trayPopoverWindow: BrowserWindow | null = null;
