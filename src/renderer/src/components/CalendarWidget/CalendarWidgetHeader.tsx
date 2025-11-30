@@ -68,7 +68,7 @@ export const CalendarWidgetHeader = ({
   }, [formattedDate, selectedDate, viewMode]);
 
   return (
-    <div className="p-2 border-b border-1 border border-border rounded-t-lg shadow-sm sticky top-0 bg-card z-10">
+    <div className="p-2 border-b border-border rounded-t-lg sticky top-0 bg-card z-10">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-5">
           <CalendarHeaderDateNavigation
