@@ -90,11 +90,13 @@ export const SettingsPage = memo(function SettingsPage({
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      <div className="p-4 pr-2 border-r border-border">
-        <SettingsSidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-        />
+      <div className="p-4 pr-2 border-r border-border h-full">
+        <div className="sticky top-4">
+          <SettingsSidebar
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+          />
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 p-4 pt-4 pb-4">
         {renderContent()}

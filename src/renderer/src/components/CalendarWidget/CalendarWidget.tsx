@@ -5,15 +5,10 @@ import { useCurrentTime } from "../../hooks/useCurrentTime";
 import { useDarkMode } from "../../hooks/useDarkMode";
 import { useWindowWidth } from "../../hooks/useWindowWidth";
 import { localApi } from "../../lib/localApi";
-import { getWeekStart } from "../../lib/weekHelpers";
 import type { ProcessedEventBlock } from "../DashboardView";
 import { CalendarWidgetHeader } from "./CalendarWidgetHeader";
 import CalendarZoomControls from "./DayTimeline/CalendarZoomControls";
 import { DayTimeline } from "./DayTimeline/DayTimeline";
-import { ProductivityTrendChart } from "./WeekView/ProductiveHoursChart";
-import WeekBreakdown from "./WeekView/WeekBreakdown";
-import { WeeklyProductivity } from "./WeekView/WeeklyProductivity";
-import WeekProductivityBarChart from "./WeekView/WeekProductivityBarChart";
 
 interface CalendarWidgetProps {
   selectedDate: Date;
@@ -209,40 +204,16 @@ const CalendarWidget = ({
   };
 
   const formattedDate = useMemo(() => {
-    if (viewMode === "week") {
-      const startOfWeek = getWeekStart(selectedDate);
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-      const startMonth = startOfWeek.toLocaleDateString(undefined, {
-        month: "short",
-      });
-      const endMonth = endOfWeek.toLocaleDateString(undefined, {
-        month: "short",
-      });
-      const startDay = startOfWeek.getDate();
-      const endDay = endOfWeek.getDate();
-      const year = endOfWeek.getFullYear();
-
-      if (startMonth === endMonth) {
-        return `${startMonth} ${startDay} - ${endDay}, ${year}`;
-      }
-      return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
-    }
     return selectedDate.toLocaleDateString(undefined, {
       weekday: "short",
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  }, [selectedDate, viewMode]);
+  }, [selectedDate]);
 
   return (
-    <div
-      className={`relative flex select-none flex-col bg-card border border-border rounded-lg ${
-        viewMode === "week" ? "" : "h-full"
-      }`}
-    >
+    <div className="relative flex select-none flex-col bg-card border border-border rounded-lg h-full">
       <CalendarWidgetHeader
         handlePrev={handlePrev}
         width={width}
@@ -258,61 +229,23 @@ const CalendarWidget = ({
       />
 
       <div className="flex-grow overflow-auto" ref={scrollContainerRef}>
-        {viewMode === "week" ? (
-          <div className="flex flex-col gap-4">
-            <div className="h-[30rem] overflow-auto">
-              <WeekProductivityBarChart
-                processedEvents={trackedEvents}
-                weekViewMode={weekViewMode}
-                selectedDay={selectedDay}
-                onDaySelect={onDaySelect}
-                selectedDate={selectedDate}
-                isDarkMode={isDarkMode}
-                isLoading={isLoading}
-              />
-            </div>
-
-            <WeekBreakdown
-              processedEvents={trackedEvents}
-              isDarkMode={isDarkMode}
-              isLoading={isLoading}
-              viewingDate={selectedDate}
-            />
-            <WeeklyProductivity
-              processedEvents={trackedEvents}
-              isDarkMode={isDarkMode}
-              weekViewMode={weekViewMode}
-              isLoading={isLoading}
-              viewingDate={selectedDate}
-            />
-            <ProductivityTrendChart
-              processedEvents={trackedEvents}
-              isDarkMode={isDarkMode}
-              isLoading={isLoading}
-              viewingDate={selectedDate}
-            />
-          </div>
-        ) : (
-          <DayTimeline
-            trackedTimeBlocks={trackedCanonicalBlocks}
-            googleCalendarTimeBlocks={googleCalendarCanonicalBlocks}
-            onHourSelect={onHourSelect}
-            selectedHour={selectedHour}
-            currentTime={currentTime}
-            dayForEntries={selectedDate}
-            isToday={isToday}
-            isDarkMode={isDarkMode}
-            hourHeight={hourHeight}
-            scrollContainerRef={scrollContainerRef}
-          />
-        )}
-      </div>
-      {viewMode === "day" && (
-        <CalendarZoomControls
-          handleZoomIn={handleZoomIn}
-          handleZoomOut={handleZoomOut}
+        <DayTimeline
+          trackedTimeBlocks={trackedCanonicalBlocks}
+          googleCalendarTimeBlocks={googleCalendarCanonicalBlocks}
+          onHourSelect={onHourSelect}
+          selectedHour={selectedHour}
+          currentTime={currentTime}
+          dayForEntries={selectedDate}
+          isToday={isToday}
+          isDarkMode={isDarkMode}
+          hourHeight={hourHeight}
+          scrollContainerRef={scrollContainerRef}
         />
-      )}
+      </div>
+      <CalendarZoomControls
+        handleZoomIn={handleZoomIn}
+        handleZoomOut={handleZoomOut}
+      />
     </div>
   );
 };

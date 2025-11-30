@@ -1,9 +1,4 @@
-import clsx from "clsx";
-import { Layers } from "lucide-react";
 import { useMemo } from "react";
-import { Button } from "../ui/button";
-import { Toggle } from "../ui/toggle";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { CalendarHeaderDateNavigation } from "./DayTimeline/CalendarHeaderDateNavigation";
 
 interface CalendarWidgetHeaderProps {
@@ -84,45 +79,7 @@ export const CalendarWidgetHeader = ({
           />
         </div>
 
-        <div className="flex gap-2 items-center">
-          {viewMode === "week" && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  variant="outline"
-                  size="xs"
-                  id="week-view-mode"
-                  pressed={weekViewMode === "stacked"}
-                  onPressedChange={(pressed) =>
-                    setWeekViewMode(pressed ? "stacked" : "grouped")
-                  }
-                  aria-label="Toggle stacked view"
-                >
-                  <Layers
-                    size={16}
-                    className={clsx(
-                      weekViewMode === "stacked"
-                        ? "text-primary"
-                        : "text-muted-foreground",
-                    )}
-                  />
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                Stacked View showing breakdown of categories
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() =>
-              onViewModeChange(viewMode === "day" ? "week" : "day")
-            }
-          >
-            {viewMode === "day" ? "Stats" : "Day"}
-          </Button>
-        </div>
+        {/* Stats button removed - stats are now in the sidebar Stats page */}
       </div>
     </div>
   );

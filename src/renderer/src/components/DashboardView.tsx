@@ -9,6 +9,9 @@ import { localApi } from "../lib/localApi";
 import ActivitiesByCategoryWidget from "./ActivityList/ActivitiesByCategoryWidget";
 import CalendarWidget from "./CalendarWidget/CalendarWidget";
 import { activityEventService } from "../lib/activityEventService";
+import { MainViewSidebar, MainSection } from "./MainViewSidebar";
+import { TimeBlocksTimeline } from "./Stats/TimeBlocksTimeline";
+import { StatsView } from "./Stats/StatsView";
 
 export interface ProcessedEventBlock {
   startTime: Date;
@@ -82,6 +85,7 @@ export function DashboardView({
   className?: string;
 }): ReactElement {
   const { user, isAuthenticated } = useAuth();
+  const [activeSection, setActiveSection] = useState<MainSection>("dashboard");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -359,46 +363,82 @@ export function DashboardView({
 
   return (
     <div
-      className={`flex-1 flex flex-row overflow-hidden min-h-0 px-2 pb-2 space-x-2 ${className}`}
+      className={`flex-1 flex flex-row overflow-hidden min-h-0 ${className}`}
     >
-      {viewMode === "day" && (
-        <div className="flex flex-col gap-4 w-1/2 overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500">
-          <ActivitiesByCategoryWidget
-            processedEvents={activityWidgetProcessedEvents}
-            isLoadingEvents={isLoadingEvents}
-            startDateMs={activityWidgetStartDateMs}
-            endDateMs={activityWidgetEndDateMs}
-            refetchEvents={refetchEvents}
-            selectedHour={selectedHour}
-            onHourSelect={handleHourSelect}
-            selectedDay={selectedDay}
-            onDaySelect={handleDaySelect}
-          />
-        </div>
-      )}
-      <div
-        className={
-          viewMode === "week"
-            ? "w-full overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500"
-            : "w-1/2 overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500"
-        }
-      >
-        <CalendarWidget
-          selectedDate={selectedDate}
-          trackedEvents={trackedProcessedEvents}
-          googleCalendarEvents={googleCalendarProcessedEvents}
-          isLoadingEvents={isLoadingEvents}
-          viewMode={viewMode}
-          onDateChange={handleDateChange}
-          onViewModeChange={handleViewModeChange}
-          selectedHour={selectedHour}
-          onHourSelect={handleHourSelect}
-          selectedDay={selectedDay}
-          onDaySelect={handleDaySelectAndSwitch}
-          weekViewMode={weekViewMode}
-          onWeekViewModeChange={setWeekViewMode}
-          isLoading={isLoadingEvents}
+      {/* Sidebar */}
+      <div className="p-4 pr-2 border-r border-border flex-shrink-0">
+        <MainViewSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
         />
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0 px-2 pb-2">
+        {activeSection === "dashboard" ? (
+          <>
+            {/* Time Blocks Timeline - only in day view */}
+            {viewMode === "day" && (
+              <div className="flex-shrink-0 pt-2">
+                <TimeBlocksTimeline
+                  processedEvents={trackedProcessedEvents}
+                  selectedDate={selectedDate}
+                  isLoading={isLoadingEvents}
+                />
+              </div>
+            )}
+
+            {/* Existing dashboard content */}
+            <div className="flex-1 flex flex-row overflow-hidden min-h-0 space-x-2 pt-2">
+              {viewMode === "day" && (
+                <div className="flex flex-col gap-4 w-1/2 overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500">
+                  <ActivitiesByCategoryWidget
+                    processedEvents={activityWidgetProcessedEvents}
+                    isLoadingEvents={isLoadingEvents}
+                    startDateMs={activityWidgetStartDateMs}
+                    endDateMs={activityWidgetEndDateMs}
+                    refetchEvents={refetchEvents}
+                    selectedHour={selectedHour}
+                    onHourSelect={handleHourSelect}
+                    selectedDay={selectedDay}
+                    onDaySelect={handleDaySelect}
+                  />
+                </div>
+              )}
+              <div
+                className={
+                  viewMode === "week"
+                    ? "w-full overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500"
+                    : "w-1/2 overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500"
+                }
+              >
+                <CalendarWidget
+                  selectedDate={selectedDate}
+                  trackedEvents={trackedProcessedEvents}
+                  googleCalendarEvents={googleCalendarProcessedEvents}
+                  isLoadingEvents={isLoadingEvents}
+                  viewMode={viewMode}
+                  onDateChange={handleDateChange}
+                  onViewModeChange={handleViewModeChange}
+                  selectedHour={selectedHour}
+                  onHourSelect={handleHourSelect}
+                  selectedDay={selectedDay}
+                  onDaySelect={handleDaySelectAndSwitch}
+                  weekViewMode={weekViewMode}
+                  onWeekViewModeChange={setWeekViewMode}
+                  isLoading={isLoadingEvents}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Stats View */
+          <StatsView
+            processedEvents={trackedProcessedEvents}
+            selectedDate={selectedDate}
+            isLoading={isLoadingEvents}
+          />
+        )}
       </div>
     </div>
   );
