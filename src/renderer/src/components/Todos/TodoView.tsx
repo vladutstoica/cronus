@@ -17,7 +17,9 @@ export function TodoView({ selectedDate }: TodoViewProps) {
   const [incompleteTodos, setIncompleteTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newTodoTitle, setNewTodoTitle] = useState("");
-  const [stats, setStats] = useState<{ date: string; created: number; completed: number }[]>([]);
+  const [stats, setStats] = useState<
+    { date: string; created: number; completed: number }[]
+  >([]);
 
   const dateString = useMemo(() => {
     return selectedDate.toISOString().split("T")[0];
@@ -33,36 +35,40 @@ export function TodoView({ selectedDate }: TodoViewProps) {
   }, [selectedDate]);
 
   // Load todos for the selected date
-  const loadTodos = useCallback(async (showLoading = true) => {
-    if (showLoading) {
-      setIsLoading(true);
-    }
-    try {
-      const data = await localApi.todos.getByDate(dateString);
-      setTodos(data);
-
-      // If viewing today, also load incomplete todos from past days
-      if (isToday) {
-        const incomplete = await localApi.todos.getIncompleteBeforeDate(dateString);
-        setIncompleteTodos(incomplete);
-      } else {
-        setIncompleteTodos([]);
+  const loadTodos = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) {
+        setIsLoading(true);
       }
+      try {
+        const data = await localApi.todos.getByDate(dateString);
+        setTodos(data);
 
-      // Load stats for the past 7 days
-      const startDate = new Date(selectedDate);
-      startDate.setDate(startDate.getDate() - 6);
-      const statsData = await localApi.todos.getStats(
-        startDate.toISOString().split("T")[0],
-        dateString
-      );
-      setStats(statsData);
-    } catch (error) {
-      console.error("Error loading todos:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [dateString, isToday, selectedDate]);
+        // If viewing today, also load incomplete todos from past days
+        if (isToday) {
+          const incomplete =
+            await localApi.todos.getIncompleteBeforeDate(dateString);
+          setIncompleteTodos(incomplete);
+        } else {
+          setIncompleteTodos([]);
+        }
+
+        // Load stats for the past 7 days
+        const startDate = new Date(selectedDate);
+        startDate.setDate(startDate.getDate() - 6);
+        const statsData = await localApi.todos.getStats(
+          startDate.toISOString().split("T")[0],
+          dateString,
+        );
+        setStats(statsData);
+      } catch (error) {
+        console.error("Error loading todos:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [dateString, isToday, selectedDate],
+  );
 
   useEffect(() => {
     loadTodos();
@@ -138,7 +144,7 @@ export function TodoView({ selectedDate }: TodoViewProps) {
   // Update priority
   const handleUpdatePriority = async (
     id: string,
-    priority: "low" | "medium" | "high"
+    priority: "low" | "medium" | "high",
   ) => {
     try {
       await localApi.todos.update(id, { priority });
@@ -168,7 +174,7 @@ export function TodoView({ selectedDate }: TodoViewProps) {
     .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   const completedTodos = todos.filter((t) => t.status === "completed");
   const sortedIncompleteTodos = [...incompleteTodos].sort(
-    (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+    (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
   );
 
   const formattedDate = selectedDate.toLocaleDateString(undefined, {
@@ -206,7 +212,10 @@ export function TodoView({ selectedDate }: TodoViewProps) {
                 onKeyDown={handleKeyDown}
                 className="flex-1"
               />
-              <Button onClick={handleCreateTodo} disabled={!newTodoTitle.trim()}>
+              <Button
+                onClick={handleCreateTodo}
+                disabled={!newTodoTitle.trim()}
+              >
                 <Plus size={16} className="mr-1" />
                 Add
               </Button>

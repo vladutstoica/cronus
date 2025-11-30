@@ -856,14 +856,17 @@ export function registerIpcHandlers(
       const user = getOrCreateLocalUser();
       const todos = getTodosByDateRange(user.id, startDate, endDate);
       return todos.map(convertTodoToCamelCase);
-    }
+    },
   );
 
-  ipcMain.handle("local:get-incomplete-todos-before-date", (_event, beforeDate: string) => {
-    const user = getOrCreateLocalUser();
-    const todos = getIncompleteTodosBeforeDate(user.id, beforeDate);
-    return todos.map(convertTodoToCamelCase);
-  });
+  ipcMain.handle(
+    "local:get-incomplete-todos-before-date",
+    (_event, beforeDate: string) => {
+      const user = getOrCreateLocalUser();
+      const todos = getIncompleteTodosBeforeDate(user.id, beforeDate);
+      return todos.map(convertTodoToCamelCase);
+    },
+  );
 
   ipcMain.handle("local:create-todo", (_event, input: any) => {
     const user = getOrCreateLocalUser();
@@ -900,7 +903,7 @@ export function registerIpcHandlers(
     (_event, startDate: string, endDate: string) => {
       const user = getOrCreateLocalUser();
       return getTodoStats(user.id, startDate, endDate);
-    }
+    },
   );
 
   ipcMain.handle("local:clear-focus-todos", (_event, date: string) => {

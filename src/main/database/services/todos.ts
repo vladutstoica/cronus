@@ -56,7 +56,7 @@ export function getTodosByDate(userId: string, date: string): Todo[] {
 export function getTodosByDateRange(
   userId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Todo[] {
   const db = getDatabase();
   const stmt = db.prepare(`
@@ -72,7 +72,7 @@ export function getTodosByDateRange(
  */
 export function getIncompleteTodosBeforeDate(
   userId: string,
-  beforeDate: string
+  beforeDate: string,
 ): Todo[] {
   const db = getDatabase();
   const stmt = db.prepare(`
@@ -107,7 +107,7 @@ export function createTodo(input: CreateTodoInput): Todo {
     input.scheduled_date,
     input.scheduled_date, // original_date is same as scheduled_date on creation
     now,
-    now
+    now,
   );
 
   return getTodoById(id)!;
@@ -125,7 +125,10 @@ export function getTodoById(id: string): Todo | undefined {
 /**
  * Update a todo
  */
-export function updateTodo(id: string, updates: UpdateTodoInput): Todo | undefined {
+export function updateTodo(
+  id: string,
+  updates: UpdateTodoInput,
+): Todo | undefined {
   const db = getDatabase();
   const todo = getTodoById(id);
   if (!todo) return undefined;
@@ -214,7 +217,7 @@ export function rolloverTodos(userId: string, toDate: string): number {
 export function getTodoStats(
   userId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
 ): { date: string; created: number; completed: number }[] {
   const db = getDatabase();
 
@@ -225,7 +228,10 @@ export function getTodoStats(
     WHERE user_id = ? AND original_date >= ? AND original_date <= ?
     GROUP BY original_date
   `);
-  const created = createdStmt.all(userId, startDate, endDate) as { date: string; count: number }[];
+  const created = createdStmt.all(userId, startDate, endDate) as {
+    date: string;
+    count: number;
+  }[];
 
   // Get completed counts by completed_at date
   const completedStmt = db.prepare(`
@@ -235,7 +241,10 @@ export function getTodoStats(
       AND DATE(completed_at) >= ? AND DATE(completed_at) <= ?
     GROUP BY DATE(completed_at)
   `);
-  const completed = completedStmt.all(userId, startDate, endDate) as { date: string; count: number }[];
+  const completed = completedStmt.all(userId, startDate, endDate) as {
+    date: string;
+    count: number;
+  }[];
 
   // Merge into a single result
   const statsMap = new Map<string, { created: number; completed: number }>();

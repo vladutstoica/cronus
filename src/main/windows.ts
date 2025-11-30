@@ -118,7 +118,10 @@ export function createFloatingWindow(
   } else {
     floatingWindow
       .loadFile(
-        join(__dirname, `../renderer/${FLOATING_WINDOW_VITE_NAME}/floating.html`),
+        join(
+          __dirname,
+          `../renderer/${FLOATING_WINDOW_VITE_NAME}/floating.html`,
+        ),
       )
       .catch((err) =>
         console.error("Failed to load floating file (prod):", err),

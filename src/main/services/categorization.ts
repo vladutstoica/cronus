@@ -36,7 +36,11 @@ const CATEGORIZATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 function generateActivityHash(activityDetails: ActivityDetails): string {
   // Include content signature - first 500 chars normalized for content-aware caching
   const contentSignature = activityDetails.content
-    ? activityDetails.content.slice(0, 500).toLowerCase().replace(/\s+/g, " ").trim()
+    ? activityDetails.content
+        .slice(0, 500)
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim()
     : "";
   const key = `${activityDetails.ownerName || ""}_${activityDetails.url || ""}_${activityDetails.title || ""}_${contentSignature}`;
   return crypto.createHash("md5").update(key).digest("hex");

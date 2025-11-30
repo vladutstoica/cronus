@@ -160,10 +160,7 @@ export function CategoryForm({
           <Label className="mb-1 block">
             Color <span className="text-red-500">*</span>
           </Label>
-          <CategoryColorPicker
-            selectedColor={color}
-            onColorChange={setColor}
-          />
+          <CategoryColorPicker selectedColor={color} onColorChange={setColor} />
         </div>
 
         <div>

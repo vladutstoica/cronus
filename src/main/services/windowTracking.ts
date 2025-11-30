@@ -47,7 +47,9 @@ export async function processWindowEvent(
 
     // Create initial event without categorization
     // Note: screenshot_path is no longer used - OCR text is stored in content field
-    console.log(`[WindowTracking] Processing event for ${eventDetails.ownerName}, content length: ${eventDetails.content?.length || 0}`);
+    console.log(
+      `[WindowTracking] Processing event for ${eventDetails.ownerName}, content length: ${eventDetails.content?.length || 0}`,
+    );
     const createdEvent = createActiveWindowEvent({
       user_id: user.id,
       window_id: eventDetails.windowId,

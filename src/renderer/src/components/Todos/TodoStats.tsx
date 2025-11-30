@@ -19,7 +19,12 @@ interface TodoStatsProps {
 export function TodoStats({ stats, selectedDate }: TodoStatsProps) {
   const chartData = useMemo(() => {
     // Generate last 7 days
-    const days: { date: string; dayLabel: string; created: number; completed: number }[] = [];
+    const days: {
+      date: string;
+      dayLabel: string;
+      created: number;
+      completed: number;
+    }[] = [];
     const today = new Date(selectedDate);
 
     for (let i = 6; i >= 0; i--) {
@@ -46,7 +51,7 @@ export function TodoStats({ stats, selectedDate }: TodoStatsProps) {
         created: acc.created + day.created,
         completed: acc.completed + day.completed,
       }),
-      { created: 0, completed: 0 }
+      { created: 0, completed: 0 },
     );
   }, [chartData]);
 
@@ -58,9 +63,7 @@ export function TodoStats({ stats, selectedDate }: TodoStatsProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">
-          Weekly Report
-        </CardTitle>
+        <CardTitle className="text-sm font-medium">Weekly Report</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Summary stats */}
@@ -70,7 +73,9 @@ export function TodoStats({ stats, selectedDate }: TodoStatsProps) {
             <p className="text-xs text-muted-foreground">Created</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-500">{totals.completed}</p>
+            <p className="text-2xl font-bold text-green-500">
+              {totals.completed}
+            </p>
             <p className="text-xs text-muted-foreground">Completed</p>
           </div>
           <div className="text-center">
@@ -111,7 +116,7 @@ export function TodoStats({ stats, selectedDate }: TodoStatsProps) {
                   if (payload?.[0]?.payload?.date) {
                     return new Date(payload[0].payload.date).toLocaleDateString(
                       undefined,
-                      { weekday: "long", month: "short", day: "numeric" }
+                      { weekday: "long", month: "short", day: "numeric" },
                     );
                   }
                   return value;

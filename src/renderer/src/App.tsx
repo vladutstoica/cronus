@@ -45,15 +45,12 @@ export function MainAppContent(): React.ReactElement {
     useAccessibilityPermission();
 
   // Use the onboarding logic hook
-  const {
-    showOnboarding,
-    handleOnboardingComplete,
-    handleResetOnboarding,
-  } = useOnboardingLogic({
-    permissionsChecked: accessibilityPermissionChecked,
-    missingAccessibilityPermissions,
-    isAuthenticated,
-  });
+  const { showOnboarding, handleOnboardingComplete, handleResetOnboarding } =
+    useOnboardingLogic({
+      permissionsChecked: accessibilityPermissionChecked,
+      missingAccessibilityPermissions,
+      isAuthenticated,
+    });
 
   // Use the activity tracking hook
   const {
@@ -147,7 +144,6 @@ export function MainAppContent(): React.ReactElement {
       window.electron.ipcRenderer.send("show-floating-window");
     }
   }, [isAuthenticated, showOnboarding]);
-
 
   // Listen for Cmd+Q keyboard shortcut to show quit confirmation
   useEffect(() => {

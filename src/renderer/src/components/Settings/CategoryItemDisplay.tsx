@@ -27,9 +27,7 @@ export function CategoryItemDisplay({
           {name}
         </span>
       </div>
-      <div className="flex-shrink-0 flex items-center gap-1">
-        {actions}
-      </div>
+      <div className="flex-shrink-0 flex items-center gap-1">{actions}</div>
     </div>
   );
 }

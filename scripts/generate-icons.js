@@ -52,10 +52,7 @@ async function main() {
 
   // 1. Copy PNG to required locations
   console.log("1. Copying PNG to required locations...");
-  const pngDestinations = [
-    "resources/icon.png",
-    "build/icon.png",
-  ];
+  const pngDestinations = ["resources/icon.png", "build/icon.png"];
 
   for (const dest of pngDestinations) {
     const destPath = path.join(PROJECT_ROOT, dest);

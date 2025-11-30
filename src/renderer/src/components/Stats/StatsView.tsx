@@ -38,7 +38,9 @@ export function StatsView({
   isLoading,
 }: StatsViewProps) {
   const isDarkMode = useDarkMode();
-  const [weekViewMode, setWeekViewMode] = useState<"stacked" | "grouped">("grouped");
+  const [weekViewMode, setWeekViewMode] = useState<"stacked" | "grouped">(
+    "grouped",
+  );
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
   // Calculate stats by category + collaboration

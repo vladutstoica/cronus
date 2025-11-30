@@ -69,18 +69,18 @@ export const PrivacySettings = () => {
     setNonTrackedApps((prev) => prev.filter((name) => name !== appName));
     setTrackedApps((prev) =>
       [...prev, { name: appName, category: "Uncategorized" }].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      )
+        a.name.localeCompare(b.name),
+      ),
     );
     // TODO: Save to database when feature is complete
   };
 
   const filteredTrackedApps = trackedApps.filter((app) =>
-    app.name.toLowerCase().includes(trackedSearch.toLowerCase())
+    app.name.toLowerCase().includes(trackedSearch.toLowerCase()),
   );
 
   const filteredNonTrackedApps = nonTrackedApps.filter((name) =>
-    name.toLowerCase().includes(nonTrackedSearch.toLowerCase())
+    name.toLowerCase().includes(nonTrackedSearch.toLowerCase()),
   );
 
   if (isLoading) {
@@ -110,7 +110,8 @@ export const PrivacySettings = () => {
           If you prefer that Cronus does not track certain apps or websites,
           please add them to the non-tracking list. Note that all tracking data
           is stored locally on your device and is never transmitted externally.
-          For more accurate tracking, keep the non-tracking list as short as possible.
+          For more accurate tracking, keep the non-tracking list as short as
+          possible.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -214,8 +215,8 @@ export const PrivacySettings = () => {
 
         {/* Beta Notice */}
         <p className="text-xs text-muted-foreground italic">
-          This feature is in beta. Changes made here are not yet persisted
-          and will not affect tracking until the feature is complete.
+          This feature is in beta. Changes made here are not yet persisted and
+          will not affect tracking until the feature is complete.
         </p>
       </CardContent>
     </Card>

@@ -252,7 +252,7 @@ export function AISettings() {
       // Fetch the most recent event that has OCR content
       const events = await localApi.events.getAll(10, 0);
       const eventWithContent = events?.find(
-        (e: any) => e.content && e.content.trim().length > 0
+        (e: any) => e.content && e.content.trim().length > 0,
       );
 
       if (eventWithContent) {

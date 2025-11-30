@@ -9,10 +9,7 @@ import { MultiPurposeAppsSettings } from "./Settings/MultiPurposeAppsSettings";
 import PauseTrackingSettings from "./Settings/PauseTrackingSettings";
 import { PermissionsStatus } from "./Settings/PermissionsStatus";
 import { PrivacySettings } from "./Settings/PrivacySettings";
-import {
-  SettingsSidebar,
-  SettingsSection,
-} from "./Settings/SettingsSidebar";
+import { SettingsSidebar, SettingsSection } from "./Settings/SettingsSidebar";
 import { ThemeSwitcher } from "./Settings/ThemeSwitcher";
 import { AppInformation } from "./Settings/VersionDisplay";
 
@@ -29,7 +26,8 @@ export const SettingsPage = memo(function SettingsPage({
 }: SettingsPageProps) {
   const { focusOn, setFocusOn } = useSettings();
   const [showPermissions, setShowPermissions] = useState(false);
-  const [activeSection, setActiveSection] = useState<SettingsSection>("general");
+  const [activeSection, setActiveSection] =
+    useState<SettingsSection>("general");
 
   useEffect(() => {
     if (focusOn === "goal-input" || focusOn === "pause-tracking") {

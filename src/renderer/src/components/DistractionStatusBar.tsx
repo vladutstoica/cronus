@@ -392,7 +392,9 @@ const DistractionStatusBar = ({
           activityUrl: displayWindowInfo.url,
           categoryReasoning: latestEvent?.categoryReasoning,
           isTrackingPaused,
-          ocrCaptured: !!(latestEvent?.content && latestEvent.content.trim().length > 0),
+          ocrCaptured: !!(
+            latestEvent?.content && latestEvent.content.trim().length > 0
+          ),
           eventId: latestEvent?._id,
         };
 

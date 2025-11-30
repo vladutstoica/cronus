@@ -1,9 +1,4 @@
-import {
-  FolderPlus,
-  MoreHorizontal,
-  PlusCircle,
-  Rows,
-} from "lucide-react";
+import { FolderPlus, MoreHorizontal, PlusCircle, Rows } from "lucide-react";
 import { JSX, memo, useEffect, useMemo, useState } from "react";
 import { Category } from "@shared/types";
 import { useAuth } from "../../contexts/AuthContext";

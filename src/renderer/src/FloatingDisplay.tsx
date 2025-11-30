@@ -87,7 +87,11 @@ const FloatingDisplay: React.FC = () => {
           lastBackendUpdateTime.current = Date.now();
 
           // Show OCR indicator briefly when new OCR content is captured
-          if (data.ocrCaptured && data.eventId && data.eventId !== lastEventIdWithOcr.current) {
+          if (
+            data.ocrCaptured &&
+            data.eventId &&
+            data.eventId !== lastEventIdWithOcr.current
+          ) {
             lastEventIdWithOcr.current = data.eventId;
             if (ocrIndicatorTimeout.current) {
               clearTimeout(ocrIndicatorTimeout.current);
@@ -356,7 +360,9 @@ const FloatingDisplay: React.FC = () => {
           size="icon"
           onClick={handleOpenMainAppWindow}
           className="open-main-app-window-butto p-1 w-5 h-5 mr-1 rounded-[7px]"
-          title={showOcrIndicator ? "Screen text captured" : "Open Main App Window"}
+          title={
+            showOcrIndicator ? "Screen text captured" : "Open Main App Window"
+          }
         >
           <AppWindowMac
             className={clsx(

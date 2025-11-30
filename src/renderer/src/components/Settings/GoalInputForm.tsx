@@ -89,7 +89,7 @@ const GoalInputForm = ({
           block: "center",
         });
         const inputs = document.querySelectorAll<HTMLInputElement>(
-          '[data-goal-input="true"]'
+          '[data-goal-input="true"]',
         );
         if (inputs.length > 0) {
           inputs[0]?.focus();
@@ -103,7 +103,10 @@ const GoalInputForm = ({
     if (!isEditing || onboardingMode) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         handleSave();
       }
     };
@@ -230,7 +233,7 @@ const GoalInputForm = ({
                 setGoals([...goals, ""]);
                 setTimeout(() => {
                   const inputs = document.querySelectorAll<HTMLInputElement>(
-                    '[data-goal-input="true"]'
+                    '[data-goal-input="true"]',
                   );
                   inputs[inputs.length - 1]?.focus();
                 }, 0);
@@ -243,11 +246,7 @@ const GoalInputForm = ({
 
             {onboardingMode && (
               <div className="flex justify-end mt-4">
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
+                <Button size="sm" onClick={handleSave} disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save & Continue"}
                 </Button>
               </div>

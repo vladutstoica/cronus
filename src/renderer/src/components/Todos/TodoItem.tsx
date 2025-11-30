@@ -11,11 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export interface Todo {
   id: string;
@@ -62,7 +58,8 @@ export function TodoItem({
 }: TodoItemProps) {
   const [showDescription, setShowDescription] = useState(false);
   const isCompleted = todo.status === "completed";
-  const isRolledOver = todo.originalDate && todo.originalDate !== todo.scheduledDate;
+  const isRolledOver =
+    todo.originalDate && todo.originalDate !== todo.scheduledDate;
 
   const cyclePriority = () => {
     const priorities: ("low" | "medium" | "high")[] = ["low", "medium", "high"];
@@ -78,7 +75,7 @@ export function TodoItem({
         isCompleted
           ? "bg-muted/30 border-border/50"
           : priorityBgColors[todo.priority],
-        todo.isFocus && !isCompleted && "ring-2 ring-primary/50"
+        todo.isFocus && !isCompleted && "ring-2 ring-primary/50",
       )}
     >
       {/* Drag handle */}
@@ -93,7 +90,7 @@ export function TodoItem({
           "flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5",
           isCompleted
             ? "bg-primary border-primary"
-            : "border-muted-foreground/50 hover:border-primary"
+            : "border-muted-foreground/50 hover:border-primary",
         )}
       >
         {isCompleted && <Check size={12} className="text-primary-foreground" />}
@@ -105,7 +102,7 @@ export function TodoItem({
           <span
             className={cn(
               "flex-1 text-sm",
-              isCompleted && "line-through text-muted-foreground"
+              isCompleted && "line-through text-muted-foreground",
             )}
           >
             {todo.title}
@@ -120,7 +117,8 @@ export function TodoItem({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Originally created on {new Date(todo.originalDate!).toLocaleDateString()}
+                Originally created on{" "}
+                {new Date(todo.originalDate!).toLocaleDateString()}
               </TooltipContent>
             </Tooltip>
           )}
@@ -156,9 +154,7 @@ export function TodoItem({
         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
           <span>Created {new Date(todo.createdAt).toLocaleDateString()}</span>
           {todo.completedAt && (
-            <span>
-              Done {new Date(todo.completedAt).toLocaleDateString()}
-            </span>
+            <span>Done {new Date(todo.completedAt).toLocaleDateString()}</span>
           )}
         </div>
       </div>
@@ -202,7 +198,7 @@ export function TodoItem({
                 className={cn(
                   todo.isFocus
                     ? "fill-yellow-500 text-yellow-500"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground",
                 )}
               />
             </Button>
@@ -225,7 +221,7 @@ export function TodoItem({
                 <Info
                   size={16}
                   className={cn(
-                    showDescription ? "text-primary" : "text-muted-foreground"
+                    showDescription ? "text-primary" : "text-muted-foreground",
                   )}
                 />
               </Button>

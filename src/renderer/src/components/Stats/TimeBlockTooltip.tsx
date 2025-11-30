@@ -35,7 +35,7 @@ export function TimeBlockTooltip({ segment, children }: TimeBlockTooltipProps) {
 
   // Sort activities by duration (highest first)
   const sortedActivities = Object.entries(segment.allActivities).sort(
-    ([, a], [, b]) => b.duration - a.duration
+    ([, a], [, b]) => b.duration - a.duration,
   );
 
   // Calculate max duration for progress bars

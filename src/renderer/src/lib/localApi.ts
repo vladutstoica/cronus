@@ -171,19 +171,22 @@ export const localApi = {
   // Todo operations
   todos: {
     getByDate: async (date: string) => {
-      return window.electron.ipcRenderer.invoke("local:get-todos-by-date", date);
+      return window.electron.ipcRenderer.invoke(
+        "local:get-todos-by-date",
+        date,
+      );
     },
     getByDateRange: async (startDate: string, endDate: string) => {
       return window.electron.ipcRenderer.invoke(
         "local:get-todos-by-date-range",
         startDate,
-        endDate
+        endDate,
       );
     },
     getIncompleteBeforeDate: async (beforeDate: string) => {
       return window.electron.ipcRenderer.invoke(
         "local:get-incomplete-todos-before-date",
-        beforeDate
+        beforeDate,
       );
     },
     create: async (input: {
@@ -209,9 +212,13 @@ export const localApi = {
         is_focus?: boolean;
         tags?: string[];
         scheduled_date?: string;
-      }
+      },
     ) => {
-      return window.electron.ipcRenderer.invoke("local:update-todo", id, updates);
+      return window.electron.ipcRenderer.invoke(
+        "local:update-todo",
+        id,
+        updates,
+      );
     },
     delete: async (id: string) => {
       return window.electron.ipcRenderer.invoke("local:delete-todo", id);
@@ -223,11 +230,14 @@ export const localApi = {
       return window.electron.ipcRenderer.invoke(
         "local:get-todo-stats",
         startDate,
-        endDate
+        endDate,
       );
     },
     clearFocus: async (date: string) => {
-      return window.electron.ipcRenderer.invoke("local:clear-focus-todos", date);
+      return window.electron.ipcRenderer.invoke(
+        "local:clear-focus-todos",
+        date,
+      );
     },
   },
 

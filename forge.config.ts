@@ -24,7 +24,8 @@ const config: ForgeConfig = {
     new MakerSquirrel({
       name: "Cronus",
       setupIcon: "./build/icon.ico",
-      iconUrl: "https://raw.githubusercontent.com/moritzWa/cronus/main/build/icon.ico",
+      iconUrl:
+        "https://raw.githubusercontent.com/moritzWa/cronus/main/build/icon.ico",
     }),
     new MakerZIP({}, ["darwin", "win32"]),
   ],
@@ -59,7 +60,9 @@ const config: ForgeConfig = {
   hooks: {
     // Workaround for Forge+Vite bug #3917: External native modules are not copied to package
     packageAfterPrune: async (_config, buildPath) => {
-      console.log("Copying external native modules and dependencies to build...");
+      console.log(
+        "Copying external native modules and dependencies to build...",
+      );
 
       // Native modules and their required dependencies
       const modulesToCopy = [
