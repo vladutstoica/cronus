@@ -14,6 +14,7 @@ import {
   createDefaultCategories,
   getCategoriesByUserId,
 } from "./database/services/categories";
+import { getBooleanSetting } from "./database/services/settings";
 import { registerIpcHandlers } from "./ipc";
 import { initializeLoggers } from "./logging";
 import {
@@ -145,7 +146,18 @@ function App() {
         !mainWindow.webContents.isDestroyed() &&
         !isTrackingPaused
       ) {
-        mainWindow.webContents.send("active-window-changed", windowInfo);
+        // Check if screen text recognition (OCR) is enabled
+        const ocrEnabled = getBooleanSetting("screenshots_enabled", false);
+
+        // Clear content if OCR is disabled
+        const eventInfo = ocrEnabled
+          ? windowInfo
+          : { ...windowInfo, content: null, contentSource: null };
+
+        console.log(
+          `[Main] Active window: ${windowInfo.ownerName}, OCR enabled: ${ocrEnabled}, content: ${eventInfo.content?.length || 0} chars`,
+        );
+        mainWindow.webContents.send("active-window-changed", eventInfo);
       }
     };
 
@@ -156,6 +168,14 @@ function App() {
     };
     (global as any).startActiveWindowObserver = () => {
       isTrackingPaused = false;
+      // Log permission status for debugging
+      const { PermissionType } = require("native-window-observer");
+      const screenRecordingStatus = nativeWindowObserver.getPermissionStatus(
+        PermissionType.ScreenRecording,
+      );
+      console.log(
+        `[Main] Screen Recording permission status: ${screenRecordingStatus} (0=Denied, 1=Granted, 2=Pending)`,
+      );
       nativeWindowObserver.startActiveWindowObserver(windowChangeCallback);
     };
 

@@ -4,12 +4,14 @@ import {
   Download,
   Loader2,
   RefreshCw,
+  ScanText,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { localApi } from "../../lib/localApi";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { ScrollArea } from "../ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -60,6 +62,15 @@ export function AISettings() {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // OCR preview state
+  const [isCapturingOCR, setIsCapturingOCR] = useState(false);
+  const [ocrResult, setOcrResult] = useState<{
+    appName?: string;
+    title?: string;
+    text?: string;
+    error?: string;
+  } | null>(null);
 
   // Load settings on mount
   useEffect(() => {
@@ -231,6 +242,36 @@ export function AISettings() {
       console.error("Failed to download model:", error);
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleFetchLatestOCR = async () => {
+    setIsCapturingOCR(true);
+    setOcrResult(null);
+    try {
+      // Fetch the most recent event that has OCR content
+      const events = await localApi.events.getAll(10, 0);
+      const eventWithContent = events?.find(
+        (e: any) => e.content && e.content.trim().length > 0
+      );
+
+      if (eventWithContent) {
+        setOcrResult({
+          appName: eventWithContent.ownerName,
+          title: eventWithContent.title,
+          text: eventWithContent.content,
+        });
+      } else {
+        setOcrResult({
+          error: "No recent OCR captures found. Browse some windows first.",
+        });
+      }
+    } catch (error) {
+      setOcrResult({
+        error: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+    } finally {
+      setIsCapturingOCR(false);
     }
   };
 
@@ -583,12 +624,14 @@ export function AISettings() {
         </>
       )}
 
-      {/* Screenshots Toggle */}
+      {/* Screen Text Recognition Toggle */}
       <div className="flex items-center justify-between pt-2 border-t">
         <div className="space-y-0.5">
-          <Label htmlFor="screenshots-enabled">Enable Screenshots</Label>
+          <Label htmlFor="screenshots-enabled">
+            Enable Screen Text Recognition
+          </Label>
           <p className="text-sm text-muted-foreground">
-            Capture screenshots of your activities (stored locally)
+            Use OCR to read screen content for improved activity categorization
           </p>
         </div>
         <Switch
@@ -597,6 +640,62 @@ export function AISettings() {
           onCheckedChange={handleScreenshotsToggle}
         />
       </div>
+
+      {/* OCR Preview Section */}
+      {screenshotsEnabled && (
+        <div className="space-y-3 p-4 border rounded-lg bg-background">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">Latest OCR Capture</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFetchLatestOCR}
+              disabled={isCapturingOCR}
+            >
+              {isCapturingOCR ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <ScanText className="w-4 h-4 mr-2" />
+              )}
+              {isCapturingOCR ? "Loading..." : "Show Latest"}
+            </Button>
+          </div>
+
+          {ocrResult && (
+            <div className="space-y-2">
+              {ocrResult.error ? (
+                <div className="flex items-center gap-2 text-sm text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{ocrResult.error}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="text-sm">
+                    <span className="font-medium">{ocrResult.appName}</span>
+                    {ocrResult.title && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        - {ocrResult.title}
+                      </span>
+                    )}
+                  </div>
+                  <ScrollArea className="h-32 w-full rounded-md border bg-muted/30 p-3">
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                      {ocrResult.text || "No text extracted"}
+                    </p>
+                  </ScrollArea>
+                </>
+              )}
+            </div>
+          )}
+
+          {!ocrResult && (
+            <p className="text-xs text-muted-foreground">
+              Click "Show Latest" to see the most recent OCR capture
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Info Section */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">

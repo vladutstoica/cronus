@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { AppWindowMac, Clock, Pause, X } from "lucide-react";
+import { AppWindowMac, Pause, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Category } from "@shared/types";
 import { Button } from "./components/ui/button";
@@ -18,6 +18,8 @@ interface FloatingStatusUpdate {
   activityUrl?: string;
   categoryReasoning?: string;
   isTrackingPaused?: boolean;
+  ocrCaptured?: boolean;
+  eventId?: string;
 }
 
 // Helper to format milliseconds to HH:MM:SS
@@ -46,6 +48,9 @@ const FloatingDisplay: React.FC = () => {
     url?: string;
     categoryReasoning?: string;
   }>({});
+  const [showOcrIndicator, setShowOcrIndicator] = useState(false);
+  const ocrIndicatorTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastEventIdWithOcr = useRef<string | null>(null);
 
   // State for handling "maybe" pending state
   const [frozenProductiveTimeMs, setFrozenProductiveTimeMs] =
@@ -80,6 +85,18 @@ const FloatingDisplay: React.FC = () => {
           setIsVisible(true);
           // Update last backend update timestamp
           lastBackendUpdateTime.current = Date.now();
+
+          // Show OCR indicator briefly when new OCR content is captured
+          if (data.ocrCaptured && data.eventId && data.eventId !== lastEventIdWithOcr.current) {
+            lastEventIdWithOcr.current = data.eventId;
+            if (ocrIndicatorTimeout.current) {
+              clearTimeout(ocrIndicatorTimeout.current);
+            }
+            setShowOcrIndicator(true);
+            ocrIndicatorTimeout.current = setTimeout(() => {
+              setShowOcrIndicator(false);
+            }, 2000); // Show for 2 seconds
+          }
         },
       );
       return cleanup;
@@ -313,9 +330,10 @@ const FloatingDisplay: React.FC = () => {
     <div
       ref={draggableRef}
       className={clsx(
-        "w-full h-full flex items-center px-0.5 rounded-[10px] select-none",
+        "w-full h-full flex items-center px-0.5 rounded-[10px] select-none relative",
         "border-2 border-secondary/50",
         isTrackingPaused && "opacity-75",
+        latestStatus === "maybe" && "animate-pulse",
       )}
       onMouseDown={handleMouseDownOnDraggable}
       title="Drag to move"
@@ -332,21 +350,28 @@ const FloatingDisplay: React.FC = () => {
         >
           <X className="w-[8px] h-[8px] text-muted-foreground hover:text-primary" />
         </Button>
-        {/* button to open the main app window */}
+        {/* button to open the main app window - turns blue when OCR captures */}
         <Button
           variant="ghost"
           size="icon"
           onClick={handleOpenMainAppWindow}
           className="open-main-app-window-butto p-1 w-5 h-5 mr-1 rounded-[7px]"
-          title="Open Main App Window"
+          title={showOcrIndicator ? "Screen text captured" : "Open Main App Window"}
         >
-          <AppWindowMac className="w-[8px] h-[8px] text-muted-foreground hover:text-primary" />
+          <AppWindowMac
+            className={clsx(
+              "w-[8px] h-[8px]",
+              showOcrIndicator
+                ? "text-blue-400 animate-pulse"
+                : "text-muted-foreground hover:text-primary",
+            )}
+          />
         </Button>
       </div>
 
       <div className="flex-grow flex items-stretch gap-1 h-full">
         {latestStatus === "maybe" ? (
-          // 3-section layout for "maybe" state: Small Productive | Large Pending Icon | Small Distractions
+          // Both boxes shown equally when pending (window pulses)
           <>
             <div className="flex-1 min-w-0 h-full [&>div]:!w-full">
               <StatusBox
@@ -359,10 +384,6 @@ const FloatingDisplay: React.FC = () => {
                 onCategoryClick={handleCategoryNameClick}
                 disabled={true}
               />
-            </div>
-            {/* Pending state indicator - compact orange clock icon */}
-            <div className="w-12 flex items-center justify-center bg-background/50 rounded-lg border-2 border-orange-300">
-              <Clock className="w-6 h-6 text-orange-300 animate-pulse" />
             </div>
             <div className="flex-1 min-w-0 h-full [&>div]:!w-full">
               <StatusBox
@@ -378,7 +399,7 @@ const FloatingDisplay: React.FC = () => {
             </div>
           </>
         ) : (
-          // 2-section layout for normal states
+          // Normal state - one box highlighted/enlarged
           <>
             <StatusBox
               label="Productive"

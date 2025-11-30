@@ -246,7 +246,7 @@ const GoalInputForm = ({
                 <Button
                   size="sm"
                   onClick={handleSave}
-                  disabled={isSaving || !hasContent}
+                  disabled={isSaving}
                 >
                   {isSaving ? "Saving..." : "Save & Continue"}
                 </Button>

@@ -12,6 +12,9 @@ interface FloatingStatusUpdate {
   activityName?: string;
   activityUrl?: string;
   categoryReasoning?: string;
+  isTrackingPaused?: boolean;
+  ocrCaptured?: boolean;
+  eventId?: string;
 }
 
 export interface ActivityToRecategorize {

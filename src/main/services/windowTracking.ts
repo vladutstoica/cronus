@@ -1,6 +1,3 @@
-import { app } from "electron";
-import path from "path";
-import fs from "fs/promises";
 import { getOrCreateLocalUser } from "../database/services/users";
 import { getCategoriesByUserId } from "../database/services/categories";
 import {
@@ -43,21 +40,14 @@ export async function processWindowEvent(
 ): Promise<any | null> {
   try {
     const user = getOrCreateLocalUser();
-    const screenshotsEnabled = getBooleanSetting("screenshots_enabled", false);
     const categorizationEnabled = getBooleanSetting(
       "categorization_enabled",
       true,
     );
 
-    // Handle screenshot storage
-    let screenshotPath: string | undefined;
-    if (screenshotsEnabled && eventDetails.localScreenshotPath) {
-      screenshotPath = await saveScreenshotLocally(
-        eventDetails.localScreenshotPath,
-      );
-    }
-
     // Create initial event without categorization
+    // Note: screenshot_path is no longer used - OCR text is stored in content field
+    console.log(`[WindowTracking] Processing event for ${eventDetails.ownerName}, content length: ${eventDetails.content?.length || 0}`);
     const createdEvent = createActiveWindowEvent({
       user_id: user.id,
       window_id: eventDetails.windowId,
@@ -68,7 +58,6 @@ export async function processWindowEvent(
       url: eventDetails.url,
       content: eventDetails.content,
       timestamp: eventDetails.timestamp.toISOString(),
-      screenshot_path: screenshotPath,
       duration_ms: eventDetails.durationMs || 0,
     });
 
@@ -237,39 +226,6 @@ async function categorizeEventAsync(
     console.log(`Categorized event ${eventId} as ${matchedCategory.name}`);
   } catch (error) {
     console.error("Error in categorizeEventAsync:", error);
-  }
-}
-
-/**
- * Save screenshot to local storage
- */
-async function saveScreenshotLocally(
-  sourcePath: string,
-): Promise<string | undefined> {
-  try {
-    const userDataPath = app.getPath("userData");
-    const screenshotsDir = path.join(userDataPath, "screenshots");
-
-    // Ensure screenshots directory exists
-    await fs.mkdir(screenshotsDir, { recursive: true });
-
-    // Generate unique filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const filename = `screenshot-${timestamp}.png`;
-    const destPath = path.join(screenshotsDir, filename);
-
-    // Copy screenshot to app data directory
-    await fs.copyFile(sourcePath, destPath);
-
-    // Delete temp file
-    await fs.unlink(sourcePath).catch(() => {
-      // Ignore errors if temp file doesn't exist
-    });
-
-    return destPath;
-  } catch (error) {
-    console.error("Error saving screenshot locally:", error);
-    return undefined;
   }
 }
 
