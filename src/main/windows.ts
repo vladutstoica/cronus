@@ -24,7 +24,7 @@ export function getIsAppQuitting(): boolean {
 
 const FLOATING_WINDOW_WIDTH = 400;
 const FLOATING_WINDOW_HEIGHT = 43;
-const IS_FLOATING_WINDOW_DEV_MODE = true;
+const IS_FLOATING_WINDOW_DEV_MODE = false;
 
 export function createFloatingWindow(
   getMainWindow: () => BrowserWindow | null,
