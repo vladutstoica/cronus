@@ -2,6 +2,7 @@ import { is } from "@electron-toolkit/utils";
 import { BrowserWindow, screen } from "electron";
 import { join } from "path";
 import icon from "../../resources/icon.png?asset";
+import { getTrayBounds } from "./tray";
 
 const { nativeTheme } = require("electron");
 
@@ -208,4 +209,99 @@ export function createMainWindow(
   });
 
   return mainWindow;
+}
+
+// Tray popover window configuration
+const TRAY_POPOVER_WIDTH = 380;
+const TRAY_POPOVER_HEIGHT = 520;
+const IS_TRAY_POPOVER_DEV_MODE = false;
+
+export function createTrayPopoverWindow(): BrowserWindow {
+  const trayBounds = getTrayBounds();
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenWidth } = primaryDisplay.workAreaSize;
+
+  // Position the popover centered under the tray icon
+  let x = 0;
+  let y = 0;
+
+  if (trayBounds) {
+    x = Math.round(
+      trayBounds.x - TRAY_POPOVER_WIDTH / 2 + trayBounds.width / 2,
+    );
+    y = trayBounds.y + trayBounds.height + 4;
+
+    // Ensure the window doesn't go off-screen
+    if (x + TRAY_POPOVER_WIDTH > screenWidth) {
+      x = screenWidth - TRAY_POPOVER_WIDTH - 10;
+    }
+    if (x < 10) {
+      x = 10;
+    }
+  }
+
+  const popover = new BrowserWindow({
+    width: TRAY_POPOVER_WIDTH,
+    height: TRAY_POPOVER_HEIGHT,
+    x,
+    y,
+    frame: false,
+    resizable: false,
+    movable: false,
+    show: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    transparent: true,
+    hasShadow: true,
+    type: process.platform === "darwin" ? "panel" : "normal",
+    webPreferences: {
+      preload: join(__dirname, "trayPreload.js"),
+      sandbox: false,
+      contextIsolation: true,
+    },
+  });
+
+  // Hide when loses focus (click outside)
+  popover.on("blur", () => {
+    popover.hide();
+  });
+
+  popover.webContents.on("did-finish-load", () => {
+    if (is.dev && IS_TRAY_POPOVER_DEV_MODE) {
+      popover?.webContents.openDevTools({ mode: "detach" });
+    }
+  });
+
+  popover.webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription) => {
+      console.error(
+        `Tray popover failed to load: ${errorCode}, ${errorDescription}`,
+      );
+    },
+  );
+
+  // Use Forge-provided variables for loading renderer
+  console.log("[TRAY] Dev URL:", TRAY_WINDOW_VITE_DEV_SERVER_URL);
+  console.log("[TRAY] Prod Name:", TRAY_WINDOW_VITE_NAME);
+
+  if (TRAY_WINDOW_VITE_DEV_SERVER_URL) {
+    const trayUrl = `${TRAY_WINDOW_VITE_DEV_SERVER_URL}/tray.html`;
+    console.log("[TRAY] Loading URL:", trayUrl);
+    popover
+      .loadURL(trayUrl)
+      .catch((err) => console.error("Failed to load tray URL (dev):", err));
+  } else {
+    popover
+      .loadFile(
+        join(__dirname, `../renderer/${TRAY_WINDOW_VITE_NAME}/tray.html`),
+      )
+      .catch((err) => console.error("Failed to load tray file (prod):", err));
+  }
+
+  popover.on("closed", () => {
+    console.log("Tray popover closed.");
+  });
+
+  return popover;
 }

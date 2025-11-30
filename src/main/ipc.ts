@@ -47,6 +47,13 @@ import {
   clearFocusTodos,
 } from "./database/services/todos";
 import {
+  getActiveSession,
+  startSession,
+  endSession,
+  updateSessionNote,
+  getSessionsByDate,
+} from "./database/services/workSessions";
+import {
   processWindowEvent,
   updateEventDuration,
   endWindowEvent,
@@ -70,6 +77,7 @@ export interface ActivityToRecategorize {
 interface Windows {
   mainWindow: BrowserWindow | null;
   floatingWindow: BrowserWindow | null;
+  trayPopoverWindow: BrowserWindow | null;
 }
 
 export function registerIpcHandlers(
@@ -910,5 +918,273 @@ export function registerIpcHandlers(
     const user = getOrCreateLocalUser();
     clearFocusTodos(user.id, date);
     return { success: true };
+  });
+
+  // ============================================================
+  // WORK SESSION IPC HANDLERS (for tray popover)
+  // ============================================================
+
+  // Helper function to convert work session to camelCase
+  const convertWorkSessionToCamelCase = (session: any) =>
+    session
+      ? {
+          id: session.id,
+          userId: session.user_id,
+          note: session.note,
+          startedAt: session.started_at,
+          endedAt: session.ended_at,
+          durationMs: session.duration_ms,
+          createdAt: session.created_at,
+        }
+      : null;
+
+  ipcMain.handle("work-session:get-active", () => {
+    const user = getOrCreateLocalUser();
+    const session = getActiveSession(user.id);
+    return convertWorkSessionToCamelCase(session);
+  });
+
+  ipcMain.handle("work-session:start", (_event, note: string) => {
+    const user = getOrCreateLocalUser();
+    const session = startSession(user.id, note);
+    return convertWorkSessionToCamelCase(session);
+  });
+
+  ipcMain.handle("work-session:end", (_event, sessionId: string) => {
+    const session = endSession(sessionId);
+    return convertWorkSessionToCamelCase(session);
+  });
+
+  ipcMain.handle(
+    "work-session:update-note",
+    (_event, sessionId: string, note: string) => {
+      const session = updateSessionNote(sessionId, note);
+      return convertWorkSessionToCamelCase(session);
+    },
+  );
+
+  ipcMain.handle("work-session:get-by-date", (_event, date: string) => {
+    const user = getOrCreateLocalUser();
+    const sessions = getSessionsByDate(user.id, date);
+    return sessions.map(convertWorkSessionToCamelCase);
+  });
+
+  // ============================================================
+  // TRAY STATS IPC HANDLERS
+  // ============================================================
+
+  ipcMain.handle("tray:get-today-stats", () => {
+    const user = getOrCreateLocalUser();
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const events = getEventsByUserAndTimeRange(user.id, startOfDay, endOfDay);
+
+    // Sort events chronologically by timestamp
+    const sortedEvents = [...events].sort((a, b) => {
+      const tsA =
+        typeof a.timestamp === "number"
+          ? a.timestamp
+          : new Date(a.timestamp).getTime();
+      const tsB =
+        typeof b.timestamp === "number"
+          ? b.timestamp
+          : new Date(b.timestamp).getTime();
+      return tsA - tsB;
+    });
+
+    // Find first event timestamp (work started)
+    const firstEvent = sortedEvents.length > 0 ? sortedEvents[0] : null;
+    const workStarted = firstEvent
+      ? typeof firstEvent.timestamp === "number"
+        ? new Date(firstEvent.timestamp).toISOString()
+        : firstEvent.timestamp
+      : null;
+
+    // Calculate total tracked time
+    const MAX_GAP_MS = 5 * 60 * 1000; // 5 minutes max gap
+    let totalMs = 0;
+
+    for (let i = 0; i < sortedEvents.length; i++) {
+      const event = sortedEvents[i];
+      const eventTime =
+        typeof event.timestamp === "number"
+          ? event.timestamp
+          : new Date(event.timestamp).getTime();
+
+      let durationMs: number;
+      if (i < sortedEvents.length - 1) {
+        const nextEvent = sortedEvents[i + 1];
+        const nextTime =
+          typeof nextEvent.timestamp === "number"
+            ? nextEvent.timestamp
+            : new Date(nextEvent.timestamp).getTime();
+        durationMs = Math.min(nextTime - eventTime, MAX_GAP_MS);
+      } else {
+        durationMs = Math.min(Date.now() - eventTime, MAX_GAP_MS);
+      }
+
+      if (durationMs > 0) {
+        totalMs += durationMs;
+      }
+    }
+
+    return {
+      workStarted,
+      totalMs,
+    };
+  });
+
+  ipcMain.handle("tray:get-hourly-activity", () => {
+    const user = getOrCreateLocalUser();
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const events = getEventsByUserAndTimeRange(user.id, startOfDay, endOfDay);
+
+    // Sort events chronologically by timestamp
+    const sortedEvents = [...events].sort((a, b) => {
+      const tsA =
+        typeof a.timestamp === "number"
+          ? a.timestamp
+          : new Date(a.timestamp).getTime();
+      const tsB =
+        typeof b.timestamp === "number"
+          ? b.timestamp
+          : new Date(b.timestamp).getTime();
+      return tsA - tsB;
+    });
+
+    const MAX_GAP_MS = 5 * 60 * 1000; // 5 minutes max gap
+    const hourlyMap = new Map<number, number>();
+
+    // Calculate duration for each event and group by hour
+    for (let i = 0; i < sortedEvents.length; i++) {
+      const event = sortedEvents[i];
+      const eventTime =
+        typeof event.timestamp === "number"
+          ? event.timestamp
+          : new Date(event.timestamp).getTime();
+
+      let durationMs: number;
+      if (i < sortedEvents.length - 1) {
+        const nextEvent = sortedEvents[i + 1];
+        const nextTime =
+          typeof nextEvent.timestamp === "number"
+            ? nextEvent.timestamp
+            : new Date(nextEvent.timestamp).getTime();
+        durationMs = Math.min(nextTime - eventTime, MAX_GAP_MS);
+      } else {
+        durationMs = Math.min(Date.now() - eventTime, MAX_GAP_MS);
+      }
+
+      if (durationMs > 0) {
+        const hour = new Date(eventTime).getHours();
+        const currentDuration = hourlyMap.get(hour) || 0;
+        hourlyMap.set(hour, currentDuration + durationMs);
+      }
+    }
+
+    // Convert to array
+    return Array.from(hourlyMap.entries()).map(([hour, durationMs]) => ({
+      hour,
+      durationMs,
+    }));
+  });
+
+  ipcMain.handle("tray:get-top-apps", () => {
+    const user = getOrCreateLocalUser();
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const events = getEventsByUserAndTimeRange(user.id, startOfDay, endOfDay);
+
+    // Sort events chronologically by timestamp
+    // Note: timestamp is stored as a number (Unix ms) in the database
+    const sortedEvents = [...events].sort((a, b) => {
+      const tsA =
+        typeof a.timestamp === "number"
+          ? a.timestamp
+          : new Date(a.timestamp).getTime();
+      const tsB =
+        typeof b.timestamp === "number"
+          ? b.timestamp
+          : new Date(b.timestamp).getTime();
+      return tsA - tsB;
+    });
+
+    const MAX_GAP_MS = 5 * 60 * 1000; // 5 minutes max gap
+    const appMap = new Map<string, number>();
+
+    // Calculate duration for each event based on time to next event
+    for (let i = 0; i < sortedEvents.length; i++) {
+      const event = sortedEvents[i];
+      const appName = event.owner_name || "Unknown";
+
+      let durationMs: number;
+      const eventTime =
+        typeof event.timestamp === "number"
+          ? event.timestamp
+          : new Date(event.timestamp).getTime();
+
+      if (i < sortedEvents.length - 1) {
+        // Duration is time until next event
+        const nextEvent = sortedEvents[i + 1];
+        const nextTime =
+          typeof nextEvent.timestamp === "number"
+            ? nextEvent.timestamp
+            : new Date(nextEvent.timestamp).getTime();
+        durationMs = Math.min(nextTime - eventTime, MAX_GAP_MS);
+      } else {
+        // Last event: duration is time until now (capped)
+        durationMs = Math.min(Date.now() - eventTime, MAX_GAP_MS);
+      }
+
+      if (durationMs > 0) {
+        const currentDuration = appMap.get(appName) || 0;
+        appMap.set(appName, currentDuration + durationMs);
+      }
+    }
+
+    // Sort by duration and return top 6
+    return Array.from(appMap.entries())
+      .map(([name, durationMs]) => ({ name, durationMs }))
+      .sort((a, b) => b.durationMs - a.durationMs)
+      .slice(0, 6);
+  });
+
+  // Hide tray popover handler
+  ipcMain.on("hide-tray-popover", () => {
+    if (windows.trayPopoverWindow && !windows.trayPopoverWindow.isDestroyed()) {
+      windows.trayPopoverWindow.hide();
+    }
+  });
+
+  // Open settings page handler
+  ipcMain.on("open-settings-page", () => {
+    // Open main window and navigate to settings
+    if (windows.mainWindow && !windows.mainWindow.isDestroyed()) {
+      windows.mainWindow.show();
+      windows.mainWindow.focus();
+      windows.mainWindow.webContents.send("navigate-to-settings");
+    } else {
+      const mainWindow = recreateMainWindow();
+      mainWindow.once("ready-to-show", () => {
+        mainWindow.webContents.send("navigate-to-settings");
+      });
+    }
+    // Hide tray popover
+    if (windows.trayPopoverWindow && !windows.trayPopoverWindow.isDestroyed()) {
+      windows.trayPopoverWindow.hide();
+    }
   });
 }

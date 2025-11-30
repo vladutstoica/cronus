@@ -26,8 +26,10 @@ import {
 import {
   createFloatingWindow,
   createMainWindow,
+  createTrayPopoverWindow,
   setIsAppQuitting,
 } from "./windows";
+import { createTray, destroyTray, getTrayBounds } from "./tray";
 
 // Handle Squirrel.Windows events
 if (squirrelStartup) {
@@ -40,6 +42,7 @@ dotenv.config({ path: is.dev ? ".env.development" : ".env.production" });
 
 let mainWindow: BrowserWindow | null = null;
 let floatingWindow: BrowserWindow | null = null;
+let trayPopoverWindow: BrowserWindow | null = null;
 
 let isTrackingPaused = false;
 
@@ -85,6 +88,34 @@ function App() {
     );
     initializeAutoUpdater(mainWindow);
     floatingWindow = createFloatingWindow(() => mainWindow);
+    trayPopoverWindow = createTrayPopoverWindow();
+
+    // Toggle tray popover function
+    const toggleTrayPopover = () => {
+      if (!trayPopoverWindow) {
+        trayPopoverWindow = createTrayPopoverWindow();
+      }
+
+      if (trayPopoverWindow.isVisible()) {
+        trayPopoverWindow.hide();
+      } else {
+        // Position the popover below the tray icon
+        const trayBounds = getTrayBounds();
+        if (trayBounds) {
+          const popoverBounds = trayPopoverWindow.getBounds();
+          const x = Math.round(
+            trayBounds.x + trayBounds.width / 2 - popoverBounds.width / 2,
+          );
+          const y = Math.round(trayBounds.y + trayBounds.height + 4);
+          trayPopoverWindow.setPosition(x, y, false);
+        }
+        trayPopoverWindow.show();
+        trayPopoverWindow.focus();
+      }
+    };
+
+    // Create tray icon
+    createTray(toggleTrayPopover);
 
     mainWindow.on("closed", () => {
       mainWindow = null;
@@ -98,13 +129,22 @@ function App() {
       });
     }
 
+    if (trayPopoverWindow) {
+      trayPopoverWindow.on("closed", () => {
+        trayPopoverWindow = null;
+        windows.trayPopoverWindow = null;
+      });
+    }
+
     // Create windows object that IPC handlers will reference
     const windows: {
       mainWindow: BrowserWindow | null;
       floatingWindow: BrowserWindow | null;
+      trayPopoverWindow: BrowserWindow | null;
     } = {
       mainWindow,
       floatingWindow,
+      trayPopoverWindow,
     };
 
     const recreateMainWindow = (): BrowserWindow => {
@@ -245,6 +285,7 @@ function App() {
   });
 
   app.on("will-quit", () => {
+    destroyTray();
     closeDatabase();
   });
 

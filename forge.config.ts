@@ -13,6 +13,10 @@ const config: ForgeConfig = {
     appBundleId: "com.cronus.app",
     icon: "./build/icon",
     asar: false, // Disabled to workaround Forge bugs #3917 (external modules) and #3934 (auto-unpack)why
+    extraResource: [
+      "./resources/iconTemplate.png",
+      "./resources/iconTemplate@2x.png",
+    ],
   },
   rebuildConfig: {},
   makers: [
@@ -44,6 +48,10 @@ const config: ForgeConfig = {
           entry: "src/preload/floatingPreload.ts",
           config: "vite.preload.config.ts",
         },
+        {
+          entry: "src/preload/trayPreload.ts",
+          config: "vite.preload.config.ts",
+        },
       ],
       renderer: [
         {
@@ -53,6 +61,10 @@ const config: ForgeConfig = {
         {
           name: "floating_window",
           config: "vite.renderer.floating.config.ts",
+        },
+        {
+          name: "tray_window",
+          config: "vite.renderer.tray.config.ts",
         },
       ],
     }),

@@ -212,6 +212,27 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, scheduled_date);
       `,
     },
+    {
+      name: "006_work_sessions_table",
+      up: `
+        -- Work sessions table for tracking time on specific tasks (Jira, etc.)
+        CREATE TABLE IF NOT EXISTS work_sessions (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          note TEXT NOT NULL,
+          started_at DATETIME NOT NULL,
+          ended_at DATETIME,
+          duration_ms INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        -- Create indexes for better query performance
+        CREATE INDEX IF NOT EXISTS idx_work_sessions_user_id ON work_sessions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_work_sessions_started_at ON work_sessions(started_at);
+        CREATE INDEX IF NOT EXISTS idx_work_sessions_user_date ON work_sessions(user_id, started_at);
+      `,
+    },
   ];
 
   // Apply migrations

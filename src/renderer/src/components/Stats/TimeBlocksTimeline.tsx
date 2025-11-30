@@ -144,7 +144,7 @@ export function TimeBlocksTimeline({
             {hourMarkers.map((marker) => (
               <div
                 key={marker.hour}
-                className="absolute text-[10px] text-muted-foreground transform -translate-x-1/2"
+                className="absolute text-[10px] text-muted-foreground transform -translate-x-1/2 whitespace-nowrap"
                 style={{ left: `${marker.leftPercent}%` }}
               >
                 {marker.label}
