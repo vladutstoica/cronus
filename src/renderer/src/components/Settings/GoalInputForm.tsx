@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "../../hooks/use-toast";
 import { localApi } from "../../lib/localApi";
@@ -10,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
-import { Textarea } from "../ui/textarea";
+import { Input } from "../ui/input";
 
 interface GoalInputFormProps {
   onboardingMode?: boolean;
@@ -24,13 +25,13 @@ const GoalInputForm = ({
   shouldFocus = false,
 }: GoalInputFormProps) => {
   const { user } = useAuth();
-  const [userProjectsAndGoals, setUserProjectsAndGoals] = useState("");
+  const [goals, setGoals] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const hasContent = userProjectsAndGoals.trim().length > 0;
+  const hasContent = goals.length > 0;
 
   // Load user goals
   useEffect(() => {
@@ -44,11 +45,26 @@ const GoalInputForm = ({
     try {
       const userData = await localApi.user.get();
       if (userData && userData.user_projects_and_goals) {
-        const goals =
-          typeof userData.user_projects_and_goals === "string"
-            ? userData.user_projects_and_goals
-            : JSON.stringify(userData.user_projects_and_goals);
-        setUserProjectsAndGoals(goals);
+        let parsedGoals: string[] = [];
+        if (typeof userData.user_projects_and_goals === "string") {
+          try {
+            const parsed = JSON.parse(userData.user_projects_and_goals);
+            if (Array.isArray(parsed)) {
+              parsedGoals = parsed;
+            } else if (typeof parsed === "string" && parsed.trim()) {
+              // Legacy: single string, convert to array
+              parsedGoals = [parsed];
+            }
+          } catch {
+            // Legacy: plain string that's not JSON
+            if (userData.user_projects_and_goals.trim()) {
+              parsedGoals = [userData.user_projects_and_goals];
+            }
+          }
+        } else if (Array.isArray(userData.user_projects_and_goals)) {
+          parsedGoals = userData.user_projects_and_goals;
+        }
+        setGoals(parsedGoals);
       }
     } catch (error) {
       console.error("Failed to load goals:", error);
@@ -68,22 +84,54 @@ const GoalInputForm = ({
     if (shouldFocus) {
       setIsEditing(true);
       setTimeout(() => {
-        textareaRef.current?.focus();
-        textareaRef.current?.scrollIntoView({
+        containerRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
+        const inputs = document.querySelectorAll<HTMLInputElement>(
+          '[data-goal-input="true"]'
+        );
+        if (inputs.length > 0) {
+          inputs[0]?.focus();
+        }
       }, 100);
     }
   }, [shouldFocus]);
 
+  // Auto-save when clicking outside (non-onboarding mode)
+  useEffect(() => {
+    if (!isEditing || onboardingMode) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        handleSave();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isEditing, onboardingMode, goals]);
+
+  const handleRemoveGoal = (index: number) => {
+    setGoals(goals.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateGoal = (index: number, value: string) => {
+    const updated = [...goals];
+    updated[index] = value;
+    setGoals(updated);
+  };
+
   const handleSave = async () => {
+    // Filter out empty goals
+    const filteredGoals = goals.filter((g) => g.trim());
     setIsSaving(true);
     try {
       await localApi.user.update({
-        user_projects_and_goals: userProjectsAndGoals,
+        user_projects_and_goals: JSON.stringify(filteredGoals),
       });
 
+      setGoals(filteredGoals);
       setIsEditing(false);
 
       if (!onboardingMode) {
@@ -96,23 +144,13 @@ const GoalInputForm = ({
 
       // Call onComplete if in onboarding mode
       if (onboardingMode && onComplete) {
-        onComplete(userProjectsAndGoals);
+        onComplete(JSON.stringify(filteredGoals));
       }
     } catch (error) {
       console.error("Failed to update goals:", error);
       alert("Failed to save goals. Please try again.");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    if (onboardingMode) {
-      return;
-    } else {
-      // Reload goals from server
-      loadGoals();
-      setIsEditing(false);
     }
   };
 
@@ -133,6 +171,7 @@ const GoalInputForm = ({
 
   return (
     <Card
+      ref={containerRef}
       className={`bg-card border-border ${
         onboardingMode ? "" : !isEditing ? "cursor-pointer" : ""
       }`}
@@ -159,51 +198,79 @@ const GoalInputForm = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          {isEditing ? (
-            <Textarea
-              ref={textareaRef}
-              id="userProjectsAndGoals"
-              value={userProjectsAndGoals}
-              onChange={(e) => setUserProjectsAndGoals(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-input text-foreground placeholder-gray-500"
-              rows={3}
-              placeholder="I'm working on Cronus - The ai time/distraction tracker software. I'm working on improving the app and getting the first few 1000 users. I'll have to post on reddit and other forums etc."
-            />
-          ) : (
-            <p className="px-3 py-2 bg-input/50 rounded-md text-foreground min-h-12 whitespace-pre-wrap">
-              {userProjectsAndGoals || (
-                <span className="text-muted-foreground italic">
-                  No projects or goals set yet.
-                </span>
-              )}
-            </p>
-          )}
-        </div>
+        {isEditing ? (
+          <div className="space-y-3">
+            {/* Existing goals list */}
+            {goals.map((goal, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  data-goal-input="true"
+                  value={goal}
+                  onChange={(e) => handleUpdateGoal(index, e.target.value)}
+                  className="flex-1"
+                  placeholder="Enter a goal or project..."
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveGoal(index)}
+                  className="text-muted-foreground hover:text-destructive shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
 
-        {isEditing && (
-          <div className="flex justify-end gap-3 mt-6">
-            {!onboardingMode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-            )}
+            {/* Add new goal button */}
             <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving || (onboardingMode && !hasContent)}
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setGoals([...goals, ""]);
+                setTimeout(() => {
+                  const inputs = document.querySelectorAll<HTMLInputElement>(
+                    '[data-goal-input="true"]'
+                  );
+                  inputs[inputs.length - 1]?.focus();
+                }, 0);
+              }}
+              className="w-full border-dashed"
             >
-              {isSaving
-                ? "Saving..."
-                : onboardingMode
-                  ? "Save & Continue"
-                  : "Save Goals"}
+              <Plus className="h-4 w-4 mr-2" />
+              Add goal or project
             </Button>
+
+            {onboardingMode && (
+              <div className="flex justify-end mt-4">
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving || !hasContent}
+                >
+                  {isSaving ? "Saving..." : "Save & Continue"}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {goals.length > 0 ? (
+              <ul className="space-y-2">
+                {goals.map((goal, index) => (
+                  <li
+                    key={index}
+                    className="px-3 py-2 bg-input/50 rounded-md text-foreground text-sm"
+                  >
+                    {goal}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-3 py-2 bg-input/50 rounded-md text-muted-foreground italic min-h-12">
+                No projects or goals set yet.
+              </p>
+            )}
           </div>
         )}
       </CardContent>
