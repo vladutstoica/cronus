@@ -32,7 +32,7 @@ const menuItems: {
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "apps", label: "Apps", icon: AppWindow },
   { id: "privacy", label: "Privacy", icon: Shield, badge: "Beta" },
-  { id: "about", label: "About", icon: Info },
+  { id: "about", label: "About", icon: Info, badge: "Beta" },
 ];
 
 export function SettingsSidebar({
