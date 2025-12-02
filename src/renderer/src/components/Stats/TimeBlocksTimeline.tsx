@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { ProcessedEventBlock } from "../DashboardView";
 import { Card, CardContent } from "../ui/card";
 import { IDLE_CATEGORY_ID, IDLE_CATEGORY_COLOR } from "../../lib/constants";
@@ -15,13 +15,12 @@ interface TimeBlocksTimelineProps {
   isLoading?: boolean;
 }
 
-// Timeline bounds (10 AM to 10 PM = 12 hours)
-const START_HOUR = 10;
-const END_HOUR = 22;
-const TOTAL_HOURS = END_HOUR - START_HOUR;
-const SLOT_MINUTES = 5; // Each slot is 5 minutes (matches idle threshold)
+// Timeline bounds (full 24 hours)
+const TOTAL_HOURS = 24;
+const SLOT_MINUTES = 5;
 const SLOTS_PER_HOUR = 60 / SLOT_MINUTES;
-const TOTAL_SLOTS = TOTAL_HOURS * SLOTS_PER_HOUR; // 144 slots
+const TOTAL_SLOTS = TOTAL_HOURS * SLOTS_PER_HOUR;
+const HOUR_WIDTH_PX = 60;
 
 // Represents a 5-minute time slot with aggregated category data
 interface TimeSlot {
@@ -32,7 +31,7 @@ interface TimeSlot {
   dominantCategoryColor: string | null;
   dominantCategoryName: string | null;
   isIdle: boolean;
-  totalDurationMs: number; // How much of this slot has activity
+  totalDurationMs: number;
   categories: Array<{
     categoryId: string | null;
     categoryName: string | null;
@@ -42,7 +41,6 @@ interface TimeSlot {
   }>;
 }
 
-// Get hour label
 function getHourLabel(hour: number): string {
   if (hour === 0) return "12 AM";
   if (hour === 12) return "12 PM";
@@ -50,12 +48,10 @@ function getHourLabel(hour: number): string {
   return `${hour - 12} PM`;
 }
 
-// Format time for tooltip
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// Format duration for display
 function formatDuration(ms: number): string {
   const minutes = Math.round(ms / 60000);
   if (minutes < 1) return "<1m";
@@ -67,7 +63,9 @@ export function TimeBlocksTimeline({
   selectedDate,
   isLoading,
 }: TimeBlocksTimelineProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolledRef = useRef(false);
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   // Filter events for the selected date
   const dayEvents = useMemo(() => {
@@ -85,14 +83,13 @@ export function TimeBlocksTimeline({
     });
   }, [processedEvents, selectedDate]);
 
-  // Create 10-minute slots and aggregate events into them
+  // Create 5-minute slots and aggregate events into them
   const timeSlots = useMemo(() => {
     const slots: TimeSlot[] = [];
 
-    // Create empty slots for the entire timeline
     for (let i = 0; i < TOTAL_SLOTS; i++) {
       const slotStartTime = new Date(selectedDate);
-      slotStartTime.setHours(START_HOUR, 0, 0, 0);
+      slotStartTime.setHours(0, 0, 0, 0);
       slotStartTime.setMinutes(slotStartTime.getMinutes() + i * SLOT_MINUTES);
 
       const slotEndTime = new Date(slotStartTime);
@@ -119,20 +116,16 @@ export function TimeBlocksTimeline({
         event.categoryId === IDLE_CATEGORY_ID ||
         event.originalEvent.type === "idle";
 
-      // Find which slots this event overlaps with
       for (const slot of slots) {
         const slotStart = slot.startTime.getTime();
         const slotEnd = slot.endTime.getTime();
 
-        // Check if event overlaps with this slot
         if (eventStart < slotEnd && eventEnd > slotStart) {
-          // Calculate overlap duration
           const overlapStart = Math.max(eventStart, slotStart);
           const overlapEnd = Math.min(eventEnd, slotEnd);
           const overlapMs = overlapEnd - overlapStart;
 
           if (overlapMs > 0) {
-            // Find or create category entry for this slot
             const categoryKey = event.categoryId || "uncategorized";
             let categoryEntry = slot.categories.find(
               (c) => (c.categoryId || "uncategorized") === categoryKey,
@@ -159,7 +152,6 @@ export function TimeBlocksTimeline({
     // Determine dominant category for each slot
     for (const slot of slots) {
       if (slot.categories.length > 0) {
-        // Sort by duration and pick the one with most time
         const sorted = [...slot.categories].sort(
           (a, b) => b.durationMs - a.durationMs,
         );
@@ -174,61 +166,52 @@ export function TimeBlocksTimeline({
     return slots;
   }, [dayEvents, selectedDate]);
 
-  // Get slot style
-  const getSlotStyle = (slot: TimeSlot) => {
-    const slotWidthPercent = 100 / TOTAL_SLOTS;
-    const leftPercent = slot.slotIndex * slotWidthPercent;
-
-    // Empty slot
-    if (slot.totalDurationMs === 0) {
-      return {
-        left: `${leftPercent}%`,
-        width: `${slotWidthPercent}%`,
-        backgroundColor: "transparent",
-      };
+  // Group slots by hour for rendering
+  const slotsByHour = useMemo(() => {
+    const grouped: TimeSlot[][] = [];
+    for (let h = 0; h < TOTAL_HOURS; h++) {
+      grouped.push(timeSlots.slice(h * SLOTS_PER_HOUR, (h + 1) * SLOTS_PER_HOUR));
     }
+    return grouped;
+  }, [timeSlots]);
 
-    // Idle slot with striped pattern
-    if (slot.isIdle) {
-      return {
-        left: `${leftPercent}%`,
-        width: `${slotWidthPercent}%`,
-        background: `repeating-linear-gradient(
-          -45deg,
-          rgba(55, 65, 81, 0.3),
-          rgba(55, 65, 81, 0.3) 3px,
-          rgba(75, 85, 99, 0.5) 3px,
-          rgba(75, 85, 99, 0.5) 6px
-        )`,
-        opacity: 0.6,
-      };
+  // Auto-scroll to center on current time
+  useEffect(() => {
+    if (isToday && scrollContainerRef.current && !hasScrolledRef.current) {
+      // Small delay to ensure DOM and CSS are fully applied
+      const timeoutId = setTimeout(() => {
+        if (scrollContainerRef.current) {
+          const now = new Date();
+          const currentHour = now.getHours() + now.getMinutes() / 60;
+          const container = scrollContainerRef.current;
+          const containerWidth = container.clientWidth;
+          const scrollWidth = container.scrollWidth;
+
+          // Only scroll if there's content to scroll
+          if (scrollWidth > containerWidth) {
+            const currentPosition = (currentHour / TOTAL_HOURS) * scrollWidth;
+            const scrollPosition = currentPosition - containerWidth / 2;
+            container.scrollLeft = Math.max(0, scrollPosition);
+          }
+          hasScrolledRef.current = true;
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
+  }, [isToday, slotsByHour]);
 
-    // Active slot with dominant category color
-    return {
-      left: `${leftPercent}%`,
-      width: `${slotWidthPercent}%`,
-      backgroundColor: slot.dominantCategoryColor || "#6b7280",
-    };
-  };
+  // Reset scroll flag when date changes
+  useEffect(() => {
+    hasScrolledRef.current = false;
+  }, [selectedDate]);
 
-  // Generate hour markers
-  const hourMarkers = useMemo((): Array<{
-    hour: number;
-    label: string;
-    leftPercent: number;
-  }> => {
-    const markers: Array<{ hour: number; label: string; leftPercent: number }> =
-      [];
-    for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
-      markers.push({
-        hour,
-        label: getHourLabel(hour),
-        leftPercent: ((hour - START_HOUR) / TOTAL_HOURS) * 100,
-      });
-    }
-    return markers;
-  }, []);
+  // Current time position
+  const currentTimePercent = useMemo(() => {
+    if (!isToday) return null;
+    const now = new Date();
+    return ((now.getHours() + now.getMinutes() / 60) / TOTAL_HOURS) * 100;
+  }, [isToday]);
 
   if (isLoading) {
     return (
@@ -242,133 +225,128 @@ export function TimeBlocksTimeline({
 
   return (
     <Card>
-      <CardContent className="py-3">
-        <div className="relative" ref={containerRef}>
-          {/* Hour markers */}
-          <div className="relative h-4 mb-1">
-            {hourMarkers.map((marker) => (
-              <div
-                key={marker.hour}
-                className="absolute text-[10px] text-muted-foreground transform -translate-x-1/2 whitespace-nowrap"
-                style={{ left: `${marker.leftPercent}%` }}
-              >
-                {marker.label}
-              </div>
-            ))}
-          </div>
+      <CardContent className="p-0">
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+        >
+          <div className="flex flex-col" style={{ minWidth: `${TOTAL_HOURS * HOUR_WIDTH_PX}px` }}>
+            {/* Hour labels */}
+            <div className="flex">
+              {Array.from({ length: TOTAL_HOURS }).map((_, hour) => (
+                <div
+                  key={hour}
+                  className="flex-1 min-w-[60px] text-[10px] text-muted-foreground px-1 pt-2"
+                >
+                  {getHourLabel(hour)}
+                </div>
+              ))}
+            </div>
 
-          {/* Timeline track with border */}
-          <div className="relative h-8 bg-muted/30 border border-border rounded-md overflow-hidden">
-            {/* Hour grid lines */}
-            {hourMarkers.map((marker) => (
-              <div
-                key={`line-${marker.hour}`}
-                className="absolute top-0 bottom-0 w-px bg-border/50"
-                style={{ left: `${marker.leftPercent}%` }}
-              />
-            ))}
-
-            {/* 5-minute time slots */}
-            {timeSlots.map((slot) => {
-              const style = getSlotStyle(slot);
-              const hasActivity = slot.totalDurationMs > 0;
-
-              if (!hasActivity) {
-                // Empty slot - just render empty space
-                return (
+            {/* Timeline track */}
+            <div className="relative mx-2 mb-2">
+              <div className="flex h-8 bg-muted/30 border border-border rounded-md overflow-hidden">
+                {slotsByHour.map((hourSlots, hourIndex) => (
                   <div
-                    key={slot.slotIndex}
-                    className="absolute top-0 bottom-0"
-                    style={style}
-                  />
-                );
-              }
+                    key={hourIndex}
+                    className="flex-1 min-w-[60px] flex border-l border-border/50 first:border-l-0"
+                  >
+                    {hourSlots.map((slot) => {
+                      const hasActivity = slot.totalDurationMs > 0;
 
-              return (
-                <TooltipProvider key={slot.slotIndex}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div
-                        className="absolute top-0 bottom-0 cursor-pointer transition-all hover:brightness-110 border-r border-background/20"
-                        style={style}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      <div className="text-xs space-y-1">
-                        <div className="font-medium">
-                          {formatTime(slot.startTime)} -{" "}
-                          {formatTime(slot.endTime)}
-                        </div>
-                        {slot.categories
-                          .sort((a, b) => b.durationMs - a.durationMs)
-                          .map((cat, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center gap-2"
-                            >
+                      if (!hasActivity) {
+                        return (
+                          <div
+                            key={slot.slotIndex}
+                            className="flex-1 h-full"
+                          />
+                        );
+                      }
+
+                      const bgStyle = slot.isIdle
+                        ? {
+                            background: `repeating-linear-gradient(
+                              -45deg,
+                              rgba(55, 65, 81, 0.3),
+                              rgba(55, 65, 81, 0.3) 3px,
+                              rgba(75, 85, 99, 0.5) 3px,
+                              rgba(75, 85, 99, 0.5) 6px
+                            )`,
+                            opacity: 0.6,
+                          }
+                        : {
+                            backgroundColor: slot.dominantCategoryColor || "#6b7280",
+                          };
+
+                      return (
+                        <TooltipProvider key={slot.slotIndex}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{
-                                  backgroundColor: cat.isIdle
-                                    ? IDLE_CATEGORY_COLOR
-                                    : cat.categoryColor || "#6b7280",
-                                }}
+                                className="flex-1 h-full cursor-pointer transition-all hover:brightness-110"
+                                style={bgStyle}
                               />
-                              <span className="truncate">
-                                {cat.isIdle
-                                  ? "Idle"
-                                  : cat.categoryName || "Uncategorized"}
-                              </span>
-                              <span className="text-muted-foreground ml-auto">
-                                {formatDuration(cat.durationMs)}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              );
-            })}
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <div className="text-xs space-y-1">
+                                <div className="font-medium">
+                                  {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                                </div>
+                                {slot.categories
+                                  .sort((a, b) => b.durationMs - a.durationMs)
+                                  .map((cat, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                      <div
+                                        className="w-2 h-2 rounded-full flex-shrink-0"
+                                        style={{
+                                          backgroundColor: cat.isIdle
+                                            ? IDLE_CATEGORY_COLOR
+                                            : cat.categoryColor || "#6b7280",
+                                        }}
+                                      />
+                                      <span className="truncate">
+                                        {cat.isIdle ? "Idle" : cat.categoryName || "Uncategorized"}
+                                      </span>
+                                      <span className="text-muted-foreground ml-auto">
+                                        {formatDuration(cat.durationMs)}
+                                      </span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
 
-            {/* Current time indicator (if viewing today) */}
-            {selectedDate.toDateString() === new Date().toDateString() && (
-              <CurrentTimeIndicator />
-            )}
-          </div>
+              {/* Current time indicator */}
+              {currentTimePercent !== null && (
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+                  style={{ left: `${currentTimePercent}%` }}
+                >
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-red-500" />
+                </div>
+              )}
+            </div>
 
-          {/* Bottom hour labels (dots) */}
-          <div className="relative h-2 mt-1">
-            {hourMarkers.map((marker) => (
-              <div
-                key={`dot-${marker.hour}`}
-                className="absolute w-1.5 h-1.5 rounded-full bg-muted-foreground/30 transform -translate-x-1/2"
-                style={{ left: `${marker.leftPercent}%` }}
-              />
-            ))}
+            {/* Bottom dots */}
+            <div className="flex pb-2">
+              {Array.from({ length: TOTAL_HOURS }).map((_, hour) => (
+                <div
+                  key={hour}
+                  className="flex-1 min-w-[60px] flex justify-start px-1"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function CurrentTimeIndicator() {
-  const now = new Date();
-  const currentHour = now.getHours() + now.getMinutes() / 60;
-
-  if (currentHour < START_HOUR || currentHour > END_HOUR) {
-    return null;
-  }
-
-  const leftPercent = ((currentHour - START_HOUR) / TOTAL_HOURS) * 100;
-
-  return (
-    <div
-      className="absolute top-0 bottom-0 w-0.5 bg-primary z-10"
-      style={{ left: `${leftPercent}%` }}
-    >
-      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full bg-primary" />
-    </div>
   );
 }
