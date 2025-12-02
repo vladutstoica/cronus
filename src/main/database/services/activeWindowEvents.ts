@@ -298,7 +298,7 @@ export function getUserStatistics(
 }
 
 /**
- * Recategorize events by identifier (owner_name or url) within a time range
+ * Recategorize events by identifier (owner_name, url, or title) within a time range
  */
 export function recategorizeEventsByIdentifier(
   userId: string,
@@ -311,24 +311,39 @@ export function recategorizeEventsByIdentifier(
   const db = getDatabase();
   const now = new Date().toISOString();
 
-  // For apps, match by owner_name; for websites, match by url
-  // Build the query with the correct field name
-  const query =
-    itemType === "app"
-      ? `UPDATE active_window_events
+  // For apps, match by owner_name
+  // For websites, match by url if identifier looks like a URL, otherwise match by title
+  // (browser events without URLs use title as identifier)
+  const isUrl =
+    identifier.startsWith("http://") || identifier.startsWith("https://");
+
+  let query: string;
+  if (itemType === "app") {
+    query = `UPDATE active_window_events
        SET category_id = ?,
            updated_at = ?
        WHERE user_id = ?
          AND owner_name = ?
          AND timestamp >= ?
-         AND timestamp <= ?`
-      : `UPDATE active_window_events
+         AND timestamp <= ?`;
+  } else if (isUrl) {
+    query = `UPDATE active_window_events
        SET category_id = ?,
            updated_at = ?
        WHERE user_id = ?
          AND url = ?
          AND timestamp >= ?
          AND timestamp <= ?`;
+  } else {
+    // Website without URL - match by title (browser tabs without URL)
+    query = `UPDATE active_window_events
+       SET category_id = ?,
+           updated_at = ?
+       WHERE user_id = ?
+         AND title = ?
+         AND timestamp >= ?
+         AND timestamp <= ?`;
+  }
 
   const stmt = db.prepare(query);
 
