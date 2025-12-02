@@ -1,6 +1,7 @@
 import { ActiveWindowEvent, Category as SharedCategory } from "@shared/types";
 import type { ProcessedEventBlock } from "../components/DashboardView";
 import { extractWebsiteInfo } from "./activityByCategoryWidgetHelpers";
+import { IDLE_CATEGORY_ID } from "./constants";
 
 export interface ActivityItem {
   name: string;
@@ -92,6 +93,14 @@ export const processActivityEvents = (
 
   // Iterate through processed blocks
   for (const block of processedBlocks) {
+    // Skip idle events - they shouldn't appear in the categorizable activity list
+    if (
+      block.categoryId === IDLE_CATEGORY_ID ||
+      block.originalEvent.type === "idle"
+    ) {
+      continue;
+    }
+
     let effectiveCategoryId: string;
     let categoryDetails: SharedCategory | undefined;
 
