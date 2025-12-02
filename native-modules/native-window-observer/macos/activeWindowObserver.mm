@@ -356,13 +356,15 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
         //  NEW: Universal immediate OCR for ALL apps
         if ([windowOwnerName isEqualToString:@"Google Chrome"]) {
             MyLog(@"🔍 Chrome window detected - getting URL/title + immediate OCR");
-            
+
+            // Always mark as browser, even if AppleScript fails to get URL/title
+            windowInfo[@"type"] = @"browser";
+            windowInfo[@"browser"] = @"chrome";
+
             NSDictionary *chromeInfo = [BrowserTabUtils getChromeTabInfo];
             if (chromeInfo) {
                 windowInfo[@"url"] = chromeInfo[@"url"];
                 windowInfo[@"title"] = chromeInfo[@"title"] ?: windowInfo[@"title"];
-                windowInfo[@"type"] = @"browser";
-                windowInfo[@"browser"] = @"chrome";
 
                 if (browserTabTracking.isBrowserActive && browserTabTracking.lastKnownBrowserURL == nil && chromeInfo[@"url"]) {
                     MyLog(@"[Browser Tab] Setting initial known tab for Chrome: URL=%@, Title=%@", chromeInfo[@"url"], chromeInfo[@"title"]);
@@ -385,13 +387,15 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
             
         } else if ([windowOwnerName isEqualToString:@"Arc"]) {
             MyLog(@"🔍 Arc window detected - getting URL/title + immediate OCR");
-            
+
+            // Always mark as browser, even if AppleScript fails to get URL/title
+            windowInfo[@"type"] = @"browser";
+            windowInfo[@"browser"] = @"arc";
+
             NSDictionary *arcInfo = [BrowserTabUtils getArcTabInfo];
             if (arcInfo) {
                 windowInfo[@"url"] = arcInfo[@"url"];
                 windowInfo[@"title"] = arcInfo[@"title"] ?: windowInfo[@"title"];
-                windowInfo[@"type"] = @"browser";
-                windowInfo[@"browser"] = @"arc";
 
                 if (browserTabTracking.isBrowserActive && browserTabTracking.lastKnownBrowserURL == nil && arcInfo[@"url"]) {
                     MyLog(@"[Browser Tab] Setting initial known tab for Arc: URL=%@, Title=%@", arcInfo[@"url"], arcInfo[@"title"]);
@@ -413,13 +417,15 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
             
         } else if ([windowOwnerName isEqualToString:@"Safari"]) {
             MyLog(@"🔍 Safari window detected - getting URL/title + immediate OCR");
-            
+
+            // Always mark as browser, even if AppleScript fails to get URL/title
+            windowInfo[@"type"] = @"browser";
+            windowInfo[@"browser"] = @"safari";
+
             NSDictionary *safariInfo = [BrowserTabUtils getSafariTabInfo];
             if (safariInfo) {
                 windowInfo[@"url"] = safariInfo[@"url"];
                 windowInfo[@"title"] = safariInfo[@"title"] ?: windowInfo[@"title"];
-                windowInfo[@"type"] = @"browser";
-                windowInfo[@"browser"] = @"safari";
             }
             
             @try {
