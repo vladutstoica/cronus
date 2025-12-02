@@ -50,13 +50,7 @@ export interface DaySegment extends VisualSegment {
   groupedEvents?: DaySegment[];
 }
 
-const BROWSER_NAMES = [
-  "Google Chrome",
-  "Safari",
-  "Firefox",
-  "Microsoft Edge",
-  "Arc",
-];
+// Browser detection now uses event.type === "browser" instead of hardcoded names
 
 function mergeConsecutiveSlots(
   slots: SlotActivityGroup[],
@@ -263,8 +257,9 @@ function accumulateActivitiesForSlot(
     const duration = overlapEnd.getTime() - overlapStart.getTime();
 
     if (duration > 0) {
+      // For browsers, group by page title (description) instead of browser name
       const groupingKey =
-        BROWSER_NAMES.includes(block.name) && block.description
+        block.type === "browser" && block.description
           ? block.description
           : block.name;
       if (!activitiesInSlot[groupingKey]) {

@@ -48,18 +48,12 @@ export const extractActivityDetailsFromEvent = (
     identifier = event.url; // Use the full URL as the identifier
     originalUrl = event.url;
   } else if (
-    // Sometimes url is missing but it's a browser event
-    (event.ownerName.toLowerCase().includes("google chrome") ||
-      event.ownerName.toLowerCase().includes("safari") ||
-      event.ownerName.toLowerCase().includes("firefox") ||
-      event.ownerName.toLowerCase().includes("arc") ||
-      event.ownerName.toLowerCase().includes("brave") ||
-      event.ownerName.toLowerCase().includes("edge") ||
-      event.ownerName.toLowerCase().includes("opera")) &&
+    // Case 2: Browser event without URL but with a usable title
+    // Use the event's type/browser fields instead of hardcoding browser names
+    (event.type === "browser" || event.browser) &&
     event.title &&
     event.title.trim() !== ""
   ) {
-    // Case 2: Event is from a browser, has no URL, but has a usable title.
     // Treat this as a web-like activity, using the title as its name and identifier.
     activityName = event.title.trim();
     itemType = "website";

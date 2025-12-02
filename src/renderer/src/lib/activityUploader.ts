@@ -29,10 +29,9 @@ export const uploadActiveWindowEvent = async (
   mutateEvent: MutateAsyncFunction,
 ): Promise<void> => {
   // Don't upload browser events that are missing a URL.
+  // Use type/browser fields instead of hardcoding specific browser names
   if (
-    (windowDetails.browser === "chrome" ||
-      windowDetails.browser === "safari" ||
-      windowDetails.browser === "arc") &&
+    (windowDetails.type === "browser" || windowDetails.browser) &&
     !windowDetails.url
   ) {
     console.log("Skipping browser event upload: missing URL.", windowDetails);
