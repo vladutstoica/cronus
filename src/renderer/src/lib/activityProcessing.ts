@@ -9,6 +9,7 @@ export interface ActivityItem {
   itemType: "app" | "website";
   identifier: string;
   originalUrl?: string;
+  ownerName?: string; // Browser/app name for icon display (e.g., "Arc", "Google Chrome")
   categoryReasoning?: string | null;
   oldCategoryReasoning?: string | null;
   llmSummary?: string | null;
@@ -145,6 +146,7 @@ export const processActivityEvents = (
       itemType,
       identifier,
       originalUrl,
+      ownerName: block.originalEvent.ownerName,
       categoryReasoning: block.originalEvent.categoryReasoning ?? undefined,
       oldCategoryReasoning:
         block.originalEvent.oldCategoryReasoning ?? undefined,

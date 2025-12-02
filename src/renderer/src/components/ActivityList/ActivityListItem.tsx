@@ -161,7 +161,7 @@ export const ActivityListItem = ({
                       : "other"
                 }
                 url={activity.originalUrl}
-                appName={activity.identifier}
+                appName={activity.ownerName}
                 size={16}
                 className="mr-2"
                 color={currentCategory.color}

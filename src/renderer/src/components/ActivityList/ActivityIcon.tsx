@@ -14,7 +14,6 @@ interface ActivityIconProps {
   fallbackText?: string;
 }
 
-// TODO: marge with constants array?
 const systemEventNames = [
   "💤 System Inactive",
   "⏰ System Active",
@@ -45,7 +44,7 @@ export function ActivityIcon({
     );
   }
 
-  // Determine the effective item type - check for empty URLs
+  // Determine the effective item type based on URL availability
   let effectiveItemType = itemType;
   if (!effectiveItemType) {
     if (url && url.trim() !== "") {
@@ -57,6 +56,12 @@ export function ActivityIcon({
     }
   }
 
+  // For websites without URL, fall back to browser's app icon
+  if (effectiveItemType === "website" && (!url || url.trim() === "")) {
+    effectiveItemType = "app";
+  }
+
+  // Website with valid URL - show favicon
   if (effectiveItemType === "website" && url && url.trim() !== "") {
     if (showFallback) {
       return (
@@ -72,8 +77,18 @@ export function ActivityIcon({
       );
     }
 
-    // Show simple colored circle if favicon failed
+    // Favicon failed to load - fall back to browser app icon if available
     if (faviconFailed) {
+      if (appName) {
+        return (
+          <AppIcon
+            appName={appName}
+            size={size}
+            className={cn("flex-shrink-0", className)}
+          />
+        );
+      }
+      // No app name available, show generic globe
       return (
         <div
           className={cn(
@@ -87,21 +102,27 @@ export function ActivityIcon({
       );
     }
 
-    // Try favicon once, fallback to simple icon if it fails
-    return (
-      <img
-        src={getFaviconURL(url)}
-        className={cn("rounded flex-shrink-0", className)}
-        style={{ width: size, height: size }}
-        onError={() => {
-          setFaviconFailed(true);
-        }}
-        alt={appName || "favicon"}
-      />
-    );
+    // Try to get favicon URL
+    const faviconUrl = getFaviconURL(url);
+    if (!faviconUrl) {
+      // Invalid URL - fall back to app icon
+      effectiveItemType = "app";
+    } else {
+      return (
+        <img
+          src={faviconUrl}
+          className={cn("rounded flex-shrink-0", className)}
+          style={{ width: size, height: size }}
+          onError={() => {
+            setFaviconFailed(true);
+          }}
+          alt={appName || "favicon"}
+        />
+      );
+    }
   }
 
-  // For manual entries (type: 'other') - show simple colored circle with letter
+  // Manual entries - show colored circle with letter
   if (effectiveItemType === "other" && color) {
     const displayName = fallbackText || appName || "M";
     const firstLetter = displayName.charAt(0).toUpperCase();
@@ -127,7 +148,7 @@ export function ActivityIcon({
     );
   }
 
-  // Only use AppIcon for real apps (not manual entries)
+  // App icon (including browser activities without URL)
   if (effectiveItemType === "app" && appName && itemType !== "other") {
     return (
       <AppIcon
@@ -138,6 +159,7 @@ export function ActivityIcon({
     );
   }
 
+  // Fallback - empty placeholder
   return (
     <div
       style={{ width: size, height: size }}

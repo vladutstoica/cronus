@@ -77,20 +77,12 @@ export const ActivityList = ({
   const activitiesToHide = shouldShowAllActivities ? [] : hiddenActivities;
 
   const renderItems = (items: ActivityItem[]): React.ReactElement[] => {
-    const validItems = items.filter((activity) => {
-      if (activity.itemType === "website" && !activity.originalUrl) {
-        // This is the problematic entry, let's not render it for now.
-        return false;
-      }
-      return true;
-    });
-
-    return validItems.map((activity, index) => {
+    return items.map((activity, index) => {
       const activityKey = `${activity.identifier}-${activity.name}`;
       const isSelected = selectedActivities.has(activityKey);
 
-      const prevItem = validItems[index - 1];
-      const nextItem = validItems[index + 1];
+      const prevItem = items[index - 1];
+      const nextItem = items[index + 1];
 
       const prevActivityKey = prevItem
         ? `${prevItem.identifier}-${prevItem.name}`

@@ -76,10 +76,17 @@ export function getFaviconURL(url: string): string {
   }
 
   const root = getRootOfURL(url);
+  // Don't try to fetch favicon for invalid/empty hostnames
+  if (!root) {
+    return "";
+  }
   return `https://icons.duckduckgo.com/ip3/${root}.ico`;
 }
 
 function getRootOfURL(url: string): string {
+  if (!url || url.trim() === "") {
+    return "";
+  }
   try {
     return new URL(url).hostname;
   } catch (e) {

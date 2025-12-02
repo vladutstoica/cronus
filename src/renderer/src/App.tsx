@@ -49,7 +49,6 @@ export function MainAppContent(): React.ReactElement {
     useOnboardingLogic({
       permissionsChecked: accessibilityPermissionChecked,
       missingAccessibilityPermissions,
-      isAuthenticated,
     });
 
   // Use the activity tracking hook

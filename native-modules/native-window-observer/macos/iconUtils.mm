@@ -39,8 +39,9 @@ NSString* getAppIconPath(NSString* appName) {
     // Try to find the app and get its icon
     NSArray *runningApps = [workspace runningApplications];
     for (NSRunningApplication *app in runningApps) {
-        if ([app.localizedName isEqualToString:appName] || 
-            [app.bundleIdentifier containsString:appName.lowercaseString]) {
+        // Only match by exact localizedName to avoid false positives
+        // (e.g., Messenger's bundle ID "com.facebook.archon" contains "arc")
+        if ([app.localizedName isEqualToString:appName]) {
             
             // Get the app icon directly from NSWorkspace
             NSImage *appIcon = [workspace iconForFile:app.bundleURL.path];
