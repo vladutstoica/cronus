@@ -1,12 +1,13 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { ProcessedEventBlock } from "../DashboardView";
-import {
-  getTimelineSegmentsForDay,
-  DaySegment,
-  CanonicalBlock,
-} from "../../lib/dayTimelineHelpers";
-import { TimeBlockTooltip } from "./TimeBlockTooltip";
 import { Card, CardContent } from "../ui/card";
+import { IDLE_CATEGORY_ID, IDLE_CATEGORY_COLOR } from "../../lib/constants";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 interface TimeBlocksTimelineProps {
   processedEvents: ProcessedEventBlock[] | null;
@@ -18,23 +19,27 @@ interface TimeBlocksTimelineProps {
 const START_HOUR = 10;
 const END_HOUR = 22;
 const TOTAL_HOURS = END_HOUR - START_HOUR;
+const SLOT_MINUTES = 5; // Each slot is 5 minutes (matches idle threshold)
+const SLOTS_PER_HOUR = 60 / SLOT_MINUTES;
+const TOTAL_SLOTS = TOTAL_HOURS * SLOTS_PER_HOUR; // 144 slots
 
-// Convert ProcessedEventBlock to CanonicalBlock
-function toCanonicalBlock(event: ProcessedEventBlock): CanonicalBlock {
-  return {
-    _id: event.originalEvent._id,
-    startTime: event.startTime,
-    endTime: event.endTime,
-    durationMs: event.durationMs,
-    name: event.name,
-    description: event.title || "",
-    url: event.url,
-    categoryColor: event.categoryColor,
-    categoryId: event.categoryId || undefined,
-    categoryName: event.categoryName,
-    type: event.originalEvent.type || "window",
-    originalEvent: event.originalEvent,
-  };
+// Represents a 5-minute time slot with aggregated category data
+interface TimeSlot {
+  slotIndex: number;
+  startTime: Date;
+  endTime: Date;
+  dominantCategoryId: string | null;
+  dominantCategoryColor: string | null;
+  dominantCategoryName: string | null;
+  isIdle: boolean;
+  totalDurationMs: number; // How much of this slot has activity
+  categories: Array<{
+    categoryId: string | null;
+    categoryName: string | null;
+    categoryColor: string | null;
+    durationMs: number;
+    isIdle: boolean;
+  }>;
 }
 
 // Get hour label
@@ -45,15 +50,26 @@ function getHourLabel(hour: number): string {
   return `${hour - 12} PM`;
 }
 
+// Format time for tooltip
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// Format duration for display
+function formatDuration(ms: number): string {
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 1) return "<1m";
+  return `${minutes}m`;
+}
+
 export function TimeBlocksTimeline({
   processedEvents,
   selectedDate,
   isLoading,
 }: TimeBlocksTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hoveredSegment, setHoveredSegment] = useState<DaySegment | null>(null);
 
-  // Filter events for the selected date and within time bounds
+  // Filter events for the selected date
   const dayEvents = useMemo(() => {
     if (!processedEvents) return [];
 
@@ -69,41 +85,130 @@ export function TimeBlocksTimeline({
     });
   }, [processedEvents, selectedDate]);
 
-  // Convert to segments using existing helper
-  const segments = useMemo(() => {
-    if (dayEvents.length === 0) return [];
+  // Create 10-minute slots and aggregate events into them
+  const timeSlots = useMemo(() => {
+    const slots: TimeSlot[] = [];
 
-    const canonicalBlocks = dayEvents.map(toCanonicalBlock);
-    // Use a fixed height for calculation (we'll use percentages for rendering)
-    const segments = getTimelineSegmentsForDay(canonicalBlocks, 1000);
+    // Create empty slots for the entire timeline
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
+      const slotStartTime = new Date(selectedDate);
+      slotStartTime.setHours(START_HOUR, 0, 0, 0);
+      slotStartTime.setMinutes(slotStartTime.getMinutes() + i * SLOT_MINUTES);
 
-    // Filter segments to only those within our time bounds
-    return segments.filter((segment) => {
-      const startHour = segment.startTime.getHours();
-      const endHour = segment.endTime.getHours();
-      return endHour >= START_HOUR && startHour < END_HOUR;
-    });
-  }, [dayEvents]);
+      const slotEndTime = new Date(slotStartTime);
+      slotEndTime.setMinutes(slotEndTime.getMinutes() + SLOT_MINUTES);
 
-  // Calculate segment position and width as percentages
-  const getSegmentStyle = (segment: DaySegment) => {
-    const startHour = segment.startTime.getHours();
-    const startMinute = segment.startTime.getMinutes();
-    const endHour = segment.endTime.getHours();
-    const endMinute = segment.endTime.getMinutes();
+      slots.push({
+        slotIndex: i,
+        startTime: slotStartTime,
+        endTime: slotEndTime,
+        dominantCategoryId: null,
+        dominantCategoryColor: null,
+        dominantCategoryName: null,
+        isIdle: false,
+        totalDurationMs: 0,
+        categories: [],
+      });
+    }
 
-    // Clamp to bounds
-    const clampedStartHour = Math.max(startHour + startMinute / 60, START_HOUR);
-    const clampedEndHour = Math.min(endHour + endMinute / 60, END_HOUR);
+    // Aggregate events into slots
+    for (const event of dayEvents) {
+      const eventStart = event.startTime.getTime();
+      const eventEnd = event.endTime.getTime();
+      const isIdle =
+        event.categoryId === IDLE_CATEGORY_ID ||
+        event.originalEvent.type === "idle";
 
-    const leftPercent = ((clampedStartHour - START_HOUR) / TOTAL_HOURS) * 100;
-    const widthPercent =
-      ((clampedEndHour - clampedStartHour) / TOTAL_HOURS) * 100;
+      // Find which slots this event overlaps with
+      for (const slot of slots) {
+        const slotStart = slot.startTime.getTime();
+        const slotEnd = slot.endTime.getTime();
 
+        // Check if event overlaps with this slot
+        if (eventStart < slotEnd && eventEnd > slotStart) {
+          // Calculate overlap duration
+          const overlapStart = Math.max(eventStart, slotStart);
+          const overlapEnd = Math.min(eventEnd, slotEnd);
+          const overlapMs = overlapEnd - overlapStart;
+
+          if (overlapMs > 0) {
+            // Find or create category entry for this slot
+            const categoryKey = event.categoryId || "uncategorized";
+            let categoryEntry = slot.categories.find(
+              (c) => (c.categoryId || "uncategorized") === categoryKey,
+            );
+
+            if (!categoryEntry) {
+              categoryEntry = {
+                categoryId: event.categoryId || null,
+                categoryName: event.categoryName || null,
+                categoryColor: event.categoryColor || null,
+                durationMs: 0,
+                isIdle,
+              };
+              slot.categories.push(categoryEntry);
+            }
+
+            categoryEntry.durationMs += overlapMs;
+            slot.totalDurationMs += overlapMs;
+          }
+        }
+      }
+    }
+
+    // Determine dominant category for each slot
+    for (const slot of slots) {
+      if (slot.categories.length > 0) {
+        // Sort by duration and pick the one with most time
+        const sorted = [...slot.categories].sort(
+          (a, b) => b.durationMs - a.durationMs,
+        );
+        const dominant = sorted[0];
+        slot.dominantCategoryId = dominant.categoryId;
+        slot.dominantCategoryColor = dominant.categoryColor;
+        slot.dominantCategoryName = dominant.categoryName;
+        slot.isIdle = dominant.isIdle;
+      }
+    }
+
+    return slots;
+  }, [dayEvents, selectedDate]);
+
+  // Get slot style
+  const getSlotStyle = (slot: TimeSlot) => {
+    const slotWidthPercent = 100 / TOTAL_SLOTS;
+    const leftPercent = slot.slotIndex * slotWidthPercent;
+
+    // Empty slot
+    if (slot.totalDurationMs === 0) {
+      return {
+        left: `${leftPercent}%`,
+        width: `${slotWidthPercent}%`,
+        backgroundColor: "transparent",
+      };
+    }
+
+    // Idle slot with striped pattern
+    if (slot.isIdle) {
+      return {
+        left: `${leftPercent}%`,
+        width: `${slotWidthPercent}%`,
+        background: `repeating-linear-gradient(
+          -45deg,
+          rgba(55, 65, 81, 0.3),
+          rgba(55, 65, 81, 0.3) 3px,
+          rgba(75, 85, 99, 0.5) 3px,
+          rgba(75, 85, 99, 0.5) 6px
+        )`,
+        opacity: 0.6,
+      };
+    }
+
+    // Active slot with dominant category color
     return {
       left: `${leftPercent}%`,
-      width: `${Math.max(widthPercent, 0.5)}%`, // Minimum width for visibility
-      backgroundColor: segment.categoryColor || "#6b7280",
+      width: `${slotWidthPercent}%`,
+      backgroundColor: slot.dominantCategoryColor || "#6b7280",
     };
   };
 
@@ -163,18 +268,66 @@ export function TimeBlocksTimeline({
               />
             ))}
 
-            {/* Activity blocks - no border radius */}
-            {segments.map((segment, index) => {
-              const style = getSegmentStyle(segment);
-              return (
-                <TimeBlockTooltip key={index} segment={segment}>
+            {/* 5-minute time slots */}
+            {timeSlots.map((slot) => {
+              const style = getSlotStyle(slot);
+              const hasActivity = slot.totalDurationMs > 0;
+
+              if (!hasActivity) {
+                // Empty slot - just render empty space
+                return (
                   <div
-                    className="absolute top-0 bottom-0 cursor-pointer transition-all hover:brightness-110"
+                    key={slot.slotIndex}
+                    className="absolute top-0 bottom-0"
                     style={style}
-                    onMouseEnter={() => setHoveredSegment(segment)}
-                    onMouseLeave={() => setHoveredSegment(null)}
                   />
-                </TimeBlockTooltip>
+                );
+              }
+
+              return (
+                <TooltipProvider key={slot.slotIndex}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="absolute top-0 bottom-0 cursor-pointer transition-all hover:brightness-110 border-r border-background/20"
+                        style={style}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <div className="text-xs space-y-1">
+                        <div className="font-medium">
+                          {formatTime(slot.startTime)} -{" "}
+                          {formatTime(slot.endTime)}
+                        </div>
+                        {slot.categories
+                          .sort((a, b) => b.durationMs - a.durationMs)
+                          .map((cat, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2"
+                            >
+                              <div
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{
+                                  backgroundColor: cat.isIdle
+                                    ? IDLE_CATEGORY_COLOR
+                                    : cat.categoryColor || "#6b7280",
+                                }}
+                              />
+                              <span className="truncate">
+                                {cat.isIdle
+                                  ? "Idle"
+                                  : cat.categoryName || "Uncategorized"}
+                              </span>
+                              <span className="text-muted-foreground ml-auto">
+                                {formatDuration(cat.durationMs)}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               );
             })}
 

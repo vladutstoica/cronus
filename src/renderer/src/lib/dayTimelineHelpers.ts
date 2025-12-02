@@ -9,7 +9,7 @@ export interface CanonicalBlock {
   categoryColor?: string;
   categoryId?: string;
   categoryName?: string;
-  type: "window" | "browser" | "system" | "manual" | "calendar";
+  type: "window" | "browser" | "system" | "manual" | "calendar" | "idle";
   originalEvent?: any;
   originalEventIds?: string[]; // Track all original event IDs that contributed to this block
   isSuggestion?: boolean;
@@ -39,7 +39,7 @@ export interface VisualSegment extends CanonicalBlock {
   heightPercentage: number;
   topPercentage: number;
   allActivities: Record<string, SlotActivity>;
-  type: "window" | "browser" | "system" | "manual" | "calendar";
+  type: "window" | "browser" | "system" | "manual" | "calendar" | "idle";
 }
 
 export interface DaySegment extends VisualSegment {
@@ -213,10 +213,12 @@ function mapBlockToDirectDaySegment(
 function partitionTimeBlocksByType(timeBlocks: CanonicalBlock[]): {
   manualBlocks: CanonicalBlock[];
   calendarBlocks: CanonicalBlock[];
+  idleBlocks: CanonicalBlock[];
   activityBlocks: CanonicalBlock[];
 } {
   const manualBlocks: CanonicalBlock[] = [];
   const calendarBlocks: CanonicalBlock[] = [];
+  const idleBlocks: CanonicalBlock[] = [];
   const activityBlocks: CanonicalBlock[] = [];
 
   timeBlocks.forEach((block) => {
@@ -224,12 +226,14 @@ function partitionTimeBlocksByType(timeBlocks: CanonicalBlock[]): {
       manualBlocks.push(block);
     } else if (block.type === "calendar") {
       calendarBlocks.push(block);
+    } else if (block.type === "idle") {
+      idleBlocks.push(block);
     } else {
       activityBlocks.push(block);
     }
   });
 
-  return { manualBlocks, calendarBlocks, activityBlocks };
+  return { manualBlocks, calendarBlocks, idleBlocks, activityBlocks };
 }
 
 function computeDayStartFromBlocks(blocks: CanonicalBlock[]): Date {
@@ -431,12 +435,18 @@ export function getTimelineSegmentsForDay(
 
   const totalMinutesInDay = 24 * 60;
 
-  const { manualBlocks, calendarBlocks, activityBlocks } =
+  const { manualBlocks, calendarBlocks, idleBlocks, activityBlocks } =
     partitionTimeBlocksByType(timeBlocks);
 
-  const nonAggregatedSegments: DaySegment[] = manualBlocks.map((block) =>
-    mapBlockToDirectDaySegment(block, timelineHeight, totalMinutesInDay),
-  );
+  // Manual and idle blocks are rendered directly without slot aggregation
+  const nonAggregatedSegments: DaySegment[] = [
+    ...manualBlocks.map((block) =>
+      mapBlockToDirectDaySegment(block, timelineHeight, totalMinutesInDay),
+    ),
+    ...idleBlocks.map((block) =>
+      mapBlockToDirectDaySegment(block, timelineHeight, totalMinutesInDay),
+    ),
+  ];
 
   let calendarSegments: DaySegment[] = calendarBlocks.map((block) =>
     mapBlockToDirectDaySegment(block, timelineHeight, totalMinutesInDay),

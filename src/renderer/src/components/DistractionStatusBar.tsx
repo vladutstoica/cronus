@@ -369,11 +369,16 @@ const DistractionStatusBar = ({
           latestStatus = "maybe";
         }
 
-        const { dailyProductiveMs, dailyUnproductiveMs } =
-          calculateProductivityMetrics(
-            todayEvents as ActiveWindowEvent[],
-            (userCategories as unknown as Category[]) || [],
-          );
+        const {
+          dailyProductiveMs,
+          dailyUnproductiveMs,
+          dailyIdleMs,
+          sessionDurationMs,
+          activeTimeMs,
+        } = calculateProductivityMetrics(
+          todayEvents as ActiveWindowEvent[],
+          (userCategories as unknown as Category[]) || [],
+        );
 
         const itemType = displayWindowInfo.url ? "website" : "app";
         const activityIdentifier = displayWindowInfo.isApp
@@ -385,6 +390,9 @@ const DistractionStatusBar = ({
           latestStatus,
           dailyProductiveMs,
           dailyUnproductiveMs,
+          dailyIdleMs,
+          sessionDurationMs,
+          activeTimeMs,
           categoryDetails: categoryDetailsForFloatingWindow,
           itemType,
           activityIdentifier,

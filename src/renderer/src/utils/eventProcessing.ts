@@ -3,7 +3,39 @@ import type { ProcessedEventBlock } from "../components/DashboardView";
 import {
   MAX_GAP_BETWEEN_EVENTS_MS,
   SYSTEM_EVENT_NAMES,
+  IDLE_CATEGORY_ID,
+  IDLE_CATEGORY_COLOR,
+  IDLE_CATEGORY_NAME,
 } from "../lib/constants";
+
+/**
+ * Creates a synthetic idle block for gaps between events
+ */
+function createIdleBlock(
+  startTime: Date,
+  endTime: Date,
+): ProcessedEventBlock {
+  const durationMs = endTime.getTime() - startTime.getTime();
+  return {
+    startTime,
+    endTime,
+    durationMs,
+    name: IDLE_CATEGORY_NAME,
+    title: undefined,
+    url: undefined,
+    categoryId: IDLE_CATEGORY_ID,
+    categoryName: IDLE_CATEGORY_NAME,
+    categoryColor: IDLE_CATEGORY_COLOR,
+    isProductive: undefined, // Neither productive nor unproductive
+    originalEvent: {
+      ownerName: IDLE_CATEGORY_NAME,
+      type: "idle",
+      timestamp: startTime.getTime(),
+      userId: "",
+      durationMs,
+    },
+  };
+}
 
 export function generateProcessedEventBlocks(
   events: ActiveWindowEvent[],
@@ -33,6 +65,7 @@ export function generateProcessedEventBlocks(
   const blocks: ProcessedEventBlock[] = [];
   let skippedSystem = 0;
   let skippedUncategorized = 0;
+  let idleBlocksCreated = 0;
 
   for (let i = 0; i < chronologicallySortedEvents.length; i++) {
     const event = chronologicallySortedEvents[i];
@@ -48,6 +81,8 @@ export function generateProcessedEventBlocks(
     const eventStartTime = new Date(event.timestamp as number);
     let eventEndTime: Date;
     let eventDurationMs: number;
+    let idleStartTime: Date | null = null;
+    let idleEndTime: Date | null = null;
 
     if (event.type === "manual" && event.durationMs) {
       eventDurationMs = event.durationMs;
@@ -56,11 +91,20 @@ export function generateProcessedEventBlocks(
       const nextEventTime = new Date(
         chronologicallySortedEvents[i + 1].timestamp as number,
       ).getTime();
-      eventDurationMs = nextEventTime - eventStartTime.getTime();
-      if (eventDurationMs > MAX_GAP_BETWEEN_EVENTS_MS) {
+      const rawDurationMs = nextEventTime - eventStartTime.getTime();
+
+      if (rawDurationMs > MAX_GAP_BETWEEN_EVENTS_MS) {
+        // Cap the event duration and create idle block for the gap
         eventDurationMs = MAX_GAP_BETWEEN_EVENTS_MS;
+        eventEndTime = new Date(eventStartTime.getTime() + eventDurationMs);
+
+        // Idle block spans from capped event end to next event start
+        idleStartTime = eventEndTime;
+        idleEndTime = new Date(nextEventTime);
+      } else {
+        eventDurationMs = rawDurationMs;
+        eventEndTime = new Date(eventStartTime.getTime() + eventDurationMs);
       }
-      eventEndTime = new Date(eventStartTime.getTime() + eventDurationMs);
     } else {
       const now = new Date();
       const potentialEndTime = new Date(
@@ -86,10 +130,16 @@ export function generateProcessedEventBlocks(
       isProductive: category?.isProductive,
       originalEvent: event,
     });
+
+    // Add idle block if there's a gap
+    if (idleStartTime && idleEndTime) {
+      blocks.push(createIdleBlock(idleStartTime, idleEndTime));
+      idleBlocksCreated++;
+    }
   }
 
   console.log(
-    `✅ Generated ${blocks.length} blocks (skipped ${skippedSystem} system, ${skippedUncategorized} uncategorized)`,
+    `✅ Generated ${blocks.length} blocks (${idleBlocksCreated} idle, skipped ${skippedSystem} system, ${skippedUncategorized} uncategorized)`,
   );
   return blocks;
 }

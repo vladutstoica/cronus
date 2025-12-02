@@ -11,6 +11,9 @@ interface FloatingStatusUpdate {
   latestStatus: LatestStatusType;
   dailyProductiveMs: number;
   dailyUnproductiveMs: number;
+  dailyIdleMs?: number;
+  sessionDurationMs?: number;
+  activeTimeMs?: number;
   categoryDetails?: Category;
   activityIdentifier?: string;
   itemType?: "app" | "website";
@@ -36,6 +39,8 @@ const FloatingDisplay: React.FC = () => {
   const [displayedProductiveTimeMs, setDisplayedProductiveTimeMs] =
     useState<number>(0);
   const [dailyUnproductiveMs, setDailyUnproductiveMs] = useState<number>(0);
+  const [sessionDurationMs, setSessionDurationMs] = useState<number>(0);
+  const [activeTimeMs, setActiveTimeMs] = useState<number>(0);
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isTrackingPaused, setIsTrackingPaused] = useState<boolean>(false);
   const [currentCategoryDetails, setCurrentCategoryDetails] = useState<
@@ -73,6 +78,8 @@ const FloatingDisplay: React.FC = () => {
           setLatestStatus(data.latestStatus);
           setDisplayedProductiveTimeMs(data.dailyProductiveMs);
           setDailyUnproductiveMs(data.dailyUnproductiveMs);
+          setSessionDurationMs(data.sessionDurationMs || 0);
+          setActiveTimeMs(data.activeTimeMs || 0);
           setCurrentCategoryDetails(data.categoryDetails);
           setIsTrackingPaused(data.isTrackingPaused || false);
           setActivityInfo({

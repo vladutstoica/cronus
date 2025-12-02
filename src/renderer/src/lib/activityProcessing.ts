@@ -127,10 +127,12 @@ export const processActivityEvents = (
     }
 
     // Aggregate duration and details for the specific activity within its category.
+    // Use identifier (full URL for websites, app name for apps) as the key to show individual activities
+    // This allows users to categorize different URLs from the same site differently
     const { activitiesMap } = categoryActivityAccumulator[effectiveCategoryId];
-    const existingActivity = activitiesMap.get(activityName);
+    const existingActivity = activitiesMap.get(identifier);
 
-    activitiesMap.set(activityName, {
+    activitiesMap.set(identifier, {
       name: activityName,
       durationMs: (existingActivity?.durationMs || 0) + durationMs,
       itemType,
