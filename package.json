@@ -12,7 +12,6 @@
   },
   "scripts": {
     "dev": "electron-forge start",
-    "build": "electron-vite build",
     "rebuild": "electron-rebuild",
     "postinstall": "electron-rebuild",
     "prepackage": "npm run generate-icons",
