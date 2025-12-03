@@ -11,10 +11,7 @@ import {
 /**
  * Creates a synthetic idle block for gaps between events
  */
-function createIdleBlock(
-  startTime: Date,
-  endTime: Date,
-): ProcessedEventBlock {
+function createIdleBlock(startTime: Date, endTime: Date): ProcessedEventBlock {
   const durationMs = endTime.getTime() - startTime.getTime();
   return {
     startTime,

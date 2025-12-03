@@ -170,7 +170,9 @@ export function TimeBlocksTimeline({
   const slotsByHour = useMemo(() => {
     const grouped: TimeSlot[][] = [];
     for (let h = 0; h < TOTAL_HOURS; h++) {
-      grouped.push(timeSlots.slice(h * SLOTS_PER_HOUR, (h + 1) * SLOTS_PER_HOUR));
+      grouped.push(
+        timeSlots.slice(h * SLOTS_PER_HOUR, (h + 1) * SLOTS_PER_HOUR),
+      );
     }
     return grouped;
   }, [timeSlots]);
@@ -230,7 +232,10 @@ export function TimeBlocksTimeline({
           ref={scrollContainerRef}
           className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
         >
-          <div className="flex flex-col" style={{ minWidth: `${TOTAL_HOURS * HOUR_WIDTH_PX}px` }}>
+          <div
+            className="flex flex-col"
+            style={{ minWidth: `${TOTAL_HOURS * HOUR_WIDTH_PX}px` }}
+          >
             {/* Hour labels */}
             <div className="flex">
               {Array.from({ length: TOTAL_HOURS }).map((_, hour) => (
@@ -256,10 +261,7 @@ export function TimeBlocksTimeline({
 
                       if (!hasActivity) {
                         return (
-                          <div
-                            key={slot.slotIndex}
-                            className="flex-1 h-full"
-                          />
+                          <div key={slot.slotIndex} className="flex-1 h-full" />
                         );
                       }
 
@@ -275,7 +277,8 @@ export function TimeBlocksTimeline({
                             opacity: 0.6,
                           }
                         : {
-                            backgroundColor: slot.dominantCategoryColor || "#6b7280",
+                            backgroundColor:
+                              slot.dominantCategoryColor || "#6b7280",
                           };
 
                       return (
@@ -290,12 +293,16 @@ export function TimeBlocksTimeline({
                             <TooltipContent side="top" className="max-w-xs">
                               <div className="text-xs space-y-1">
                                 <div className="font-medium">
-                                  {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                                  {formatTime(slot.startTime)} -{" "}
+                                  {formatTime(slot.endTime)}
                                 </div>
                                 {slot.categories
                                   .sort((a, b) => b.durationMs - a.durationMs)
                                   .map((cat, i) => (
-                                    <div key={i} className="flex items-center gap-2">
+                                    <div
+                                      key={i}
+                                      className="flex items-center gap-2"
+                                    >
                                       <div
                                         className="w-2 h-2 rounded-full flex-shrink-0"
                                         style={{
@@ -305,7 +312,9 @@ export function TimeBlocksTimeline({
                                         }}
                                       />
                                       <span className="truncate">
-                                        {cat.isIdle ? "Idle" : cat.categoryName || "Uncategorized"}
+                                        {cat.isIdle
+                                          ? "Idle"
+                                          : cat.categoryName || "Uncategorized"}
                                       </span>
                                       <span className="text-muted-foreground ml-auto">
                                         {formatDuration(cat.durationMs)}

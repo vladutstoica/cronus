@@ -43,13 +43,17 @@ export function calculateProductivityMetrics(
       (a, b) => a.startTime.getTime() - b.startTime.getTime(),
     );
     const firstBlockStart = sortedBlocks[0].startTime.getTime();
-    const lastBlockEnd = sortedBlocks[sortedBlocks.length - 1].endTime.getTime();
+    const lastBlockEnd =
+      sortedBlocks[sortedBlocks.length - 1].endTime.getTime();
     sessionDurationMs = lastBlockEnd - firstBlockStart;
   }
 
   for (const block of processedBlocks) {
     // Check if it's an idle block
-    if (block.categoryId === IDLE_CATEGORY_ID || block.originalEvent.type === "idle") {
+    if (
+      block.categoryId === IDLE_CATEGORY_ID ||
+      block.originalEvent.type === "idle"
+    ) {
       dailyIdleMs += block.durationMs;
       continue;
     }

@@ -105,7 +105,9 @@ export const EventSegments: React.FC<EventSegmentsProps> = ({
               height: `${height}rem`,
               left: "4rem",
               width: "calc(100% - 4rem)",
-              backgroundColor: isIdle ? undefined : segmentBackgroundColor(segment),
+              backgroundColor: isIdle
+                ? undefined
+                : segmentBackgroundColor(segment),
               ...getIdleBackgroundStyle(segment),
               borderLeft: `3px ${isIdle ? "dashed" : "solid"} ${borderColor}`,
               paddingTop: `${SEGMENT_TOP_OFFSET_PX}px`,
