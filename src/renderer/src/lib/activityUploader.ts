@@ -28,13 +28,18 @@ export const uploadActiveWindowEvent = async (
   windowDetails: ActiveWindowDetails & { localScreenshotPath?: string },
   mutateEvent: MutateAsyncFunction,
 ): Promise<void> => {
-  // Don't upload browser events that are missing a URL.
-  // Use type/browser fields instead of hardcoding specific browser names
+  // Don't upload browser events that are missing BOTH URL and title.
+  // Events with a title but no URL are still valuable (e.g., when AppleScript fails to get URL)
+  // The activity processing code handles these by using the title as identifier.
   if (
     (windowDetails.type === "browser" || windowDetails.browser) &&
-    !windowDetails.url
+    !windowDetails.url &&
+    (!windowDetails.title || windowDetails.title.trim() === "")
   ) {
-    console.log("Skipping browser event upload: missing URL.", windowDetails);
+    console.log(
+      "Skipping browser event upload: missing URL and title.",
+      windowDetails,
+    );
     return;
   }
 
