@@ -1,5 +1,6 @@
 import { useMemo, useRef, useEffect } from "react";
 import { ProcessedEventBlock } from "../DashboardView";
+import { useCurrentTime } from "../../hooks/useCurrentTime";
 import { Card, CardContent } from "../ui/card";
 import { IDLE_CATEGORY_ID, IDLE_CATEGORY_COLOR } from "../../lib/constants";
 import {
@@ -65,6 +66,7 @@ export function TimeBlocksTimeline({
 }: TimeBlocksTimelineProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledRef = useRef(false);
+  const currentTime = useCurrentTime(); // Updates every minute
   const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   // Filter events for the selected date
@@ -208,12 +210,14 @@ export function TimeBlocksTimeline({
     hasScrolledRef.current = false;
   }, [selectedDate]);
 
-  // Current time position
+  // Current time position (updates every minute via useCurrentTime)
   const currentTimePercent = useMemo(() => {
     if (!isToday) return null;
-    const now = new Date();
-    return ((now.getHours() + now.getMinutes() / 60) / TOTAL_HOURS) * 100;
-  }, [isToday]);
+    return (
+      ((currentTime.getHours() + currentTime.getMinutes() / 60) / TOTAL_HOURS) *
+      100
+    );
+  }, [isToday, currentTime]);
 
   if (isLoading) {
     return (
