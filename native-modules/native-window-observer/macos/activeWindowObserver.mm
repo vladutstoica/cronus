@@ -340,6 +340,7 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
                 browserTabTracking.browserName = activeBrowserName;
                 browserTabTracking.isBrowserActive = YES;
                 [browserTabTracking startBrowserTabTimer];
+                // Note: Initial URL/title baseline is set below via getArcTabInfo/getChromeTabInfo
             }
         } else {
             if (browserTabTracking.isBrowserActive) {
@@ -493,11 +494,64 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
 // App exclusion related - REMOVED, see appFilter.mm
 
 - (void)browserTabDidSwitch:(NSDictionary *)newTabInfo {
-    MyLog(@"   Delegate received tab switch. Sending full details for new tab state (Owner: %@, Title: %@, URL: %@)", 
-          newTabInfo[@"ownerName"], 
-          newTabInfo[@"title"],
-          newTabInfo[@"url"]);
-    [self sendWindowInfoToJS:newTabInfo withReason:@"browser_tab_switch"];
+    MyLog(@"[Browser Tab] 🔄 Tab switch detected: %@ - %@", newTabInfo[@"ownerName"], newTabInfo[@"title"]);
+
+    // Get the current frontmost window to capture OCR content
+    CFArrayRef windowsRef = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements, kCGNullWindowID);
+    if (!windowsRef) {
+        MyLog(@"[Browser Tab] ⚠️ Failed to get window list");
+        [self sendWindowInfoToJS:newTabInfo withReason:@"browser_tab_switch"];
+        return;
+    }
+
+    NSArray *windows = (__bridge NSArray *)windowsRef;
+    CGWindowID windowId = 0;
+    NSString *targetOwner = newTabInfo[@"ownerName"];
+
+    for (NSDictionary *window in windows) {
+        NSNumber *windowLayer = window[(id)kCGWindowLayer];
+        if ([windowLayer intValue] == 0) {
+            NSString *ownerName = window[(id)kCGWindowOwnerName];
+            if ([ownerName isEqualToString:targetOwner]) {
+                windowId = [window[(id)kCGWindowNumber] unsignedIntValue];
+                break;
+            }
+        }
+    }
+    CFRelease(windowsRef);
+
+    // Enrich the tab info with OCR content and missing fields
+    NSMutableDictionary *enrichedInfo = [newTabInfo mutableCopy];
+
+    if (!enrichedInfo[@"icon"]) {
+        NSString *iconPath = getAppIconPath(targetOwner);
+        if (iconPath) {
+            enrichedInfo[@"icon"] = iconPath;
+        }
+    }
+
+    if (!enrichedInfo[@"id"] && windowId != 0) {
+        enrichedInfo[@"id"] = @(windowId);
+    }
+
+    // Capture OCR content for the new tab
+    if (windowId != 0) {
+        @try {
+            NSString *ocrContent = [self captureScreenshotAndPerformOCR:windowId];
+            enrichedInfo[@"content"] = ocrContent ?: @"";
+            enrichedInfo[@"contentSource"] = @"ocr";
+        } @catch (NSException *exception) {
+            MyLog(@"[Browser Tab] ⚠️ OCR failed: %@", [exception reason]);
+            enrichedInfo[@"content"] = @"";
+            enrichedInfo[@"contentSource"] = @"ocr_failed";
+        }
+    } else {
+        enrichedInfo[@"content"] = @"";
+        enrichedInfo[@"contentSource"] = @"no_window";
+    }
+
+    [self sendWindowInfoToJS:enrichedInfo withReason:@"browser_tab_switch"];
+    [enrichedInfo release];
 }
 
 #pragma mark - Unified Screenshot + OCR Methods

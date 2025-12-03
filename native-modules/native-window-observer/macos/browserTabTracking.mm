@@ -116,43 +116,49 @@
     }
 
     NSDictionary *briefTabInfo = [self getCurrentBrowserTabBriefInfo];
-    if (briefTabInfo) {
-        NSString *currentURL = briefTabInfo[@"url"];
-        NSString *currentTitle = briefTabInfo[@"title"];
-
-        BOOL urlChanged = (_lastKnownBrowserURL || currentURL) && ![_lastKnownBrowserURL isEqualToString:currentURL];
-        BOOL titleChanged = (_lastKnownBrowserTitle || currentTitle) && ![_lastKnownBrowserTitle isEqualToString:currentTitle];
-
-        if (urlChanged || titleChanged) {
-            MyLog(@"[Browser Tab] 🔄 %@ Tab Switch Detected:", self.browserName);
-            if (urlChanged) MyLog(@"   URL: '%@' -> '%@'", _lastKnownBrowserURL, currentURL);
-            if (titleChanged) MyLog(@"   Title: '%@' -> '%@'", _lastKnownBrowserTitle, currentTitle);
-
-            NSString *newURL = [currentURL copy];
-            [_lastKnownBrowserURL release];
-            _lastKnownBrowserURL = newURL;
-
-            NSString *newTitle = [currentTitle copy];
-            [_lastKnownBrowserTitle release];
-            _lastKnownBrowserTitle = newTitle;
-            
-            NSDictionary *activeWindowDetails = nil;
-            if ([self.browserName isEqualToString:@"Google Chrome"]) {
-                activeWindowDetails = [BrowserTabUtils getChromeTabInfo];
-            } else if ([self.browserName isEqualToString:@"Arc"]) {
-                // We'll need to add a getArcTabInfo to BrowserTabUtils
-                // For now, let's assume it exists and is similar to getChromeTabInfo
-                activeWindowDetails = [BrowserTabUtils getArcTabInfo];
-            }
-            
-            if (activeWindowDetails) {
-                 if (self.delegate && [self.delegate respondsToSelector:@selector(browserTabDidSwitch:)]) {
-                    [self.delegate browserTabDidSwitch:activeWindowDetails];
-                }
-            } else {
-                MyLog(@"   Could not get active window details after tab switch for %@", self.browserName);
-            }
+    if (!briefTabInfo) {
+        // Only log on first failure to avoid spam
+        static BOOL hasLoggedFailure = NO;
+        if (!hasLoggedFailure) {
+            MyLog(@"[Browser Tab] ⚠️ Failed to get tab info for %@", self.browserName);
+            hasLoggedFailure = YES;
         }
+        return;
+    }
+
+    NSString *currentURL = briefTabInfo[@"url"];
+    NSString *currentTitle = briefTabInfo[@"title"];
+
+    BOOL urlChanged = (_lastKnownBrowserURL || currentURL) && ![_lastKnownBrowserURL isEqualToString:currentURL];
+    BOOL titleChanged = (_lastKnownBrowserTitle || currentTitle) && ![_lastKnownBrowserTitle isEqualToString:currentTitle];
+
+    if (!urlChanged && !titleChanged) {
+        return; // No change, nothing to do
+    }
+
+    MyLog(@"[Browser Tab] 🔄 %@ tab switch: %@ -> %@", self.browserName, _lastKnownBrowserURL, currentURL);
+
+    // Update stored values
+    NSString *newURL = [currentURL copy];
+    [_lastKnownBrowserURL release];
+    _lastKnownBrowserURL = newURL;
+
+    NSString *newTitle = [currentTitle copy];
+    [_lastKnownBrowserTitle release];
+    _lastKnownBrowserTitle = newTitle;
+
+    // Get full tab details and notify delegate
+    NSDictionary *activeWindowDetails = nil;
+    if ([self.browserName isEqualToString:@"Google Chrome"]) {
+        activeWindowDetails = [BrowserTabUtils getChromeTabInfo];
+    } else if ([self.browserName isEqualToString:@"Arc"]) {
+        activeWindowDetails = [BrowserTabUtils getArcTabInfo];
+    }
+
+    if (activeWindowDetails && self.delegate && [self.delegate respondsToSelector:@selector(browserTabDidSwitch:)]) {
+        [self.delegate browserTabDidSwitch:activeWindowDetails];
+    } else if (!activeWindowDetails) {
+        MyLog(@"[Browser Tab] ⚠️ Could not get tab details for %@", self.browserName);
     }
 }
 

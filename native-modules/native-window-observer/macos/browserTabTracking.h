@@ -19,6 +19,7 @@
 
 - (void)startBrowserTabTimer;
 - (void)stopBrowserTabTimer;
+- (void)performBrowserTabCheck;
 - (NSDictionary*)getCurrentBrowserTabBriefInfo;
 
 @end
