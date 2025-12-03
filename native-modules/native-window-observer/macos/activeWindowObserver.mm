@@ -362,18 +362,23 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
             windowInfo[@"type"] = @"browser";
             windowInfo[@"browser"] = @"chrome";
 
+            // Try AppleScript for full URL+title (may fail without permissions)
             NSDictionary *chromeInfo = [BrowserTabUtils getChromeTabInfo];
             if (chromeInfo) {
                 windowInfo[@"url"] = chromeInfo[@"url"];
                 windowInfo[@"title"] = chromeInfo[@"title"] ?: windowInfo[@"title"];
-
-                if (browserTabTracking.isBrowserActive && browserTabTracking.lastKnownBrowserURL == nil && chromeInfo[@"url"]) {
-                    MyLog(@"[Browser Tab] Setting initial known tab for Chrome: URL=%@, Title=%@", chromeInfo[@"url"], chromeInfo[@"title"]);
-                    browserTabTracking.lastKnownBrowserURL = [chromeInfo[@"url"] copy];
-                    browserTabTracking.lastKnownBrowserTitle = [chromeInfo[@"title"] copy];
-                }
             }
-            
+
+            // ALWAYS set initial baseline for tab tracking - use window title from CGWindowList
+            // This works even without Apple Events permission
+            if (browserTabTracking.isBrowserActive && browserTabTracking.lastKnownBrowserTitle == nil) {
+                NSString *initialTitle = windowInfo[@"title"];
+                NSString *initialUrl = chromeInfo[@"url"] ?: @"";
+                MyLog(@"[Browser Tab] Setting initial baseline for Chrome: Title='%@', URL='%@'", initialTitle, initialUrl);
+                browserTabTracking.lastKnownBrowserTitle = [initialTitle copy];
+                browserTabTracking.lastKnownBrowserURL = [initialUrl copy];
+            }
+
             // 🛡️ PROTECTED OCR
             @try {
                 NSString *ocrContent = [self captureScreenshotAndPerformOCR:windowId];
@@ -393,18 +398,23 @@ void windowChangeCallback(AXObserverRef observer, AXUIElementRef element, CFStri
             windowInfo[@"type"] = @"browser";
             windowInfo[@"browser"] = @"arc";
 
+            // Try AppleScript for full URL+title (may fail without permissions)
             NSDictionary *arcInfo = [BrowserTabUtils getArcTabInfo];
             if (arcInfo) {
                 windowInfo[@"url"] = arcInfo[@"url"];
                 windowInfo[@"title"] = arcInfo[@"title"] ?: windowInfo[@"title"];
-
-                if (browserTabTracking.isBrowserActive && browserTabTracking.lastKnownBrowserURL == nil && arcInfo[@"url"]) {
-                    MyLog(@"[Browser Tab] Setting initial known tab for Arc: URL=%@, Title=%@", arcInfo[@"url"], arcInfo[@"title"]);
-                    browserTabTracking.lastKnownBrowserURL = [arcInfo[@"url"] copy];
-                    browserTabTracking.lastKnownBrowserTitle = [arcInfo[@"title"] copy];
-                }
             }
-            
+
+            // ALWAYS set initial baseline for tab tracking - use window title from CGWindowList
+            // This works even without Apple Events permission
+            if (browserTabTracking.isBrowserActive && browserTabTracking.lastKnownBrowserTitle == nil) {
+                NSString *initialTitle = windowInfo[@"title"];
+                NSString *initialUrl = arcInfo[@"url"] ?: @"";
+                MyLog(@"[Browser Tab] Setting initial baseline for Arc: Title='%@', URL='%@'", initialTitle, initialUrl);
+                browserTabTracking.lastKnownBrowserTitle = [initialTitle copy];
+                browserTabTracking.lastKnownBrowserURL = [initialUrl copy];
+            }
+
             @try {
                 NSString *ocrContent = [self captureScreenshotAndPerformOCR:windowId];
                 windowInfo[@"content"] = ocrContent ?: @"";

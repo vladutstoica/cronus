@@ -1,6 +1,7 @@
 #import "browserTabTracking.h"
 #import "browserTabUtils.h"
 #import "permissionManager.h"
+#import <CoreGraphics/CoreGraphics.h>
 
 // Custom Log Macro
 #define MyLog(format, ...) fprintf(stderr, "%s\n", [[NSString stringWithFormat:format, ##__VA_ARGS__] UTF8String])
@@ -27,62 +28,81 @@
     [super dealloc];
 }
 
+// Get browser window title using CGWindowList - NO PERMISSIONS NEEDED
+- (NSString*)getBrowserWindowTitle {
+    if (!self.browserName) {
+        return nil;
+    }
+
+    CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements, kCGNullWindowID);
+    if (!windowList) {
+        return nil;
+    }
+
+    NSArray *windows = (__bridge NSArray *)windowList;
+    NSString *foundTitle = nil;
+
+    for (NSDictionary *window in windows) {
+        NSNumber *windowLayer = window[(id)kCGWindowLayer];
+        if ([windowLayer intValue] == 0) {
+            NSString *ownerName = window[(id)kCGWindowOwnerName];
+            if ([ownerName isEqualToString:self.browserName]) {
+                // IMPORTANT: Copy the title before releasing windowList
+                NSString *title = window[(id)kCGWindowName];
+                if (title) {
+                    foundTitle = [[title copy] autorelease];
+                }
+                break;
+            }
+        }
+    }
+
+    CFRelease(windowList);
+    return foundTitle;
+}
+
 - (NSDictionary*)getCurrentBrowserTabBriefInfo {
     if (!self.browserName) {
-        MyLog(@"[Browser Tab Brief] ⚠️ Browser name not set, cannot get tab info.");
         return nil;
     }
 
-    if (![PermissionManager shouldRequestPermissions]) {
-        MyLog(@"[Browser Tab Brief] ⚠️  Permission requests disabled - skipping tab tracking during onboarding");
-        return nil;
-    }
-    
-    NSString *scriptSource = [NSString stringWithFormat:@"tell application \"%@\"\n"
-                           "  try\n"
-                           "    set tabTitle to title of active tab of front window\n"
-                           "    set tabUrl to URL of active tab of front window\n"
-                           "    return tabUrl & \"|\" & tabTitle\n"
-                           "  on error errMsg\n"
-                           "    return \"ERROR|\" & errMsg\n"
-                           "  end try\n"
-                           "end tell", self.browserName];
-    NSAppleScript *appleScript = [[NSAppleScript alloc] initWithSource:scriptSource];
-    NSDictionary *errorInfo = nil;
-    NSAppleEventDescriptor *descriptor = [appleScript executeAndReturnError:&errorInfo];
-    [appleScript release];
+    // Try AppleScript first for full info (URL + title) - only if permissions enabled
+    if ([PermissionManager shouldRequestPermissions]) {
+        NSString *scriptSource = [NSString stringWithFormat:@"tell application \"%@\"\n"
+                               "  try\n"
+                               "    set tabTitle to title of active tab of front window\n"
+                               "    set tabUrl to URL of active tab of front window\n"
+                               "    return tabUrl & \"|\" & tabTitle\n"
+                               "  on error errMsg\n"
+                               "    return \"ERROR|\" & errMsg\n"
+                               "  end try\n"
+                               "end tell", self.browserName];
+        NSAppleScript *appleScript = [[NSAppleScript alloc] initWithSource:scriptSource];
+        NSDictionary *errorInfo = nil;
+        NSAppleEventDescriptor *descriptor = [appleScript executeAndReturnError:&errorInfo];
+        [appleScript release];
 
-    if (errorInfo) {
-        MyLog(@"[Browser Tab Brief] AppleScript execution error for %@: %@", self.browserName, errorInfo);
-        
-        // If this is the first time accessing Chrome and permissions aren't granted,
-        // request Apple Events permission through our centralized system
-        if ([PermissionManager shouldRequestPermissions]) {
-            MyLog(@"[Browser Tab Brief] 🔑 Requesting Apple Events permission for %@ tab tracking", self.browserName);
-            [PermissionManager requestPermission:PermissionTypeAppleEvents completion:^(PermissionStatus status) {
-                MyLog(@"[Browser Tab Brief] 📋 Apple Events permission request completed with status: %ld", (long)status);
-            }];
+        if (!errorInfo) {
+            NSString *resultString = [descriptor stringValue];
+            if (resultString && ![resultString hasPrefix:@"ERROR|"]) {
+                NSArray *components = [resultString componentsSeparatedByString:@"|"];
+                if (components.count >= 1) {
+                    NSString *url = components[0];
+                    NSString *title = (components.count > 1) ? components[1] : @"";
+                    return @{@"url": url, @"title": title};
+                }
+            }
         }
-        
-        return nil;
+        // AppleScript failed - fall through to CGWindowList
     }
 
-    NSString *resultString = [descriptor stringValue];
-    if (!resultString || [resultString hasPrefix:@"ERROR|"]) {
-        if (resultString && ![resultString isEqualToString:@"ERROR|No window"]) {
-             MyLog(@"[Browser Tab Brief] AppleScript reported error for %@: %@", self.browserName, resultString);
-        }
-        return nil;
+    // ALWAYS try CGWindowList fallback (NO PERMISSION NEEDED)
+    // This works even without Apple Events permission
+    NSString *windowTitle = [self getBrowserWindowTitle];
+    if (windowTitle && windowTitle.length > 0) {
+        return @{@"title": windowTitle, @"url": @""};
     }
-    
-    NSArray *components = [resultString componentsSeparatedByString:@"|"];
-    if (components.count >= 1) {
-        NSString *url = components[0];
-        NSString *title = (components.count > 1) ? components[1] : @"";
-        return @{@"url": url, @"title": title};
-    }
-    
-    MyLog(@"[Browser Tab Brief] Invalid components from AppleScript for %@: %@", self.browserName, resultString);
+
     return nil;
 }
 
@@ -117,37 +137,40 @@
 
     NSDictionary *briefTabInfo = [self getCurrentBrowserTabBriefInfo];
     if (!briefTabInfo) {
-        // Only log on first failure to avoid spam
-        static BOOL hasLoggedFailure = NO;
-        if (!hasLoggedFailure) {
-            MyLog(@"[Browser Tab] ⚠️ Failed to get tab info for %@", self.browserName);
-            hasLoggedFailure = YES;
-        }
         return;
     }
 
     NSString *currentURL = briefTabInfo[@"url"];
     NSString *currentTitle = briefTabInfo[@"title"];
 
-    BOOL urlChanged = (_lastKnownBrowserURL || currentURL) && ![_lastKnownBrowserURL isEqualToString:currentURL];
-    BOOL titleChanged = (_lastKnownBrowserTitle || currentTitle) && ![_lastKnownBrowserTitle isEqualToString:currentTitle];
+    // Check for changes - for URL, only compare if we have one
+    BOOL urlChanged = NO;
+    if (currentURL && currentURL.length > 0) {
+        urlChanged = ![_lastKnownBrowserURL isEqualToString:currentURL];
+    }
+
+    BOOL titleChanged = (currentTitle && currentTitle.length > 0) &&
+                        ![_lastKnownBrowserTitle isEqualToString:currentTitle];
 
     if (!urlChanged && !titleChanged) {
         return; // No change, nothing to do
     }
 
-    MyLog(@"[Browser Tab] 🔄 %@ tab switch: %@ -> %@", self.browserName, _lastKnownBrowserURL, currentURL);
+    MyLog(@"[Browser Tab] 🔄 %@ tab switch detected - Title: '%@' -> '%@'",
+          self.browserName, _lastKnownBrowserTitle, currentTitle);
 
     // Update stored values
-    NSString *newURL = [currentURL copy];
-    [_lastKnownBrowserURL release];
-    _lastKnownBrowserURL = newURL;
+    if (currentURL && currentURL.length > 0) {
+        NSString *newURL = [currentURL copy];
+        [_lastKnownBrowserURL release];
+        _lastKnownBrowserURL = newURL;
+    }
 
     NSString *newTitle = [currentTitle copy];
     [_lastKnownBrowserTitle release];
     _lastKnownBrowserTitle = newTitle;
 
-    // Get full tab details and notify delegate
+    // Try to get full tab details via AppleScript
     NSDictionary *activeWindowDetails = nil;
     if ([self.browserName isEqualToString:@"Google Chrome"]) {
         activeWindowDetails = [BrowserTabUtils getChromeTabInfo];
@@ -155,10 +178,21 @@
         activeWindowDetails = [BrowserTabUtils getArcTabInfo];
     }
 
-    if (activeWindowDetails && self.delegate && [self.delegate respondsToSelector:@selector(browserTabDidSwitch:)]) {
+    // If AppleScript failed, create minimal info from what we have
+    if (!activeWindowDetails) {
+        activeWindowDetails = @{
+            @"ownerName": self.browserName,
+            @"title": currentTitle ?: @"",
+            @"url": currentURL ?: @"",
+            @"type": @"browser",
+            @"browser": [self.browserName isEqualToString:@"Arc"] ? @"arc" : @"chrome",
+            @"timestamp": @([[NSDate date] timeIntervalSince1970] * 1000)
+        };
+        MyLog(@"[Browser Tab] Using fallback tab info (no AppleScript permission)");
+    }
+
+    if (self.delegate && [self.delegate respondsToSelector:@selector(browserTabDidSwitch:)]) {
         [self.delegate browserTabDidSwitch:activeWindowDetails];
-    } else if (!activeWindowDetails) {
-        MyLog(@"[Browser Tab] ⚠️ Could not get tab details for %@", self.browserName);
     }
 }
 
