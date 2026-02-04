@@ -52,7 +52,7 @@ export function createFloatingWindow(
     type: process.platform === "darwin" ? "panel" : "normal",
     webPreferences: {
       preload: join(__dirname, "floatingPreload.js"),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
     },
   };
@@ -163,7 +163,7 @@ export function createMainWindow(
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "preload.js"),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
     },
   });
@@ -256,7 +256,7 @@ export function createTrayPopoverWindow(): BrowserWindow {
     type: process.platform === "darwin" ? "panel" : "normal",
     webPreferences: {
       preload: join(__dirname, "trayPreload.js"),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
     },
   });
