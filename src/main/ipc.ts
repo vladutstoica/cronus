@@ -8,6 +8,7 @@ import { nativeWindowObserver, PermissionType } from "native-window-observer";
 import { logMainToFile } from "./logging";
 import { redactSensitiveContent } from "./redaction";
 import { setAllowForcedQuit } from "./windows";
+import { isPathAllowed } from "./pathValidation";
 import {
   getOrCreateLocalUser,
   getUserById,
@@ -307,6 +308,10 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("read-file", async (_event, filePath: string) => {
+    if (!isPathAllowed(filePath)) {
+      console.warn(`[IPC] Blocked read-file access to path outside allowed directories: ${filePath}`);
+      throw new Error('Access denied: file path is outside allowed directories');
+    }
     try {
       const buffer = await fs.readFile(filePath);
       return buffer;
@@ -317,6 +322,10 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("delete-file", async (_event, filePath: string) => {
+    if (!isPathAllowed(filePath)) {
+      console.warn(`[IPC] Blocked delete-file access to path outside allowed directories: ${filePath}`);
+      throw new Error('Access denied: file path is outside allowed directories');
+    }
     try {
       await fs.unlink(filePath);
     } catch (error) {
