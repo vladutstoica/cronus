@@ -1,6 +1,20 @@
 import { getDatabase } from "../index";
 import { randomBytes } from "crypto";
 
+/**
+ * Whitelist of column names allowed in dynamic UPDATE SET clauses.
+ * Prevents SQL injection via crafted object keys.
+ */
+const ALLOWED_COLUMNS: readonly string[] = [
+  "name",
+  "description",
+  "color",
+  "emoji",
+  "is_productive",
+  "is_default",
+  "is_archived",
+] as const;
+
 export interface Category {
   id: string;
   user_id: string;
@@ -114,6 +128,12 @@ export function updateCategory(
 
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {
+      if (!ALLOWED_COLUMNS.includes(key)) {
+        console.warn(
+          `[categories] Rejected invalid column name in update: "${key}"`,
+        );
+        return;
+      }
       fields.push(`${key} = ?`);
 
       // Convert booleans to integers

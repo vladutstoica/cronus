@@ -1,6 +1,31 @@
 import { getDatabase } from "../index";
 import { randomBytes } from "crypto";
 
+/**
+ * Whitelist of column names allowed in dynamic UPDATE SET clauses.
+ * Prevents SQL injection via crafted object keys.
+ */
+const ALLOWED_COLUMNS: readonly string[] = [
+  "window_id",
+  "owner_name",
+  "type",
+  "browser",
+  "title",
+  "url",
+  "content",
+  "category_id",
+  "category_reasoning",
+  "llm_summary",
+  "timestamp",
+  "screenshot_path",
+  "duration_ms",
+  "last_categorization_at",
+  "generated_title",
+  "old_category_id",
+  "old_category_reasoning",
+  "old_llm_summary",
+] as const;
+
 export interface ActiveWindowEvent {
   id: string;
   user_id: string;
@@ -151,6 +176,12 @@ export function updateActiveWindowEvent(
 
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {
+      if (!ALLOWED_COLUMNS.includes(key)) {
+        console.warn(
+          `[activeWindowEvents] Rejected invalid column name in update: "${key}"`,
+        );
+        return;
+      }
       fields.push(`${key} = ?`);
       values.push(value);
     }

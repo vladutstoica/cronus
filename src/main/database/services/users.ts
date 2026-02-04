@@ -1,6 +1,24 @@
 import { getDatabase } from "../index";
 import { randomBytes } from "crypto";
 
+/**
+ * Whitelist of column names allowed in dynamic UPDATE SET clauses.
+ * Prevents SQL injection via crafted object keys.
+ * Note: These are the snake_case DB column names (after conversion from camelCase).
+ */
+const ALLOWED_COLUMNS: readonly string[] = [
+  "email",
+  "name",
+  "picture",
+  "has_subscription",
+  "is_waitlisted",
+  "has_completed_onboarding",
+  "is_in_eu",
+  "token_version",
+  "electron_app_settings",
+  "user_projects_and_goals",
+] as const;
+
 export interface User {
   id: string;
   email: string;
@@ -115,8 +133,14 @@ export function updateUser(
 
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {
-      // Convert snake_case to match DB columns
+      // Convert camelCase to snake_case to match DB columns
       const dbKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+      if (!ALLOWED_COLUMNS.includes(dbKey)) {
+        console.warn(
+          `[users] Rejected invalid column name in update: "${dbKey}" (from key "${key}")`,
+        );
+        return;
+      }
       fields.push(`${dbKey} = ?`);
 
       // Convert booleans to integers
