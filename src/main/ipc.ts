@@ -67,6 +67,7 @@ import {
 } from "./services/windowTracking";
 import { listOllamaModels, pullOllamaModel } from "./services/ollama";
 import { generateCategorySuggestions } from "./services/categorization";
+import { snakeToCamel } from "./utils/snakeToCamel";
 
 interface Windows {
   mainWindow: BrowserWindow | null;
@@ -572,18 +573,10 @@ export function registerIpcHandlers(
     };
   });
 
-  // Helper function to convert category snake_case to camelCase for frontend
+  // Convert category snake_case to camelCase for frontend
   const convertCategoryToCamelCase = (category: any) => ({
-    _id: category.id,
-    userId: category.user_id,
-    name: category.name,
-    description: category.description,
-    color: category.color,
-    isProductive: category.is_productive,
-    isDefault: category.is_default,
-    isArchived: category.is_archived,
-    createdAt: category.created_at,
-    updatedAt: category.updated_at,
+    ...snakeToCamel(category),
+    _id: category.id, // frontend expects _id instead of id
   });
 
   // Category handlers
@@ -644,30 +637,11 @@ export function registerIpcHandlers(
   );
 
   // Event handlers
-  // Helper function to convert snake_case to camelCase for frontend
-  const convertEventToCamelCase = (event: any) => ({
-    _id: event.id,
-    userId: event.user_id,
-    windowId: event.window_id,
-    ownerName: event.owner_name,
-    type: event.type,
-    browser: event.browser,
-    title: event.title,
-    url: event.url,
-    content: event.content,
-    categoryId: event.category_id,
-    categoryReasoning: event.category_reasoning,
-    llmSummary: event.llm_summary,
+  // Convert event snake_case to camelCase for frontend
+  const convertEventToCamelCase = (event: any): Record<string, unknown> => ({
+    ...snakeToCamel(event),
+    _id: event.id, // frontend expects _id instead of id
     timestamp: new Date(event.timestamp).getTime(), // Convert to number
-    screenshotPath: event.screenshot_path,
-    durationMs: event.duration_ms,
-    lastCategorizationAt: event.last_categorization_at,
-    generatedTitle: event.generated_title,
-    oldCategoryId: event.old_category_id,
-    oldCategoryReasoning: event.old_category_reasoning,
-    oldLlmSummary: event.old_llm_summary,
-    createdAt: event.created_at,
-    updatedAt: event.updated_at,
   });
 
   ipcMain.handle(
@@ -833,21 +807,11 @@ export function registerIpcHandlers(
   // TODO IPC HANDLERS
   // ============================================================
 
-  // Helper function to convert todo snake_case to camelCase for frontend
+  // Convert todo snake_case to camelCase for frontend
   const convertTodoToCamelCase = (todo: any) => ({
-    id: todo.id,
-    userId: todo.user_id,
-    title: todo.title,
-    description: todo.description,
-    priority: todo.priority,
-    status: todo.status,
-    isFocus: todo.is_focus === 1,
-    tags: todo.tags ? JSON.parse(todo.tags) : [],
-    scheduledDate: todo.scheduled_date,
-    originalDate: todo.original_date,
-    completedAt: todo.completed_at,
-    createdAt: todo.created_at,
-    updatedAt: todo.updated_at,
+    ...snakeToCamel(todo),
+    isFocus: todo.is_focus === 1, // Convert integer to boolean
+    tags: todo.tags ? JSON.parse(todo.tags) : [], // Parse JSON string
   });
 
   ipcMain.handle("local:get-todos-by-date", (_event, date: string) => {
@@ -922,19 +886,9 @@ export function registerIpcHandlers(
   // WORK SESSION IPC HANDLERS (for tray popover)
   // ============================================================
 
-  // Helper function to convert work session to camelCase
+  // Convert work session snake_case to camelCase for frontend
   const convertWorkSessionToCamelCase = (session: any) =>
-    session
-      ? {
-          id: session.id,
-          userId: session.user_id,
-          note: session.note,
-          startedAt: session.started_at,
-          endedAt: session.ended_at,
-          durationMs: session.duration_ms,
-          createdAt: session.created_at,
-        }
-      : null;
+    session ? snakeToCamel(session) : null;
 
   ipcMain.handle("work-session:get-active", () => {
     const user = getOrCreateLocalUser();
