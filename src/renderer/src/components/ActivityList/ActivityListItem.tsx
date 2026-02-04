@@ -9,7 +9,6 @@ import {
   ProcessedCategory,
 } from "../../lib/activityProcessing";
 import { formatDuration } from "../../lib/timeFormatting";
-import { trpc } from "../../utils/trpc";
 import {
   ContextMenu,
   ContextMenuContent,
