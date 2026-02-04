@@ -68,6 +68,7 @@ import {
 import { listOllamaModels, pullOllamaModel } from "./services/ollama";
 import { generateCategorySuggestions } from "./services/categorization";
 import { snakeToCamel } from "./utils/snakeToCamel";
+import { computeEventDurations } from "./utils/eventDurations";
 
 interface Windows {
   mainWindow: BrowserWindow | null;
@@ -934,55 +935,16 @@ export function registerIpcHandlers(
     endOfDay.setHours(23, 59, 59, 999);
 
     const events = getEventsByUserAndTimeRange(user.id, startOfDay, endOfDay);
-
-    // Sort events chronologically by timestamp
-    const sortedEvents = [...events].sort((a, b) => {
-      const tsA =
-        typeof a.timestamp === "number"
-          ? a.timestamp
-          : new Date(a.timestamp).getTime();
-      const tsB =
-        typeof b.timestamp === "number"
-          ? b.timestamp
-          : new Date(b.timestamp).getTime();
-      return tsA - tsB;
-    });
+    const durations = computeEventDurations(events);
 
     // Find first event timestamp (work started)
-    const firstEvent = sortedEvents.length > 0 ? sortedEvents[0] : null;
-    const workStarted = firstEvent
-      ? typeof firstEvent.timestamp === "number"
-        ? new Date(firstEvent.timestamp).toISOString()
-        : firstEvent.timestamp
-      : null;
+    const workStarted =
+      durations.length > 0
+        ? new Date(durations[0].eventTimeMs).toISOString()
+        : null;
 
     // Calculate total tracked time
-    const MAX_GAP_MS = 5 * 60 * 1000; // 5 minutes max gap
-    let totalMs = 0;
-
-    for (let i = 0; i < sortedEvents.length; i++) {
-      const event = sortedEvents[i];
-      const eventTime =
-        typeof event.timestamp === "number"
-          ? event.timestamp
-          : new Date(event.timestamp).getTime();
-
-      let durationMs: number;
-      if (i < sortedEvents.length - 1) {
-        const nextEvent = sortedEvents[i + 1];
-        const nextTime =
-          typeof nextEvent.timestamp === "number"
-            ? nextEvent.timestamp
-            : new Date(nextEvent.timestamp).getTime();
-        durationMs = Math.min(nextTime - eventTime, MAX_GAP_MS);
-      } else {
-        durationMs = Math.min(Date.now() - eventTime, MAX_GAP_MS);
-      }
-
-      if (durationMs > 0) {
-        totalMs += durationMs;
-      }
-    }
+    const totalMs = durations.reduce((sum, d) => sum + d.durationMs, 0);
 
     return {
       workStarted,
@@ -999,48 +961,14 @@ export function registerIpcHandlers(
     endOfDay.setHours(23, 59, 59, 999);
 
     const events = getEventsByUserAndTimeRange(user.id, startOfDay, endOfDay);
+    const durations = computeEventDurations(events);
 
-    // Sort events chronologically by timestamp
-    const sortedEvents = [...events].sort((a, b) => {
-      const tsA =
-        typeof a.timestamp === "number"
-          ? a.timestamp
-          : new Date(a.timestamp).getTime();
-      const tsB =
-        typeof b.timestamp === "number"
-          ? b.timestamp
-          : new Date(b.timestamp).getTime();
-      return tsA - tsB;
-    });
-
-    const MAX_GAP_MS = 5 * 60 * 1000; // 5 minutes max gap
     const hourlyMap = new Map<number, number>();
 
-    // Calculate duration for each event and group by hour
-    for (let i = 0; i < sortedEvents.length; i++) {
-      const event = sortedEvents[i];
-      const eventTime =
-        typeof event.timestamp === "number"
-          ? event.timestamp
-          : new Date(event.timestamp).getTime();
-
-      let durationMs: number;
-      if (i < sortedEvents.length - 1) {
-        const nextEvent = sortedEvents[i + 1];
-        const nextTime =
-          typeof nextEvent.timestamp === "number"
-            ? nextEvent.timestamp
-            : new Date(nextEvent.timestamp).getTime();
-        durationMs = Math.min(nextTime - eventTime, MAX_GAP_MS);
-      } else {
-        durationMs = Math.min(Date.now() - eventTime, MAX_GAP_MS);
-      }
-
-      if (durationMs > 0) {
-        const hour = new Date(eventTime).getHours();
-        const currentDuration = hourlyMap.get(hour) || 0;
-        hourlyMap.set(hour, currentDuration + durationMs);
-      }
+    for (const { eventTimeMs, durationMs } of durations) {
+      const hour = new Date(eventTimeMs).getHours();
+      const currentDuration = hourlyMap.get(hour) || 0;
+      hourlyMap.set(hour, currentDuration + durationMs);
     }
 
     // Convert to array
@@ -1059,52 +987,14 @@ export function registerIpcHandlers(
     endOfDay.setHours(23, 59, 59, 999);
 
     const events = getEventsByUserAndTimeRange(user.id, startOfDay, endOfDay);
+    const durations = computeEventDurations(events);
 
-    // Sort events chronologically by timestamp
-    // Note: timestamp is stored as a number (Unix ms) in the database
-    const sortedEvents = [...events].sort((a, b) => {
-      const tsA =
-        typeof a.timestamp === "number"
-          ? a.timestamp
-          : new Date(a.timestamp).getTime();
-      const tsB =
-        typeof b.timestamp === "number"
-          ? b.timestamp
-          : new Date(b.timestamp).getTime();
-      return tsA - tsB;
-    });
-
-    const MAX_GAP_MS = 5 * 60 * 1000; // 5 minutes max gap
     const appMap = new Map<string, number>();
 
-    // Calculate duration for each event based on time to next event
-    for (let i = 0; i < sortedEvents.length; i++) {
-      const event = sortedEvents[i];
+    for (const { event, durationMs } of durations) {
       const appName = event.owner_name || "Unknown";
-
-      let durationMs: number;
-      const eventTime =
-        typeof event.timestamp === "number"
-          ? event.timestamp
-          : new Date(event.timestamp).getTime();
-
-      if (i < sortedEvents.length - 1) {
-        // Duration is time until next event
-        const nextEvent = sortedEvents[i + 1];
-        const nextTime =
-          typeof nextEvent.timestamp === "number"
-            ? nextEvent.timestamp
-            : new Date(nextEvent.timestamp).getTime();
-        durationMs = Math.min(nextTime - eventTime, MAX_GAP_MS);
-      } else {
-        // Last event: duration is time until now (capped)
-        durationMs = Math.min(Date.now() - eventTime, MAX_GAP_MS);
-      }
-
-      if (durationMs > 0) {
-        const currentDuration = appMap.get(appName) || 0;
-        appMap.set(appName, currentDuration + durationMs);
-      }
+      const currentDuration = appMap.get(appName) || 0;
+      appMap.set(appName, currentDuration + durationMs);
     }
 
     // Sort by duration and return top 6
