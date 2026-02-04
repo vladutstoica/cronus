@@ -4,6 +4,7 @@ import {
   createActiveWindowEvent,
   updateActiveWindowEvent,
   recategorizeEventsByIdentifier,
+  getEventById,
 } from "../database/services/activeWindowEvents";
 import {
   getAICategoryChoice,
@@ -354,8 +355,9 @@ export async function recategorizeEvent(
   newCategoryId: string,
 ): Promise<boolean> {
   try {
+    const currentEvent = getEventById(eventId);
     const result = updateActiveWindowEvent(eventId, {
-      old_category_id: undefined, // Will be set from current category_id in a transaction
+      old_category_id: currentEvent?.category_id,
       category_id: newCategoryId,
       last_categorization_at: new Date().toISOString(),
     });
