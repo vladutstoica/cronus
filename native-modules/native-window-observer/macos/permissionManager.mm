@@ -87,20 +87,12 @@ static NSMutableArray *_pendingRequests = nil;
             return PermissionStatusPending;
         }
         case PermissionTypeScreenRecording: {
-            // Check if screen recording permission is granted
-            // On macOS 10.15+, we can check by attempting to create a screen capture
+            // Check screen recording permission using CGPreflightScreenCaptureAccess (macOS 10.15+)
+            // Note: CGWindowListCreateImage is unreliable — it can return a non-null (blank) image
+            // even when permission is not granted on macOS 12+.
             if (@available(macOS 10.15, *)) {
-                // Try to capture a small portion of the screen to test permission
-                CGImageRef testImage = CGWindowListCreateImage(CGRectMake(0, 0, 1, 1), 
-                                                             kCGWindowListOptionOnScreenOnly, 
-                                                             kCGNullWindowID, 
-                                                             kCGWindowImageDefault);
-                if (testImage) {
-                    CFRelease(testImage);
-                    return PermissionStatusGranted;
-                } else {
-                    return PermissionStatusDenied;
-                }
+                BOOL hasAccess = CGPreflightScreenCaptureAccess();
+                return hasAccess ? PermissionStatusGranted : PermissionStatusDenied;
             } else {
                 // On older macOS versions, screen recording doesn't require explicit permission
                 return PermissionStatusGranted;
@@ -267,17 +259,16 @@ static NSMutableArray *_pendingRequests = nil;
         }
         case PermissionTypeScreenRecording: {
             MyLog(@"📺 Requesting Screen Recording permissions...");
-            
+
             if (@available(macOS 10.15, *)) {
-                // Trigger screen recording permission request by attempting to capture
-                CGImageRef testImage = CGWindowListCreateImage(CGRectMake(0, 0, 1, 1), 
-                                                             kCGWindowListOptionOnScreenOnly, 
-                                                             kCGNullWindowID, 
-                                                             kCGWindowImageDefault);
-                
+                // Use CGRequestScreenCaptureAccess to prompt the user (macOS 10.15+)
+                // This is more reliable than CGWindowListCreateImage which can return
+                // a non-null (blank) image even without permission on macOS 12+.
+                CGRequestScreenCaptureAccess();
+
+                BOOL hasAccess = CGPreflightScreenCaptureAccess();
                 PermissionStatus status;
-                if (testImage) {
-                    CFRelease(testImage);
+                if (hasAccess) {
                     status = PermissionStatusGranted;
                     MyLog(@"📋 Screen Recording permission result: ✅ Granted");
                 } else {
