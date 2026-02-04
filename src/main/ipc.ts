@@ -6,6 +6,10 @@ import { Category } from "@shared/types";
 import icon from "../../resources/icon.png?asset";
 import { nativeWindowObserver, PermissionType } from "native-window-observer";
 import { logMainToFile } from "./logging";
+import {
+  startActiveWindowObserver,
+  stopActiveWindowObserver,
+} from "./services/observerManager";
 import { redactSensitiveContent } from "./redaction";
 import { setAllowForcedQuit } from "./windows";
 import { isPathAllowed } from "./pathValidation";
@@ -151,32 +155,17 @@ export function registerIpcHandlers(
     logMainToFile(
       "Starting active window observer after onboarding completion",
     );
-    // Call the global function we set up in main/index.ts
-    if ((global as any).startActiveWindowObserver) {
-      (global as any).startActiveWindowObserver();
-    } else {
-      logMainToFile("ERROR: startActiveWindowObserver function not available");
-    }
+    startActiveWindowObserver();
   });
 
   ipcMain.handle("pause-window-tracking", () => {
     logMainToFile("Pausing active window observer");
-    // Call the global function to stop tracking
-    if ((global as any).stopActiveWindowObserver) {
-      (global as any).stopActiveWindowObserver();
-    } else {
-      logMainToFile("ERROR: stopActiveWindowObserver function not available");
-    }
+    stopActiveWindowObserver();
   });
 
   ipcMain.handle("resume-window-tracking", () => {
     logMainToFile("Resuming active window observer");
-    // Call the global function to start tracking again
-    if ((global as any).startActiveWindowObserver) {
-      (global as any).startActiveWindowObserver();
-    } else {
-      logMainToFile("ERROR: startActiveWindowObserver function not available");
-    }
+    startActiveWindowObserver();
   });
 
   // for pausing the timer when tracking is paused
