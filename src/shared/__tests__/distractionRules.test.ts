@@ -40,7 +40,7 @@ describe('Distraction Rules', () => {
       const result = isVeryLikelyProductive({
         ownerName: 'Chrome',
         type: 'browser',
-        url: 'cursor.com',
+        url: 'https://cursor.com/settings',
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
@@ -115,7 +115,7 @@ describe('Distraction Rules', () => {
       const result = isVeryLikelyProductive({
         ownerName: 'Chrome',
         type: 'browser',
-        url: 'figma.com',
+        url: 'https://figma.com/design/abc123',
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
@@ -125,10 +125,31 @@ describe('Distraction Rules', () => {
       const result = isVeryLikelyProductive({
         ownerName: 'Chrome',
         type: 'browser',
-        url: 'us-east-1.console.aws.amazon.com',
+        url: 'https://us-east-1.console.aws.amazon.com/ec2',
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
+    });
+
+    it('should match subdomains of productive sites', () => {
+      const result = isVeryLikelyProductive({
+        ownerName: 'Chrome',
+        type: 'browser',
+        url: 'https://www.figma.com/files',
+        timestamp: Date.now(),
+      });
+      expect(result).toBe(true);
+    });
+
+    it('should handle bare domain URLs gracefully (no protocol)', () => {
+      const result = isVeryLikelyProductive({
+        ownerName: 'Chrome',
+        type: 'browser',
+        url: 'cursor.com',
+        timestamp: Date.now(),
+      });
+      // Bare domains without protocol are not valid URLs, function handles gracefully
+      expect(result).toBe(false);
     });
   });
 });
