@@ -3,7 +3,10 @@ import dotenv from "dotenv";
 import { app, BrowserWindow, session } from "electron";
 import squirrelStartup from "electron-squirrel-startup";
 import { ActiveWindowDetails } from "@shared/types";
-import { nativeWindowObserver } from "native-window-observer";
+import {
+  setWindowChangeCallback,
+  getIsTrackingPaused,
+} from "./services/observerManager";
 import {
   initializeAutoUpdater,
   registerAutoUpdaterHandlers,
@@ -50,8 +53,6 @@ if (is.dev) {
 let mainWindow: BrowserWindow | null = null;
 let floatingWindow: BrowserWindow | null = null;
 let trayPopoverWindow: BrowserWindow | null = null;
-
-let isTrackingPaused = false;
 
 function App() {
   async function initializeApp() {
@@ -191,7 +192,7 @@ function App() {
         mainWindow &&
         !mainWindow.isDestroyed() &&
         !mainWindow.webContents.isDestroyed() &&
-        !isTrackingPaused
+        !getIsTrackingPaused()
       ) {
         // Check if screen text recognition (OCR) is enabled
         const ocrEnabled = getBooleanSetting("screenshots_enabled", false);
@@ -208,23 +209,8 @@ function App() {
       }
     };
 
-    // Make the callback available to IPC handlers
-    (global as any).stopActiveWindowObserver = () => {
-      isTrackingPaused = true;
-      nativeWindowObserver.stopActiveWindowObserver();
-    };
-    (global as any).startActiveWindowObserver = () => {
-      isTrackingPaused = false;
-      // Log permission status for debugging
-      const { PermissionType } = require("native-window-observer");
-      const screenRecordingStatus = nativeWindowObserver.getPermissionStatus(
-        PermissionType.ScreenRecording,
-      );
-      console.log(
-        `[Main] Screen Recording permission status: ${screenRecordingStatus} (0=Denied, 1=Granted, 2=Pending)`,
-      );
-      nativeWindowObserver.startActiveWindowObserver(windowChangeCallback);
-    };
+    // Register the callback with the observer manager module
+    setWindowChangeCallback(windowChangeCallback);
 
     // Handle app activation (e.g., clicking the dock icon on macOS)
     app.on("activate", () => {
