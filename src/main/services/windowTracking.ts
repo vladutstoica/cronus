@@ -32,6 +32,13 @@ export interface WindowEventDetails {
 // Store active events in memory to update durations
 const activeEvents = new Map<string, { eventId: string; startTime: Date }>();
 
+// VIB-55: Constants to prevent unbounded Map growth
+const STALE_EVENT_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+const MAX_ACTIVE_EVENTS = 500;
+const SWEEP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+let sweepIntervalId: ReturnType<typeof setInterval> | null = null;
+
 /**
  * Process a new window event
  */
@@ -63,11 +70,38 @@ export async function processWindowEvent(
       duration_ms: eventDetails.durationMs || 0,
     });
 
+    // VIB-53: Finalize the previous event for this windowId before overwriting
+    const existingEntry = activeEvents.get(eventDetails.windowId);
+    if (existingEntry) {
+      const finalDuration = Date.now() - existingEntry.startTime.getTime();
+      console.warn(
+        `[WindowTracking] Replacing active event ${existingEntry.eventId} for windowId=${eventDetails.windowId} (duration=${finalDuration}ms). Previous event was not ended.`,
+      );
+      try {
+        updateActiveWindowEvent(existingEntry.eventId, {
+          duration_ms: finalDuration,
+        });
+      } catch (err) {
+        console.error(
+          `[WindowTracking] Failed to finalize replaced event ${existingEntry.eventId}:`,
+          err,
+        );
+      }
+    }
+
     // Track this event for duration updates
     activeEvents.set(eventDetails.windowId, {
       eventId: createdEvent.id,
       startTime: eventDetails.timestamp,
     });
+
+    // VIB-55: Trigger sweep if Map exceeds the maximum size
+    if (activeEvents.size > MAX_ACTIVE_EVENTS) {
+      console.warn(
+        `[WindowTracking] activeEvents size (${activeEvents.size}) exceeds MAX_ACTIVE_EVENTS (${MAX_ACTIVE_EVENTS}). Triggering sweep.`,
+      );
+      sweepStaleActiveEvents();
+    }
 
     // Categorize asynchronously using request queue (prevents overwhelming AI provider)
     if (categorizationEnabled) {
@@ -135,6 +169,87 @@ export async function updateEventDuration(
  */
 export async function endWindowEvent(windowId: string): Promise<void> {
   activeEvents.delete(windowId);
+}
+
+/**
+ * VIB-55: Sweep stale entries from the activeEvents Map.
+ * Entries older than STALE_EVENT_THRESHOLD_MS are finalized in the DB and removed.
+ */
+export function sweepStaleActiveEvents(): void {
+  const now = Date.now();
+  let sweptCount = 0;
+
+  for (const [windowId, entry] of activeEvents) {
+    const age = now - entry.startTime.getTime();
+    if (age > STALE_EVENT_THRESHOLD_MS) {
+      try {
+        updateActiveWindowEvent(entry.eventId, { duration_ms: age });
+      } catch (err) {
+        console.error(
+          `[WindowTracking] Failed to finalize stale event ${entry.eventId}:`,
+          err,
+        );
+      }
+      activeEvents.delete(windowId);
+      sweptCount++;
+    }
+  }
+
+  if (sweptCount > 0) {
+    console.log(
+      `[WindowTracking] Swept ${sweptCount} stale active event(s). Remaining: ${activeEvents.size}`,
+    );
+  }
+}
+
+/**
+ * VIB-55: Start periodic sweep of stale active events.
+ */
+export function startActiveEventsSweep(): void {
+  if (sweepIntervalId !== null) {
+    return;
+  }
+  sweepIntervalId = setInterval(sweepStaleActiveEvents, SWEEP_INTERVAL_MS);
+  console.log(
+    `[WindowTracking] Started active events sweep (interval=${SWEEP_INTERVAL_MS}ms)`,
+  );
+}
+
+/**
+ * VIB-55: Stop periodic sweep of stale active events.
+ */
+export function stopActiveEventsSweep(): void {
+  if (sweepIntervalId !== null) {
+    clearInterval(sweepIntervalId);
+    sweepIntervalId = null;
+    console.log("[WindowTracking] Stopped active events sweep");
+  }
+}
+
+/**
+ * VIB-55: Finalize and remove ALL active events (e.g., on app sleep/lock).
+ */
+export function clearAllActiveEvents(): void {
+  const now = Date.now();
+  let clearedCount = 0;
+
+  for (const [windowId, entry] of activeEvents) {
+    const finalDuration = now - entry.startTime.getTime();
+    try {
+      updateActiveWindowEvent(entry.eventId, { duration_ms: finalDuration });
+    } catch (err) {
+      console.error(
+        `[WindowTracking] Failed to finalize event ${entry.eventId} during clearAll:`,
+        err,
+      );
+    }
+    activeEvents.delete(windowId);
+    clearedCount++;
+  }
+
+  console.log(
+    `[WindowTracking] Cleared all ${clearedCount} active event(s)`,
+  );
 }
 
 /**
