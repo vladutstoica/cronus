@@ -17,6 +17,9 @@ vi.mock('../ollama', () => ({
 
 import {
   clearCategorizationCacheForIdentifier,
+  sweepExpiredCacheEntries,
+  startCacheCleanup,
+  stopCacheCleanup,
 } from '../categorization';
 
 describe('Categorization Cache', () => {
@@ -66,6 +69,34 @@ describe('Categorization Cache', () => {
       };
       expect(details.ownerName).toBe('Chrome');
       expect(details.url).toBe('https://github.com');
+    });
+  });
+
+  describe('sweepExpiredCacheEntries', () => {
+    it('should return 0 when cache is empty', () => {
+      const result = sweepExpiredCacheEntries();
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('startCacheCleanup / stopCacheCleanup', () => {
+    afterEach(() => {
+      stopCacheCleanup();
+    });
+
+    it('should start and stop without errors', () => {
+      expect(() => startCacheCleanup()).not.toThrow();
+      expect(() => stopCacheCleanup()).not.toThrow();
+    });
+
+    it('should be idempotent on start', () => {
+      startCacheCleanup();
+      startCacheCleanup(); // calling twice should not throw or create duplicate intervals
+      stopCacheCleanup();
+    });
+
+    it('should be safe to call stop when not started', () => {
+      expect(() => stopCacheCleanup()).not.toThrow();
     });
   });
 });
