@@ -29,6 +29,10 @@ interface CachedCategorization {
 
 const categorizationCache = new Map<string, CachedCategorization>();
 const CATEGORIZATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 1000;
+const SWEEP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+let sweepIntervalRef: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Generate a hash for an activity to detect duplicates
@@ -100,6 +104,17 @@ function cacheCategorization(
       identifier: identifierInfo.identifier,
       itemType: identifierInfo.itemType,
     });
+
+    // Evict oldest entries if cache exceeds max size
+    if (categorizationCache.size > MAX_CACHE_SIZE) {
+      const entries = Array.from(categorizationCache.entries());
+      entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+
+      const toRemove = categorizationCache.size - MAX_CACHE_SIZE;
+      for (let i = 0; i < toRemove; i++) {
+        categorizationCache.delete(entries[i][0]);
+      }
+    }
   }
 }
 
@@ -125,6 +140,51 @@ export function clearCategorizationCacheForIdentifier(
     `Cleared ${clearedCount} categorization cache entries for ${itemType} "${identifier}"`,
   );
   return clearedCount;
+}
+
+/**
+ * Sweep expired entries from the categorization cache.
+ * Returns the number of entries removed.
+ */
+export function sweepExpiredCacheEntries(): number {
+  const now = Date.now();
+  let removedCount = 0;
+
+  for (const [hash, cached] of categorizationCache.entries()) {
+    if (now - cached.timestamp > CATEGORIZATION_CACHE_DURATION) {
+      categorizationCache.delete(hash);
+      removedCount++;
+    }
+  }
+
+  if (removedCount > 0) {
+    console.log(
+      `Swept ${removedCount} expired categorization cache entries (${categorizationCache.size} remaining)`,
+    );
+  }
+
+  return removedCount;
+}
+
+/**
+ * Start periodic cache cleanup on an interval.
+ * Calls sweepExpiredCacheEntries every SWEEP_INTERVAL_MS.
+ */
+export function startCacheCleanup(): void {
+  if (sweepIntervalRef !== null) {
+    return;
+  }
+  sweepIntervalRef = setInterval(sweepExpiredCacheEntries, SWEEP_INTERVAL_MS);
+}
+
+/**
+ * Stop the periodic cache cleanup interval.
+ */
+export function stopCacheCleanup(): void {
+  if (sweepIntervalRef !== null) {
+    clearInterval(sweepIntervalRef);
+    sweepIntervalRef = null;
+  }
 }
 
 /**
