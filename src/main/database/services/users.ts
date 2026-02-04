@@ -35,10 +35,16 @@ export interface User {
   updated_at: string;
 }
 
+let cachedUser: User | null = null;
+
 /**
  * Create or get the default local user
  */
 export function getOrCreateLocalUser(): User {
+  if (cachedUser) {
+    return cachedUser;
+  }
+
   const db = getDatabase();
 
   // Check if a user already exists
@@ -47,6 +53,7 @@ export function getOrCreateLocalUser(): User {
     | undefined;
 
   if (existingUser) {
+    cachedUser = existingUser;
     return existingUser;
   }
 
@@ -95,6 +102,7 @@ export function getOrCreateLocalUser(): User {
     user.updated_at,
   );
 
+  cachedUser = user;
   return user;
 }
 
@@ -183,5 +191,15 @@ export function updateUser(
 
   stmt.run(...values);
 
+  cachedUser = null; // Invalidate cache so next call fetches fresh data
+
   return getUserById(id);
+}
+
+/**
+ * Invalidate the cached local user, forcing the next
+ * getOrCreateLocalUser() call to query the database.
+ */
+export function invalidateUserCache(): void {
+  cachedUser = null;
 }
