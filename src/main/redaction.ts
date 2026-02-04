@@ -79,8 +79,18 @@ export function redactSensitiveContent(content: string): string {
       "$1: [REDACTED]",
     );
 
-    // Credit cards
-    redacted = redacted.replace(/(\d{4}[-\s]?){4}/g, "[REDACTED_CC]");
+    // Credit cards - prefix-based matching to reduce false positives
+    // Visa (4xxx), Mastercard (5[1-5]xx, 2[2-7]xx), Amex (3[47]xx), Discover (6011, 65xx)
+    redacted = redacted.replace(
+      /\b(?:4\d{3}|5[1-5]\d{2}|2[2-7]\d{2}|3[47]\d{2}|6(?:011|5\d{2}))[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{1,4}\b/g,
+      "[REDACTED_CC]",
+    );
+
+    // Social Security Numbers (XXX-XX-XXXX)
+    redacted = redacted.replace(
+      /\b\d{3}-\d{2}-\d{4}\b/g,
+      "[REDACTED_SSN]",
+    );
 
     // Phone numbers (but preserve email addresses)
     redacted = redacted.replace(
