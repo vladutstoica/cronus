@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
-import { Category } from "@shared/types";
+import { ActivityToRecategorize, Category } from "@shared/types";
 
 // Define the structure of the data being sent
 interface FloatingStatusUpdate {
@@ -15,17 +15,6 @@ interface FloatingStatusUpdate {
   isTrackingPaused?: boolean;
   ocrCaptured?: boolean;
   eventId?: string;
-}
-
-export interface ActivityToRecategorize {
-  identifier: string;
-  nameToDisplay: string;
-  itemType: "app" | "website";
-  currentCategoryId: string;
-  currentCategoryName: string;
-  currentCategoryColor: string;
-  categoryReasoning?: string;
-  originalUrl?: string;
 }
 
 export interface FloatingWindowApi {

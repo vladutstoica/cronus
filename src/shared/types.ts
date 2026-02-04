@@ -60,6 +60,19 @@ export interface Category {
   updatedAt: string;
 }
 
+export interface ActivityToRecategorize {
+  identifier: string;
+  nameToDisplay: string;
+  itemType: "app" | "website";
+  currentCategoryId: string;
+  currentCategoryName: string;
+  currentCategoryColor: string;
+  categoryReasoning?: string;
+  originalUrl?: string;
+  startDateMs?: number;
+  endDateMs?: number;
+}
+
 export interface ActivityEventSuggestion {
   _id: string;
   userId: string;

@@ -2,7 +2,7 @@ import { is } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, Notification, shell } from "electron";
 import fs from "fs/promises";
 import { join } from "path";
-import { Category } from "@shared/types";
+import { ActivityToRecategorize, Category } from "@shared/types";
 import icon from "../../resources/icon.png?asset";
 import { nativeWindowObserver, PermissionType } from "native-window-observer";
 import { logMainToFile } from "./logging";
@@ -67,17 +67,6 @@ import {
 } from "./services/windowTracking";
 import { listOllamaModels, pullOllamaModel } from "./services/ollama";
 import { generateCategorySuggestions } from "./services/categorization";
-
-export interface ActivityToRecategorize {
-  identifier: string;
-  nameToDisplay: string;
-  itemType: "app" | "website";
-  currentCategoryId: string;
-  currentCategoryName: string;
-  currentCategoryColor: string;
-  categoryReasoning?: string;
-  originalUrl?: string;
-}
 
 interface Windows {
   mainWindow: BrowserWindow | null;
