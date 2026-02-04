@@ -1,4 +1,5 @@
 import { CheckCircle, ShieldCheck } from "lucide-react";
+import { PermissionStatus } from "../Settings/PermissionsStatus";
 
 interface ScreenRecordingStepProps {
   screenRecordingStatus: number | null;
@@ -50,8 +51,8 @@ export function ScreenRecordingStep({
           </li>
         </ul>
       </div>
-      {/* TODO: screenRecordingStatus !== 1 is not working I think but we could make this open when the user clicks on "Grant Access" as additional instructions */}
-      {hasRequestedScreenRecording && screenRecordingStatus !== 1 && (
+      {hasRequestedScreenRecording &&
+        screenRecordingStatus !== PermissionStatus.Granted && (
         <div className="bg-blue-50 w-full dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
           <div className="text-sm text-left text-blue-800 dark:text-blue-200">
             <div className="font-semibold pb-1">Next steps:</div>
@@ -65,7 +66,8 @@ export function ScreenRecordingStep({
           </div>
         </div>
       )}
-      {hasRequestedScreenRecording && screenRecordingStatus === 1 && (
+      {hasRequestedScreenRecording &&
+        screenRecordingStatus === PermissionStatus.Granted && (
         <div className="bg-green-50 w-full dark:bg-green-900/20 rounded-lg p-4 mt-4 border border-green-200 dark:border-green-800">
           <div className="text-sm text-green-800 dark:text-green-200 flex items-center justify-center">
             <CheckCircle className="w-4 h-4 mr-2" />
