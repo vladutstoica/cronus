@@ -47,17 +47,7 @@ export function registerEventHandlers(): void {
         `[IPC] Loaded ${events.length} events for range ${startDate} to ${endDate}`,
       );
 
-      const convertedEvents = events.map(convertEventToCamelCase);
-
-      if (convertedEvents.length > 0) {
-        console.log("[IPC] Sample event:", {
-          owner: convertedEvents[0].ownerName,
-          timestamp: convertedEvents[0].timestamp,
-          categoryId: convertedEvents[0].categoryId,
-        });
-      }
-
-      return convertedEvents;
+      return events.map(convertEventToCamelCase);
     },
   );
 

@@ -38,23 +38,27 @@ export function generateProcessedEventBlocks(
   events: ActiveWindowEvent[],
   categories: Category[],
 ): ProcessedEventBlock[] {
-  console.log(`🔧 Processing ${events.length} events`);
+  if (import.meta.env.DEV) {
+    console.log(`Processing ${events.length} events`);
+  }
 
   const chronologicallySortedEvents = [...events]
     .filter((event) => typeof event.timestamp === "number")
     .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
 
-  console.log(
-    `📅 After timestamp filter: ${chronologicallySortedEvents.length} events`,
-  );
-  console.log(
-    `📝 Sample timestamp types:`,
-    events.slice(0, 3).map((e) => ({
-      owner: e.ownerName,
-      timestamp: e.timestamp,
-      type: typeof e.timestamp,
-    })),
-  );
+  if (import.meta.env.DEV) {
+    console.log(
+      `After timestamp filter: ${chronologicallySortedEvents.length} events`,
+    );
+    console.log(
+      `Sample timestamp types:`,
+      events.slice(0, 3).map((e) => ({
+        owner: e.ownerName,
+        timestamp: e.timestamp,
+        type: typeof e.timestamp,
+      })),
+    );
+  }
 
   const categoriesMap = new Map<string, Category>(
     categories.map((cat) => [cat._id, cat]),
@@ -135,8 +139,10 @@ export function generateProcessedEventBlocks(
     }
   }
 
-  console.log(
-    `✅ Generated ${blocks.length} blocks (${idleBlocksCreated} idle, skipped ${skippedSystem} system, ${skippedUncategorized} uncategorized)`,
-  );
+  if (import.meta.env.DEV) {
+    console.log(
+      `Generated ${blocks.length} blocks (${idleBlocksCreated} idle, skipped ${skippedSystem} system, ${skippedUncategorized} uncategorized)`,
+    );
+  }
   return blocks;
 }
