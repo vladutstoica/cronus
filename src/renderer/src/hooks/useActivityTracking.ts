@@ -1,23 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActiveWindowDetails, Category } from "@shared/types";
+import {
+  ActiveWindowDetails,
+  ActivityToRecategorize,
+  Category,
+} from "@shared/types";
 import { localApi } from "../lib/localApi";
 import { uploadActiveWindowEvent } from "../lib/activityUploader";
 import { showActivityMovedToast } from "../lib/custom-toasts";
 import { toast } from "./use-toast";
 import { activityEventService } from "../lib/activityEventService";
-
-export interface ActivityToRecategorize {
-  identifier: string;
-  nameToDisplay: string;
-  itemType: "app" | "website";
-  currentCategoryId: string;
-  currentCategoryName: string;
-  currentCategoryColor: string;
-  categoryReasoning?: string;
-  originalUrl?: string;
-  startDateMs?: number;
-  endDateMs?: number;
-}
 
 interface UseActivityTrackingProps {
   isAuthenticated: boolean;

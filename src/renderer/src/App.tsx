@@ -15,21 +15,12 @@ import { useActivityTracking } from "./hooks/useActivityTracking";
 import { useOnboardingLogic } from "./hooks/useOnboardingLogicApp";
 import { cn } from "./lib/utils";
 
+export type { ActivityToRecategorize } from "@shared/types";
+
 export const APP_NAME =
   "Cronus" + (process.env.NODE_ENV === "development" ? " Dev" : "");
 export const APP_USP =
   "The first context-aware, AI distraction and time tracker.";
-
-export interface ActivityToRecategorize {
-  identifier: string;
-  nameToDisplay: string;
-  itemType: "app" | "website";
-  currentCategoryId: string;
-  currentCategoryName: string;
-  currentCategoryColor: string;
-  categoryReasoning?: string;
-  originalUrl?: string;
-}
 
 export function MainAppContent(): React.ReactElement {
   const { isAuthenticated } = useAuth();

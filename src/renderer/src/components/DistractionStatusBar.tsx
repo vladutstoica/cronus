@@ -1,4 +1,4 @@
-import { ActivityToRecategorize } from "@renderer/hooks/useActivityTracking";
+import { ActivityToRecategorize } from "@shared/types";
 import clsx from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import {
