@@ -111,24 +111,18 @@ function checkForUpdatesIfNeeded(trigger: string): void {
 function setupRecurringUpdateCheck(): void {
   // Clear any existing timer
   if (updateTimer) {
-    clearTimeout(updateTimer);
+    clearInterval(updateTimer);
     updateTimer = null;
   }
 
-  // Schedule next check in 5 minutes (300000 ms)
-  const msUntilFiveMinutes = 300000;
+  // Check every 2 hours with ±15 min jitter to avoid thundering herd
+  const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+  const JITTER_MS = Math.floor(Math.random() * 30 * 60 * 1000) - 15 * 60 * 1000;
+  const intervalMs = TWO_HOURS_MS + JITTER_MS;
 
-  // log.info(
-  //   `📅 Next recurring update check scheduled for: ${new Date(Date.now() + msUntilFiveMinutes).toLocaleString()}`
-  // )
-
-  updateTimer = setTimeout(() => {
-    // log.info('🔄 Recurring update check triggered')
+  updateTimer = setInterval(() => {
     checkForUpdatesIfNeeded("recurring_timer");
-
-    // Reschedule for next interval
-    setupRecurringUpdateCheck();
-  }, msUntilFiveMinutes);
+  }, intervalMs);
 }
 
 export function registerAutoUpdaterHandlers(): void {
