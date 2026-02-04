@@ -161,7 +161,9 @@ export function MainAppContent(): React.ReactElement {
   const handleQuitConfirm = async () => {
     try {
       await window.api.confirmQuit();
-    } catch (error) {}
+    } catch (error) {
+      console.error("Failed to confirm quit:", error);
+    }
   };
 
   const handleKeepRunning = () => {
