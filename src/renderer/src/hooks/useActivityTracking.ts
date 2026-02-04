@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActiveWindowDetails, Category } from "@shared/types";
 import { localApi } from "../lib/localApi";
 import { uploadActiveWindowEvent } from "../lib/activityUploader";
@@ -220,6 +220,8 @@ export function useActivityTracking({
     }
   }, [openRecategorizeDialog, activeWindow]);
 
+  const mutateAsyncRef = useRef<(eventData: any) => Promise<any>>(null!);
+
   const eventCreationMutation = {
     mutateAsync: async (eventData: any) => {
       // Process the event using local IPC
@@ -237,6 +239,8 @@ export function useActivityTracking({
     },
   };
 
+  mutateAsyncRef.current = eventCreationMutation.mutateAsync;
+
   // Handle active window changes and upload events
   useEffect(() => {
     const cleanup = window.api.onActiveWindowChanged((details) => {
@@ -247,12 +251,12 @@ export function useActivityTracking({
           details as ActiveWindowDetails & {
             localScreenshotPath?: string | undefined;
           },
-          eventCreationMutation.mutateAsync,
+          mutateAsyncRef.current,
         );
       }
     });
     return cleanup;
-  }, [isAuthenticated, eventCreationMutation.mutateAsync, isTrackingPaused]);
+  }, [isAuthenticated, isTrackingPaused]);
 
   return {
     activeWindow,
