@@ -32,6 +32,7 @@ vi.mock('../../database/services/activeWindowEvents', () => ({
 
 vi.mock('../../database/services/settings', () => ({
   getBooleanSetting: vi.fn(() => false),
+  getSetting: vi.fn(() => undefined),
 }));
 
 vi.mock('../categorization', () => ({
@@ -64,6 +65,7 @@ import {
   startActiveEventsSweep,
   stopActiveEventsSweep,
   clearAllActiveEvents,
+  clearNonTrackedAppsCache,
   WindowEventDetails,
 } from '../windowTracking';
 
@@ -109,6 +111,8 @@ describe('windowTracking', () => {
     vi.clearAllMocks();
     // Ensure no leftover tracked windows between tests
     clearAllActiveEvents();
+    // VIB-73: Clear non-tracked apps cache between tests
+    clearNonTrackedAppsCache();
     vi.clearAllMocks(); // Clear again after clearAllActiveEvents side-effects
   });
 
