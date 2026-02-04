@@ -233,7 +233,18 @@ export function registerIpcHandlers(
   });
 
   ipcMain.on("open-external-url", (_event, url: string) => {
-    shell.openExternal(url);
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        console.warn(
+          `[IPC] Blocked open-external-url with unsafe protocol: ${parsed.protocol}`,
+        );
+        return;
+      }
+      shell.openExternal(url);
+    } catch {
+      console.warn(`[IPC] Blocked open-external-url with invalid URL: ${url}`);
+    }
   });
 
   ipcMain.handle("get-floating-window-visibility", () => {
