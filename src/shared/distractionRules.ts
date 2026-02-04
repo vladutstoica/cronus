@@ -1,8 +1,19 @@
 import { ActiveWindowDetails } from "./types";
 
 export const isVeryLikelyProductive = (windowDetails: ActiveWindowDetails) => {
+  let isProductiveSite = false;
+  if (windowDetails.url) {
+    try {
+      const hostname = new URL(windowDetails.url).hostname;
+      isProductiveSite = alwaysProductiveSites.some(
+        (site) => hostname === site || hostname.endsWith(`.${site}`),
+      );
+    } catch {
+      // Invalid URL, skip site matching
+    }
+  }
   return (
-    alwaysProductiveSites.includes(windowDetails.url || "") ||
+    isProductiveSite ||
     alwaysProductiveOwners.includes(windowDetails.ownerName)
   );
 };
