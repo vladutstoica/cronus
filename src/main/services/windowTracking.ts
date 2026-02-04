@@ -13,7 +13,7 @@ import {
   clearCategorizationCacheForIdentifier,
 } from "./categorization";
 import { getRuleBasedCategoryChoice } from "./ruleBasedCategorization";
-import { getBooleanSetting } from "../database/services/settings";
+import { getBooleanSetting, getSetting } from "../database/services/settings";
 import { isAIEnabled } from "./ollama";
 import { aiRequestQueue } from "./aiRequestQueue";
 
@@ -40,6 +40,42 @@ const SWEEP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 let sweepIntervalId: ReturnType<typeof setInterval> | null = null;
 
+// VIB-73: Module-level cache for non-tracked apps
+let nonTrackedAppsCache: string[] | null = null;
+let nonTrackedAppsCacheTime = 0;
+const NON_TRACKED_APPS_CACHE_TTL = 30_000; // 30 seconds
+
+function getNonTrackedApps(): string[] {
+  const now = Date.now();
+  if (
+    nonTrackedAppsCache &&
+    now - nonTrackedAppsCacheTime < NON_TRACKED_APPS_CACHE_TTL
+  ) {
+    return nonTrackedAppsCache;
+  }
+
+  const json = getSetting("non_tracked_apps");
+  if (json) {
+    try {
+      nonTrackedAppsCache = JSON.parse(json);
+      nonTrackedAppsCacheTime = now;
+      return nonTrackedAppsCache!;
+    } catch {
+      // ignore parse errors
+    }
+  }
+  nonTrackedAppsCache = [];
+  nonTrackedAppsCacheTime = now;
+  return [];
+}
+
+/**
+ * VIB-73: Clear the non-tracked apps cache (called when settings change)
+ */
+export function clearNonTrackedAppsCache(): void {
+  nonTrackedAppsCache = null;
+}
+
 /**
  * Process a new window event
  */
@@ -47,6 +83,14 @@ export async function processWindowEvent(
   eventDetails: WindowEventDetails,
 ): Promise<any | null> {
   try {
+    // VIB-73: Check if app is in non-tracked list
+    if (eventDetails.ownerName) {
+      const nonTrackedApps = getNonTrackedApps();
+      if (nonTrackedApps.includes(eventDetails.ownerName)) {
+        return null;
+      }
+    }
+
     const user = getOrCreateLocalUser();
     const categorizationEnabled = getBooleanSetting(
       "categorization_enabled",

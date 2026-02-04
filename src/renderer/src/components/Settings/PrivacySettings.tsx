@@ -47,11 +47,17 @@ export const PrivacySettings = () => {
         .map(([name, category]) => ({ name, category }))
         .sort((a, b) => a.name.localeCompare(b.name));
 
-      setTrackedApps(apps);
+      // Load non-tracked apps from settings
+      const savedNonTracked = await localApi.settings.get("non_tracked_apps");
+      const nonTrackedList: string[] = savedNonTracked
+        ? JSON.parse(savedNonTracked)
+        : [];
+      setNonTrackedApps(nonTrackedList);
 
-      // Load non-tracked apps from user settings (placeholder for now)
-      // In a full implementation, this would load from a database table
-      setNonTrackedApps([]);
+      // Filter non-tracked apps out of the tracked list
+      setTrackedApps(
+        apps.filter((app) => !nonTrackedList.includes(app.name)),
+      );
     } catch (error) {
       console.error("Failed to load privacy settings:", error);
     } finally {
@@ -59,20 +65,34 @@ export const PrivacySettings = () => {
     }
   };
 
+  const saveNonTrackedApps = async (apps: string[]) => {
+    try {
+      await localApi.settings.set("non_tracked_apps", JSON.stringify(apps));
+    } catch (error) {
+      console.error("Failed to save non-tracked apps:", error);
+    }
+  };
+
   const moveToNonTracked = (appName: string) => {
     setTrackedApps((prev) => prev.filter((app) => app.name !== appName));
-    setNonTrackedApps((prev) => [...prev, appName].sort());
-    // TODO: Save to database when feature is complete
+    setNonTrackedApps((prev) => {
+      const updated = [...prev, appName].sort();
+      saveNonTrackedApps(updated);
+      return updated;
+    });
   };
 
   const moveToTracked = (appName: string) => {
-    setNonTrackedApps((prev) => prev.filter((name) => name !== appName));
+    setNonTrackedApps((prev) => {
+      const updated = prev.filter((name) => name !== appName);
+      saveNonTrackedApps(updated);
+      return updated;
+    });
     setTrackedApps((prev) =>
       [...prev, { name: appName, category: "Uncategorized" }].sort((a, b) =>
         a.name.localeCompare(b.name),
       ),
     );
-    // TODO: Save to database when feature is complete
   };
 
   const filteredTrackedApps = trackedApps.filter((app) =>
@@ -100,12 +120,7 @@ export const PrivacySettings = () => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-xl">Privacy</CardTitle>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-medium">
-            Beta
-          </span>
-        </div>
+        <CardTitle className="text-xl">Privacy</CardTitle>
         <CardDescription>
           If you prefer that Cronus does not track certain apps or websites,
           please add them to the non-tracking list. Note that all tracking data
@@ -213,10 +228,9 @@ export const PrivacySettings = () => {
           </div>
         </div>
 
-        {/* Beta Notice */}
         <p className="text-xs text-muted-foreground italic">
-          This feature is in beta. Changes made here are not yet persisted and
-          will not affect tracking until the feature is complete.
+          Changes to the non-tracking list are saved automatically. Apps in the
+          non-tracking list will be excluded from future activity tracking.
         </p>
       </CardContent>
     </Card>
