@@ -2,6 +2,9 @@ import { Ollama } from "ollama";
 import { getBooleanSetting, getSetting } from "../database/services/settings";
 import { AIProvider } from "./aiProvider";
 
+/** Default Ollama model used when no model is configured in settings. */
+export const DEFAULT_OLLAMA_MODEL = "llama3.2:1b";
+
 let ollamaClient: Ollama | null = null;
 
 /**
@@ -115,15 +118,6 @@ export class OllamaProvider implements AIProvider {
 }
 
 /**
- * Check if Ollama is available and configured
- * @deprecated Use OllamaProvider.isAvailable() instead
- */
-export async function isOllamaAvailable(): Promise<boolean> {
-  const provider = new OllamaProvider();
-  return provider.isAvailable();
-}
-
-/**
  * Check if AI categorization is enabled
  */
 export function isAIEnabled(): boolean {
@@ -134,40 +128,11 @@ export function isAIEnabled(): boolean {
  * Get the configured Ollama model
  */
 export function getOllamaModel(): string {
-  return getSetting("ollama_model") || "llama3.2:1b";
-}
-
-/**
- * Generate a chat completion using Ollama
- * @deprecated Use OllamaProvider.generateChatCompletion() instead
- */
-export async function generateChatCompletion(
-  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
-  options?: {
-    temperature?: number;
-    maxTokens?: number;
-    format?: "json" | undefined;
-  },
-): Promise<string | null> {
-  if (!isAIEnabled()) {
-    console.log("AI is disabled in settings");
-    return null;
-  }
-
-  const provider = new OllamaProvider();
-  const available = await provider.isAvailable();
-
-  if (!available) {
-    console.log("Ollama is not available");
-    return null;
-  }
-
-  return provider.generateChatCompletion(messages, options);
+  return getSetting("ollama_model") || DEFAULT_OLLAMA_MODEL;
 }
 
 /**
  * List available Ollama models
- * @deprecated Use OllamaProvider.listModels() instead
  */
 export async function listOllamaModels(): Promise<string[]> {
   const provider = new OllamaProvider();
@@ -176,7 +141,6 @@ export async function listOllamaModels(): Promise<string[]> {
 
 /**
  * Pull (download) an Ollama model
- * @deprecated Use OllamaProvider.pullModel() instead
  */
 export async function pullOllamaModel(modelName: string): Promise<boolean> {
   const provider = new OllamaProvider();
