@@ -3,6 +3,8 @@ import { isAIEnabled } from "./ollama";
 import { Category } from "../database/services/categories";
 import crypto from "crypto";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 export interface ActivityDetails {
   ownerName?: string;
   title?: string;
@@ -279,9 +281,11 @@ export async function getAICategoryChoice(
   // OPTIMIZATION: Check cache first - reuse AI's previous decision for identical activities
   const cachedResult = getCachedCategorization(activityDetails);
   if (cachedResult) {
-    console.log(
-      `💾 CACHED: ${activityDetails.ownerName || activityDetails.url} → ${cachedResult.chosenCategoryName} (reusing AI decision from cache)`,
-    );
+    if (isDev) {
+      console.log(
+        `CACHED: ${activityDetails.ownerName || activityDetails.url} → ${cachedResult.chosenCategoryName}`,
+      );
+    }
     return cachedResult;
   }
 
@@ -303,28 +307,26 @@ export async function getAICategoryChoice(
     activityDetails,
   );
 
-  // 🔍 LOG: What we're sending to AI
-  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🤖 AI CATEGORIZATION REQUEST");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📋 User Goals:", userProjectsAndGoals || "(none set)");
-  console.log(
-    "📁 Available Categories:",
-    userCategories.map((c) => c.name).join(", "),
-  );
-  console.log("🎯 Current Activity:");
-  console.log("  - App/Browser:", activityDetails.ownerName);
-  console.log("  - Title:", activityDetails.title || "(none)");
-  console.log("  - URL:", activityDetails.url || "(none)");
-  console.log(
-    "  - Content preview:",
-    activityDetails.content
-      ? activityDetails.content.substring(0, 200) + "..."
-      : "(none)",
-  );
-  console.log("\n📨 Full Prompt Sent to AI:");
-  console.log(JSON.stringify(messages, null, 2));
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+  if (isDev) {
+    console.log("\nAI CATEGORIZATION REQUEST");
+    console.log("User Goals:", userProjectsAndGoals || "(none set)");
+    console.log(
+      "Available Categories:",
+      userCategories.map((c) => c.name).join(", "),
+    );
+    console.log("Current Activity:");
+    console.log("  - App/Browser:", activityDetails.ownerName);
+    console.log("  - Title:", activityDetails.title || "(none)");
+    console.log("  - URL:", activityDetails.url || "(none)");
+    console.log(
+      "  - Content preview:",
+      activityDetails.content
+        ? activityDetails.content.substring(0, 200) + "..."
+        : "(none)",
+    );
+    console.log("\nFull Prompt:");
+    console.log(JSON.stringify(messages, null, 2));
+  }
 
   try {
     const response = await provider.generateChatCompletion(messages, {
@@ -332,15 +334,15 @@ export async function getAICategoryChoice(
       format: "json",
     });
 
-    // 🔍 LOG: What AI responded
-    console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("🎯 AI CATEGORIZATION RESPONSE");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Raw response:", response);
+    if (isDev) {
+      console.log("\nAI CATEGORIZATION RESPONSE");
+      console.log("Raw response:", response);
+    }
 
     if (!response) {
-      console.log("❌ No response from AI");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+      if (isDev) {
+        console.log("No response from AI");
+      }
       return null;
     }
 
@@ -362,18 +364,19 @@ export async function getAICategoryChoice(
     }
 
     const parsed = JSON.parse(cleanedResponse) as CategoryChoice;
-    console.log("✅ Chosen Category:", parsed.chosenCategoryName);
-    console.log("📝 Summary:", parsed.summary);
-    console.log("💭 Reasoning:", parsed.reasoning);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    if (isDev) {
+      console.log("Chosen Category:", parsed.chosenCategoryName);
+      console.log("Summary:", parsed.summary);
+      console.log("Reasoning:", parsed.reasoning);
+    }
 
     // Cache the AI result for future requests
     cacheCategorization(activityDetails, parsed);
 
     return parsed;
   } catch (error) {
-    console.error("❌ Error getting AI category choice:", error);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    console.error("Error getting AI category choice:", error);
     return null;
   }
 }
