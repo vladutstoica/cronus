@@ -1,6 +1,6 @@
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { AnimatePresence, motion } from "framer-motion";
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { Category as SharedCategory } from "@shared/types";
 import { ActivityItem, ProcessedCategory } from "../../lib/activityProcessing";
 import { Button } from "../ui/button";
@@ -9,6 +9,16 @@ import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import { ClipboardIcon } from "lucide-react";
 import { ActivityListItem } from "./ActivityListItem";
+import { VirtualizedList } from "../VirtualizedList/VirtualizedList";
+
+/** Threshold for using virtualization (number of items) */
+const VIRTUALIZATION_THRESHOLD = 100;
+
+/** Default estimated item height in pixels */
+const DEFAULT_ITEM_HEIGHT = 32;
+
+/** Maximum height for virtualized list before scrolling (in pixels) */
+const DEFAULT_MAX_HEIGHT = 400;
 
 interface ActivityListProps {
   activities: ActivityItem[];
@@ -35,6 +45,10 @@ interface ActivityListProps {
   selectedActivities: Set<string>;
   onSelectActivity: (activityKey: string, event: React.MouseEvent) => void;
   onAddNewCategory: () => void;
+  /** Maximum height for virtualized lists before scrolling. Defaults to 400px */
+  maxVirtualizedHeight?: number;
+  /** Force virtualization regardless of item count (useful for testing) */
+  forceVirtualization?: boolean;
 }
 
 export const ActivityList = ({
@@ -59,6 +73,8 @@ export const ActivityList = ({
   selectedActivities,
   onSelectActivity,
   onAddNewCategory,
+  maxVirtualizedHeight = DEFAULT_MAX_HEIGHT,
+  forceVirtualization = false,
 }: ActivityListProps): React.ReactElement => {
   const oneMinuteMs = 60 * 1000;
   const visibleActivities = activities.filter(
@@ -76,8 +92,16 @@ export const ActivityList = ({
     : visibleActivities;
   const activitiesToHide = shouldShowAllActivities ? [] : hiddenActivities;
 
-  const renderItems = (items: ActivityItem[]): React.ReactElement[] => {
-    return items.map((activity, index) => {
+  // Determine if we should use virtualization based on total item count
+  const shouldVirtualize = useMemo(
+    () => forceVirtualization || activities.length >= VIRTUALIZATION_THRESHOLD,
+    [activities.length, forceVirtualization],
+  );
+
+  // Pre-compute selection state for all items to avoid recalculating in render
+  const getSelectionState = useCallback(
+    (items: ActivityItem[], index: number) => {
+      const activity = items[index];
       const activityKey = `${activity.identifier}-${activity.name}`;
       const isSelected = selectedActivities.has(activityKey);
 
@@ -97,6 +121,84 @@ export const ActivityList = ({
       const isNextSelected = nextActivityKey
         ? selectedActivities.has(nextActivityKey)
         : false;
+
+      return { isSelected, isPrevSelected, isNextSelected };
+    },
+    [selectedActivities],
+  );
+
+  // Key extractor for virtualized list
+  const getItemKey = useCallback(
+    (activity: ActivityItem): string => {
+      return `${currentCategory.id}-${activity.identifier}-${activity.name}`;
+    },
+    [currentCategory.id],
+  );
+
+  // Render function for virtualized items (no animation for performance)
+  const renderVirtualizedItem = useCallback(
+    (items: ActivityItem[]) =>
+      // eslint-disable-next-line react/display-name
+      (activity: ActivityItem, index: number): React.ReactNode => {
+        const { isSelected, isPrevSelected, isNextSelected } =
+          getSelectionState(items, index);
+
+        return (
+          <ActivityListItem
+            activity={activity}
+            isSelected={isSelected}
+            isPrevSelected={isPrevSelected}
+            isNextSelected={isNextSelected}
+            currentCategory={currentCategory}
+            allUserCategories={allUserCategories}
+            handleMoveActivity={handleMoveActivity}
+            isMovingActivity={isMovingActivity}
+            faviconErrors={faviconErrors}
+            handleFaviconError={handleFaviconError}
+            hoveredActivityKey={hoveredActivityKey}
+            setHoveredActivityKey={setHoveredActivityKey}
+            openDropdownActivityKey={openDropdownActivityKey}
+            setOpenDropdownActivityKey={setOpenDropdownActivityKey}
+            onSelectActivity={onSelectActivity}
+            selectedHour={selectedHour}
+            selectedDay={selectedDay}
+            viewMode={viewMode}
+            startDateMs={startDateMs}
+            endDateMs={endDateMs}
+            onAddNewCategory={onAddNewCategory}
+          />
+        );
+      },
+    [
+      getSelectionState,
+      currentCategory,
+      allUserCategories,
+      handleMoveActivity,
+      isMovingActivity,
+      faviconErrors,
+      handleFaviconError,
+      hoveredActivityKey,
+      setHoveredActivityKey,
+      openDropdownActivityKey,
+      setOpenDropdownActivityKey,
+      onSelectActivity,
+      selectedHour,
+      selectedDay,
+      viewMode,
+      startDateMs,
+      endDateMs,
+      onAddNewCategory,
+    ],
+  );
+
+  // Render items with animation (for small lists)
+  const renderAnimatedItems = (items: ActivityItem[]): React.ReactElement[] => {
+    return items.map((activity, index) => {
+      const activityKey = `${activity.identifier}-${activity.name}`;
+      const { isSelected, isPrevSelected, isNextSelected } = getSelectionState(
+        items,
+        index,
+      );
 
       return (
         <motion.div
@@ -137,6 +239,21 @@ export const ActivityList = ({
     });
   };
 
+  // Render virtualized list
+  const renderVirtualizedList = (items: ActivityItem[]): React.ReactElement => {
+    return (
+      <VirtualizedList
+        items={items}
+        renderItem={renderVirtualizedItem(items)}
+        estimateSize={DEFAULT_ITEM_HEIGHT}
+        overscan={5}
+        maxHeight={maxVirtualizedHeight}
+        getItemKey={getItemKey}
+        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+      />
+    );
+  };
+
   if (activities.length === 0) {
     return (
       <motion.div
@@ -173,6 +290,35 @@ export const ActivityList = ({
     );
   }
 
+  // For large lists, use virtualization without animations
+  if (shouldVirtualize) {
+    // Combine all items when using virtualization
+    const allItems = isShowMore
+      ? [...activitiesToShow, ...activitiesToHide]
+      : activitiesToShow;
+
+    return (
+      <div>
+        {renderVirtualizedList(allItems)}
+        {activitiesToHide.length > 0 && (
+          <Button
+            variant="link"
+            className="p-1 px-2 mt-2 w-full h-auto text-xs text-left justify-start text-slate-600 dark:text-slate-400 hover:text-foreground transition-colors flex items-center gap-1"
+            onClick={onToggleShowMore}
+          >
+            {isShowMore ? "Show less" : `Show ${activitiesToHide.length} more`}
+            <ChevronDownIcon
+              className={`ml-.5 h-4 w-4 transition-transform duration-200 ${
+                isShowMore ? "rotate-180" : ""
+              }`}
+            />
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // For small lists, use the original animated rendering
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -181,7 +327,7 @@ export const ActivityList = ({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
-        {renderItems(activitiesToShow)}
+        {renderAnimatedItems(activitiesToShow)}
         {activitiesToHide.length > 0 && (
           <Button
             variant="link"
@@ -209,7 +355,7 @@ export const ActivityList = ({
               }}
               className="overflow-hidden"
             >
-              {renderItems(activitiesToHide)}
+              {renderAnimatedItems(activitiesToHide)}
             </motion.div>
           )}
         </AnimatePresence>
