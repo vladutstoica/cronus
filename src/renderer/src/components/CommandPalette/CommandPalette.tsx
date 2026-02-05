@@ -78,7 +78,7 @@ export function CommandPalette({
         id: "nav-dashboard",
         label: "Go to Dashboard",
         icon: <LayoutDashboard size={16} />,
-        shortcut: "",
+        shortcut: "\u2318 1",
         category: "navigation",
         keywords: ["home", "main", "overview"],
         onSelect: () => {
@@ -90,7 +90,7 @@ export function CommandPalette({
         id: "nav-todos",
         label: "Go to Todos",
         icon: <CheckSquare size={16} />,
-        shortcut: "",
+        shortcut: "\u2318 2",
         category: "navigation",
         keywords: ["tasks", "checklist", "list"],
         onSelect: () => {
@@ -102,7 +102,7 @@ export function CommandPalette({
         id: "nav-stats",
         label: "Go to Stats",
         icon: <BarChart3 size={16} />,
-        shortcut: "",
+        shortcut: "\u2318 3",
         category: "navigation",
         keywords: ["statistics", "analytics", "charts", "reports"],
         onSelect: () => {
@@ -114,7 +114,7 @@ export function CommandPalette({
         id: "nav-settings",
         label: "Go to Settings",
         icon: <Settings size={16} />,
-        shortcut: "",
+        shortcut: "\u2318 ,",
         category: "navigation",
         keywords: ["preferences", "config", "options"],
         onSelect: () => {
@@ -127,7 +127,7 @@ export function CommandPalette({
         id: "action-tracking",
         label: isTrackingPaused ? "Resume Tracking" : "Pause Tracking",
         icon: isTrackingPaused ? <Play size={16} /> : <Pause size={16} />,
-        shortcut: "",
+        shortcut: "\u2318 P",
         category: "action",
         keywords: ["stop", "start", "toggle", "timer"],
         onSelect: () => {
@@ -427,6 +427,10 @@ export function CommandPalette({
               <span className="flex items-center gap-1">
                 <kbd className="px-1 rounded bg-muted font-mono">esc</kbd>
                 close
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1 rounded bg-muted font-mono">?</kbd>
+                shortcuts
               </span>
             </div>
           </div>

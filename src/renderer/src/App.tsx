@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { CommandPalette, useCommandPalette } from "./components/CommandPalette";
 import { DashboardView } from "./components/DashboardView";
 import DistractionStatusBar from "./components/DistractionStatusBar";
+import { KeyboardShortcutsHelp } from "./components/KeyboardShortcutsHelp";
 import { OnboardingModal } from "./components/OnboardingModal";
 import { QuitConfirmationModal } from "./components/QuitConfirmationModal";
 import RecategorizeDialog from "./components/RecategorizeDialog";
@@ -15,6 +16,7 @@ import { useNavigation } from "./contexts/NavigationContext";
 import { useSettings } from "./contexts/SettingsContext";
 import { useAccessibilityPermission } from "./hooks/useAccessibilityPermission";
 import { useActivityTracking } from "./hooks/useActivityTracking";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useOnboardingLogic } from "./hooks/useOnboardingLogicApp";
 import { cn } from "./lib/utils";
 
@@ -35,6 +37,7 @@ export function MainAppContent(): React.ReactElement {
   const [isTrackingPaused, setIsTrackingPaused] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [isSystemRestarting, setIsSystemRestarting] = useState(false);
+  const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
 
   // Use the accessibility permission hook
   const { accessibilityPermissionChecked, missingAccessibilityPermissions } =
@@ -119,6 +122,26 @@ export function MainAppContent(): React.ReactElement {
   const handleNavigateSettings = useCallback(() => {
     setIsSettingsOpen(true);
   }, [setIsSettingsOpen]);
+
+  // Handler for section navigation from keyboard shortcuts
+  const handleNavigateSection = useCallback(
+    (section: "dashboard" | "todos" | "stats") => {
+      setIsSettingsOpen(false);
+      setActiveSection(section);
+    },
+    [setIsSettingsOpen, setActiveSection],
+  );
+
+  // Use the keyboard shortcuts hook for global navigation and actions
+  const { shortcuts, closeShortcutsHelp } = useKeyboardShortcuts({
+    onNavigateSection: handleNavigateSection,
+    onNavigateSettings: handleNavigateSettings,
+    onToggleTracking: handleToggleTracking,
+    onOpenCommandPalette: commandPalette.open,
+    isShortcutsHelpOpen,
+    setIsShortcutsHelpOpen,
+    enabled: !showOnboarding && !showQuitModal && !isRecategorizeDialogOpen,
+  });
 
   // Mini timer visibility management
   useEffect(() => {
@@ -290,6 +313,13 @@ export function MainAppContent(): React.ReactElement {
           onToggleTracking={handleToggleTracking}
           isMiniTimerVisible={isMiniTimerVisible}
           onToggleFloatingWindow={handleToggleFloatingWindow}
+        />
+
+        {/* Keyboard Shortcuts Help Dialog */}
+        <KeyboardShortcutsHelp
+          isOpen={isShortcutsHelpOpen}
+          onClose={closeShortcutsHelp}
+          shortcuts={shortcuts}
         />
 
         {allCategories && recategorizeTarget && (
