@@ -137,7 +137,7 @@ export function updateUser(
   const now = new Date().toISOString();
 
   const fields: string[] = [];
-  const values: any[] = [];
+  const values: (string | number | boolean | null)[] = [];
 
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {

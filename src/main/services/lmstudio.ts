@@ -67,12 +67,13 @@ export class LMStudioProvider implements AIProvider {
         return null;
       }
 
-      const completionParams: any = {
-        model,
-        messages,
-        temperature: options?.temperature ?? 0.7,
-        max_tokens: options?.maxTokens ?? 500,
-      };
+      const completionParams: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming =
+        {
+          model,
+          messages,
+          temperature: options?.temperature ?? 0.7,
+          max_tokens: options?.maxTokens ?? 500,
+        };
 
       // LM Studio doesn't support response_format in the same way as OpenAI
       // We'll rely on prompt engineering for JSON output instead

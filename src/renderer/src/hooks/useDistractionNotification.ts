@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActiveWindowDetails, Category } from "@shared/types";
 import { useAuth } from "../contexts/AuthContext";
-import { localApi } from "../lib/localApi";
+import { localApi, ElectronAppSettings } from "../lib/localApi";
 
 export const useDistractionNotification = (
   categoryDetails: Category | null | undefined,
@@ -9,7 +9,8 @@ export const useDistractionNotification = (
   statusText: string,
 ): void => {
   const { user, isAuthenticated } = useAuth();
-  const [electronSettings, setElectronSettings] = useState<any>(null);
+  const [electronSettings, setElectronSettings] =
+    useState<ElectronAppSettings | null>(null);
 
   const lastNotifiedRef = useRef<number | null>(null);
   const distractionStartRef = useRef<number | null>(null);
@@ -32,14 +33,14 @@ export const useDistractionNotification = (
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if ((electronSettings as any)?.showDistractionNotifications === false) {
+    if (electronSettings?.showDistractionNotifications === false) {
       distractionStartRef.current = null;
       lastNotifiedRef.current = null;
       return;
     }
 
     const notificationIntervalMs =
-      ((electronSettings as any)?.distractionNotificationInterval || 60) * 1000;
+      (electronSettings?.distractionNotificationInterval || 60) * 1000;
 
     let isDistracting = false;
     if (

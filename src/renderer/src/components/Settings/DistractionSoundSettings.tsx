@@ -58,7 +58,12 @@ export const DistractionSoundSettings = () => {
     }
   };
 
-  const updateSettings = async (newSettings: any) => {
+  const updateSettings = async (newSettings: {
+    playDistractionSound: boolean;
+    distractionSoundInterval: number;
+    showDistractionNotifications: boolean;
+    distractionNotificationInterval: number;
+  }) => {
     try {
       await localApi.user.update({
         electron_app_settings: newSettings,

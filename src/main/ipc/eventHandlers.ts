@@ -15,10 +15,14 @@ import {
   recategorizeEventsByIdentifierService,
 } from "../services/windowTracking";
 import { snakeToCamel } from "../utils/snakeToCamel";
+import { ActiveWindowEvent } from "../database/services/activeWindowEvents";
+import { WindowEventDetails } from "../services/windowTracking";
 
 // Convert event snake_case to camelCase for frontend
-const convertEventToCamelCase = (event: any): Record<string, unknown> => ({
-  ...snakeToCamel(event),
+const convertEventToCamelCase = (
+  event: ActiveWindowEvent,
+): Record<string, unknown> => ({
+  ...snakeToCamel(event as unknown as Record<string, unknown>),
   _id: event.id, // frontend expects _id instead of id
   timestamp: new Date(event.timestamp).getTime(), // Convert to number
 });
@@ -57,9 +61,22 @@ export function registerEventHandlers(): void {
     return convertEventToCamelCase(event);
   });
 
-  ipcMain.handle("local:update-event", (_event, id: string, updates: any) => {
-    return updateActiveWindowEvent(id, updates);
-  });
+  ipcMain.handle(
+    "local:update-event",
+    (
+      _event,
+      id: string,
+      updates: Partial<{
+        category_id: string;
+        category_reasoning: string;
+        llm_summary: string;
+        generated_title: string;
+        duration_ms: number;
+      }>,
+    ) => {
+      return updateActiveWindowEvent(id, updates);
+    },
+  );
 
   ipcMain.handle(
     "local:get-user-statistics",
@@ -97,12 +114,15 @@ export function registerEventHandlers(): void {
   );
 
   // Window tracking handlers
-  ipcMain.handle("local:process-window-event", (_event, eventDetails: any) => {
-    return processWindowEvent({
-      ...eventDetails,
-      timestamp: new Date(eventDetails.timestamp),
-    });
-  });
+  ipcMain.handle(
+    "local:process-window-event",
+    (_event, eventDetails: WindowEventDetails) => {
+      return processWindowEvent({
+        ...eventDetails,
+        timestamp: new Date(eventDetails.timestamp),
+      });
+    },
+  );
 
   ipcMain.handle(
     "local:update-event-duration",

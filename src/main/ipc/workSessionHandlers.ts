@@ -8,10 +8,11 @@ import {
   getSessionsByDate,
 } from "../database/services/workSessions";
 import { snakeToCamel } from "../utils/snakeToCamel";
+import { WorkSession } from "../database/services/workSessions";
 
 // Convert work session snake_case to camelCase for frontend
-const convertWorkSessionToCamelCase = (session: any) =>
-  session ? snakeToCamel(session) : null;
+const convertWorkSessionToCamelCase = (session: WorkSession | null) =>
+  session ? snakeToCamel(session as unknown as Record<string, unknown>) : null;
 
 export function registerWorkSessionHandlers(): void {
   ipcMain.handle("work-session:get-active", () => {

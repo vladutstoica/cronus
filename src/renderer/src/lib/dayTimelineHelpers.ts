@@ -1,3 +1,5 @@
+import { ActiveWindowEvent } from "@shared/types";
+
 export interface CanonicalBlock {
   _id?: string;
   startTime: Date;
@@ -10,7 +12,7 @@ export interface CanonicalBlock {
   categoryId?: string;
   categoryName?: string;
   type: "window" | "browser" | "system" | "manual" | "calendar" | "idle";
-  originalEvent?: any;
+  originalEvent?: ActiveWindowEvent;
   originalEventIds?: string[]; // Track all original event IDs that contributed to this block
   isSuggestion?: boolean;
   onAccept?: (e: React.MouseEvent) => void;

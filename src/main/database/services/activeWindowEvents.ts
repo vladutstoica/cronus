@@ -172,7 +172,7 @@ export function updateActiveWindowEvent(
   const now = new Date().toISOString();
 
   const fields: string[] = [];
-  const values: any[] = [];
+  const values: (string | number | null)[] = [];
 
   Object.entries(updates).forEach(([key, value]) => {
     if (value !== undefined) {
@@ -251,7 +251,7 @@ export function getTotalDurationByCategoryId(
     WHERE category_id = ?
   `;
 
-  const params: any[] = [categoryId];
+  const params: (string | number)[] = [categoryId];
 
   if (startDate && endDate) {
     query += " AND timestamp >= ? AND timestamp <= ?";

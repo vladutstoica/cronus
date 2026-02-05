@@ -13,10 +13,11 @@ import {
   clearFocusTodos,
 } from "../database/services/todos";
 import { snakeToCamel } from "../utils/snakeToCamel";
+import { Todo, CreateTodoInput, UpdateTodoInput } from "../database/services/todos";
 
 // Convert todo snake_case to camelCase for frontend
-const convertTodoToCamelCase = (todo: any) => ({
-  ...snakeToCamel(todo),
+const convertTodoToCamelCase = (todo: Todo) => ({
+  ...snakeToCamel(todo as unknown as Record<string, unknown>),
   isFocus: todo.is_focus === 1, // Convert integer to boolean
   tags: todo.tags ? JSON.parse(todo.tags) : [], // Parse JSON string
 });
@@ -46,14 +47,17 @@ export function registerTodoHandlers(): void {
     },
   );
 
-  ipcMain.handle("local:create-todo", (_event, input: any) => {
-    const user = getOrCreateLocalUser();
-    const todo = createTodo({
-      ...input,
-      user_id: user.id,
-    });
-    return convertTodoToCamelCase(todo);
-  });
+  ipcMain.handle(
+    "local:create-todo",
+    (_event, input: Omit<CreateTodoInput, "user_id">) => {
+      const user = getOrCreateLocalUser();
+      const todo = createTodo({
+        ...input,
+        user_id: user.id,
+      });
+      return convertTodoToCamelCase(todo);
+    },
+  );
 
   ipcMain.handle("local:get-todo-by-id", (_event, id: string) => {
     const todo = getTodoById(id);
@@ -61,7 +65,7 @@ export function registerTodoHandlers(): void {
     return convertTodoToCamelCase(todo);
   });
 
-  ipcMain.handle("local:update-todo", (_event, id: string, updates: any) => {
+  ipcMain.handle("local:update-todo", (_event, id: string, updates: UpdateTodoInput) => {
     const todo = updateTodo(id, updates);
     if (!todo) return null;
     return convertTodoToCamelCase(todo);

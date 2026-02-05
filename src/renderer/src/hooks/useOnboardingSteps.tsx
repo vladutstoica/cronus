@@ -20,7 +20,16 @@ interface UseOnboardingStepsProps {
   referralSource: string;
   setReferralSource: (source: string) => void;
   onGoalsComplete: (goals: string) => void;
-  onCategoriesComplete: (categories: any[]) => void;
+  onCategoriesComplete: (
+    categories: Array<{
+      name: string;
+      description?: string;
+      color?: string;
+      isProductive: boolean;
+      isDefault: boolean;
+      isArchived?: boolean;
+    }>,
+  ) => void;
   onNext: () => void;
   onAiCategoriesLoadingChange: (loading: boolean) => void;
 }
