@@ -1,7 +1,7 @@
 import { is } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, Notification, shell } from "electron";
 import { ActivityToRecategorize, Category } from "@shared/types";
-import icon from "../../resources/icon.png?asset";
+import icon from "../../../resources/icon.png?asset";
 import { nativeWindowObserver, PermissionType } from "native-window-observer";
 import { logMainToFile } from "../logging";
 import {
