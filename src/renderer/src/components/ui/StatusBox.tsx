@@ -96,7 +96,7 @@ const StatusBox: React.FC<StatusBoxProps> = ({
       )}
       <span
         className={clsx(
-          "font-mono pointer-events-none",
+          "font-mono tabular-nums pointer-events-none",
           timeColorCls,
           isEnlarged
             ? "text-xl font-semibold"

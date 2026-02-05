@@ -98,7 +98,7 @@ export function SessionTimer({
           </span>
         </div>
         {activeSession && (
-          <span className="text-2xl font-mono font-bold text-success">
+          <span className="text-2xl font-mono tabular-nums font-bold text-success">
             {formattedTime}
           </span>
         )}
