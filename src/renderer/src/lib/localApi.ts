@@ -345,6 +345,52 @@ export const localApi = {
       };
     },
   },
+
+  // Categorization insights operations
+  categorizationInsights: {
+    getPatterns: async (options?: {
+      patternType?: "app" | "domain" | "url_path" | "title_keyword";
+      categoryId?: string;
+      source?: "user_correction" | "manual" | "template";
+      minConfidence?: number;
+      limit?: number;
+      orderBy?: "confidence" | "match_count" | "created_at" | "updated_at";
+      orderDirection?: "ASC" | "DESC";
+    }) => {
+      return window.electron.ipcRenderer.invoke(
+        "local:get-categorization-patterns",
+        options,
+      );
+    },
+    deletePattern: async (id: number): Promise<boolean> => {
+      return window.electron.ipcRenderer.invoke(
+        "local:delete-categorization-pattern",
+        id,
+      );
+    },
+    deleteAllPatterns: async (): Promise<number> => {
+      return window.electron.ipcRenderer.invoke(
+        "local:delete-all-categorization-patterns",
+      );
+    },
+    getPatternStats: async () => {
+      return window.electron.ipcRenderer.invoke("local:get-pattern-stats");
+    },
+    getRuleStats: async () => {
+      return window.electron.ipcRenderer.invoke("local:get-rule-stats");
+    },
+    getSuggestions: async (limit?: number) => {
+      return window.electron.ipcRenderer.invoke(
+        "local:get-rule-suggestions",
+        limit,
+      );
+    },
+    getInsights: async () => {
+      return window.electron.ipcRenderer.invoke(
+        "local:get-categorization-insights",
+      );
+    },
+  },
 };
 
 // Helper hooks for React Query (if needed)

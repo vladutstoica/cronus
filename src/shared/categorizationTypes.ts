@@ -193,9 +193,45 @@ export interface CategorizationResult {
 }
 
 /**
+ * Suggestion for creating a rule based on uncategorized activities
+ */
+export interface RuleSuggestion {
+  identifier: string;
+  type: "app" | "domain";
+  occurrences: number;
+  totalDurationMs: number;
+  lastSeen: string;
+  suggestedPatternType: PatternType;
+}
+
+/**
+ * Statistics about learned patterns for a user
+ */
+export interface PatternStats {
+  totalPatterns: number;
+  patternsByType: Record<PatternType, number>;
+  patternsBySource: Record<PatternSource, number>;
+  averageConfidence: number;
+  trustedPatterns: number;
+}
+
+/**
+ * Statistics about categorization rules for a user
+ */
+export interface RuleStats {
+  totalRules: number;
+  enabledRules: number;
+  rulesBySource: Record<RuleSource, number>;
+  averageConfidence: number;
+  totalMatches: number;
+}
+
+/**
  * Convert a database row to a CategorizationPattern object
  */
-export function rowToPattern(row: CategorizationPatternRow): CategorizationPattern {
+export function rowToPattern(
+  row: CategorizationPatternRow,
+): CategorizationPattern {
   return {
     id: row.id,
     userId: row.user_id,
@@ -238,7 +274,7 @@ export function rowToRule(row: CategorizationRuleRow): CategorizationRule {
  * Convert a CategorizationPattern to database row format
  */
 export function patternToRow(
-  pattern: Omit<CategorizationPattern, "id" | "createdAt" | "updatedAt">
+  pattern: Omit<CategorizationPattern, "id" | "createdAt" | "updatedAt">,
 ): Omit<CategorizationPatternRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: pattern.userId,
@@ -256,7 +292,7 @@ export function patternToRow(
  * Convert a CategorizationRule to database row format
  */
 export function ruleToRow(
-  rule: Omit<CategorizationRule, "id" | "createdAt" | "updatedAt">
+  rule: Omit<CategorizationRule, "id" | "createdAt" | "updatedAt">,
 ): Omit<CategorizationRuleRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: rule.userId,

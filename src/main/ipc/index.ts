@@ -11,6 +11,8 @@ import { registerFileHandlers } from "./fileHandlers";
 import { registerWindowHandlers } from "./windowHandlers";
 import { registerSettingsHandlers } from "./settingsHandlers";
 import { registerExportHandlers } from "./exportHandlers";
+import { registerCategorizationPatternsHandlers } from "./categorizationPatternsHandlers";
+import { registerWorklogHandlers } from "./worklogHandlers";
 
 export function registerIpcHandlers(
   windows: Windows,
@@ -29,4 +31,6 @@ export function registerIpcHandlers(
   registerWindowHandlers(windows, recreateFloatingWindow, recreateMainWindow);
   registerSettingsHandlers();
   registerExportHandlers();
+  registerCategorizationPatternsHandlers();
+  registerWorklogHandlers();
 }
