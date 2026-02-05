@@ -56,10 +56,15 @@ export interface TrayPopoverApi {
   // Status updates (from main process)
   onStatusUpdate: (callback: (data: TrayStatusUpdate) => void) => () => void;
 
+  // Tracking control
+  pauseTracking: () => Promise<void>;
+  resumeTracking: () => Promise<void>;
+
   // Window control
   hidePopover: () => void;
   openMainApp: () => void;
   openSettings: () => void;
+  quitApp: () => void;
 }
 
 const trayApi: TrayPopoverApi = {
@@ -89,6 +94,10 @@ const trayApi: TrayPopoverApi = {
     };
   },
 
+  // Tracking control
+  pauseTracking: () => ipcRenderer.invoke("pause-window-tracking"),
+  resumeTracking: () => ipcRenderer.invoke("resume-window-tracking"),
+
   // Window control
   hidePopover: () => {
     ipcRenderer.send("hide-tray-popover");
@@ -98,6 +107,9 @@ const trayApi: TrayPopoverApi = {
   },
   openSettings: () => {
     ipcRenderer.send("open-settings-page");
+  },
+  quitApp: () => {
+    ipcRenderer.send("quit-app");
   },
 };
 

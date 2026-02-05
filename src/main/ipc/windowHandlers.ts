@@ -336,4 +336,25 @@ export function registerWindowHandlers(
 
     app.quit();
   });
+
+  // Handler for tray quit action
+  ipcMain.on("quit-app", () => {
+    logMainToFile("Quit requested from tray, closing app");
+
+    setAllowForcedQuit(true);
+
+    if (windows.mainWindow && !windows.mainWindow.isDestroyed()) {
+      windows.mainWindow.destroy();
+    }
+
+    if (windows.floatingWindow && !windows.floatingWindow.isDestroyed()) {
+      windows.floatingWindow.destroy();
+    }
+
+    if (windows.trayPopoverWindow && !windows.trayPopoverWindow.isDestroyed()) {
+      windows.trayPopoverWindow.destroy();
+    }
+
+    app.quit();
+  });
 }

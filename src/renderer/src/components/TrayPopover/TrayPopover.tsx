@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { SessionTimer } from "./SessionTimer";
-import { TrayStats } from "./TrayStats";
-import { TrayActivityChart } from "./TrayActivityChart";
-import { TrayAppsList } from "./TrayAppsList";
-import { ExternalLink, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { TodayTab, SessionsTab, ActionsTab } from "./tabs";
+import { Calendar, Clock, Zap } from "lucide-react";
+
+// Storage key for persisting the last active tab
+const ACTIVE_TAB_STORAGE_KEY = "cronus-tray-active-tab";
 
 // Type definitions for the tray API (camelCase from IPC)
 interface WorkSession {
@@ -56,15 +57,21 @@ declare global {
       onStatusUpdate: (
         callback: (data: TrayStatusUpdate) => void,
       ) => () => void;
+      pauseTracking: () => Promise<void>;
+      resumeTracking: () => Promise<void>;
       hidePopover: () => void;
       openMainApp: () => void;
       openSettings: () => void;
+      quitApp: () => void;
     };
   }
 }
 
+type TabValue = "today" | "sessions" | "actions";
+
 export function TrayPopover() {
   const [activeSession, setActiveSession] = useState<WorkSession | null>(null);
+  const [recentSessions, setRecentSessions] = useState<WorkSession[]>([]);
   const [todayStats, setTodayStats] = useState<TodayStats>({
     workStarted: null,
     totalMs: 0,
@@ -76,20 +83,55 @@ export function TrayPopover() {
     null,
   );
 
+  // Initialize active tab from localStorage
+  const [activeTab, setActiveTab] = useState<TabValue>(() => {
+    try {
+      const stored = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+      if (stored && ["today", "sessions", "actions"].includes(stored)) {
+        return stored as TabValue;
+      }
+    } catch {
+      // localStorage might not be available
+    }
+    return "today";
+  });
+
+  // Persist active tab to localStorage
+  const handleTabChange = useCallback((value: string) => {
+    const tabValue = value as TabValue;
+    setActiveTab(tabValue);
+    try {
+      localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tabValue);
+    } catch {
+      // localStorage might not be available
+    }
+  }, []);
+
   // Load initial data
   const loadData = useCallback(async () => {
     try {
-      const [session, stats, activity, apps] = await Promise.all([
+      const today = new Date().toISOString().split("T")[0];
+      const [session, stats, activity, apps, sessions] = await Promise.all([
         window.trayApi.getActiveSession(),
         window.trayApi.getTodayStats(),
         window.trayApi.getHourlyActivity(),
         window.trayApi.getTopApps(),
+        window.trayApi.getSessionsByDate(today),
       ]);
 
       setActiveSession(session);
       setTodayStats(stats);
       setHourlyActivity(activity);
       setTopApps(apps);
+      // Filter out active session from recent sessions and sort by most recent
+      setRecentSessions(
+        sessions
+          .filter((s) => s.endedAt) // Only completed sessions
+          .sort(
+            (a, b) =>
+              new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+          ),
+      );
     } catch (error) {
       console.error("Error loading tray data:", error);
     } finally {
@@ -160,57 +202,101 @@ export function TrayPopover() {
     window.trayApi.openSettings();
   };
 
-  // Use status update for total time if available
-  const totalTrackedMs = statusUpdate?.totalTrackedMs ?? todayStats.totalMs;
+  const handleToggleTracking = async () => {
+    try {
+      if (statusUpdate?.isTrackingPaused) {
+        await window.trayApi.resumeTracking();
+      } else {
+        await window.trayApi.pauseTracking();
+      }
+      // The status update will come through the subscription
+    } catch (error) {
+      console.error("Error toggling tracking:", error);
+    }
+  };
+
+  const handleQuitApp = () => {
+    window.trayApi.quitApp();
+  };
 
   return (
     <div className="w-[380px] h-[520px] bg-background rounded-xl border border-border shadow-2xl overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
         <h1 className="text-sm font-semibold text-foreground">Cronus</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenMainApp}
-            className="p-1.5 rounded-md hover:bg-secondary transition-colors"
-            title="Open main app"
+        {statusUpdate && (
+          <div
+            className={`flex items-center gap-1.5 text-xs ${
+              statusUpdate.isTrackingPaused
+                ? "text-warning"
+                : "text-success"
+            }`}
           >
-            <ExternalLink size={16} className="text-muted-foreground" />
-          </button>
-          <button
-            onClick={handleOpenSettings}
-            className="p-1.5 rounded-md hover:bg-secondary transition-colors"
-            title="Settings"
-          >
-            <Settings size={16} className="text-muted-foreground" />
-          </button>
-        </div>
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${
+                statusUpdate.isTrackingPaused ? "bg-warning" : "bg-success"
+              }`}
+            />
+            {statusUpdate.isTrackingPaused ? "Paused" : "Tracking"}
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Session Timer */}
-        <SessionTimer
-          activeSession={activeSession}
-          onStartSession={handleStartSession}
-          onEndSession={handleEndSession}
-          onUpdateNote={handleUpdateNote}
-        />
+      {/* Tabs */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="flex-1 flex flex-col overflow-hidden"
+        >
+          <TabsList className="grid w-full grid-cols-3 mx-4 mt-3 flex-shrink-0" style={{ width: "calc(100% - 32px)" }}>
+            <TabsTrigger value="today" className="gap-1">
+              <Calendar size={12} />
+              Today
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="gap-1">
+              <Clock size={12} />
+              Sessions
+            </TabsTrigger>
+            <TabsTrigger value="actions" className="gap-1">
+              <Zap size={12} />
+              Actions
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Activity Chart */}
-        <TrayActivityChart
-          hourlyActivity={hourlyActivity}
-          isLoading={isLoading}
-        />
+          <div className="flex-1 overflow-y-auto p-4">
+            <TabsContent value="today" className="mt-0 h-full">
+              <TodayTab
+                todayStats={todayStats}
+                hourlyActivity={hourlyActivity}
+                topApps={topApps}
+                statusUpdate={statusUpdate}
+                isLoading={isLoading}
+              />
+            </TabsContent>
 
-        {/* Stats */}
-        <TrayStats
-          workStarted={todayStats.workStarted}
-          totalMs={totalTrackedMs}
-          isLoading={isLoading}
-        />
+            <TabsContent value="sessions" className="mt-0 h-full">
+              <SessionsTab
+                activeSession={activeSession}
+                recentSessions={recentSessions}
+                onStartSession={handleStartSession}
+                onEndSession={handleEndSession}
+                onUpdateNote={handleUpdateNote}
+                isLoading={isLoading}
+              />
+            </TabsContent>
 
-        {/* Top Apps */}
-        <TrayAppsList topApps={topApps} isLoading={isLoading} />
+            <TabsContent value="actions" className="mt-0 h-full">
+              <ActionsTab
+                statusUpdate={statusUpdate}
+                onOpenMainApp={handleOpenMainApp}
+                onOpenSettings={handleOpenSettings}
+                onToggleTracking={handleToggleTracking}
+                onQuitApp={handleQuitApp}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
     </div>
   );
