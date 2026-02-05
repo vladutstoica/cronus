@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { AppWindowMac, Pause, X } from "lucide-react";
+import { AppWindowMac, Play, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Category } from "@shared/types";
 import { Button } from "./components/ui/button";
@@ -271,6 +271,13 @@ const FloatingDisplay: React.FC = () => {
     }
   };
 
+  // Handle resume tracking when clicking on the paused widget
+  const handleResumeTracking = useCallback(() => {
+    if (isTrackingPaused && window.floatingApi?.resumeTracking) {
+      window.floatingApi.resumeTracking();
+    }
+  }, [isTrackingPaused]);
+
   if (!isVisible && latestStatus === null) {
     return (
       <div className="w-full h-full flex items-center justify-center p-2 rounded-xl bg-background border-2 border-secondary/50">
@@ -322,14 +329,21 @@ const FloatingDisplay: React.FC = () => {
     unproductiveIsEnlarged = false;
   }
 
-  // visual indication when tracking is paused
-  const getPauseIndicator = () => {
+  // Non-blocking pause badge indicator - shows in corner without obscuring content
+  const getPauseBadge = () => {
     if (isTrackingPaused) {
       return (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl z-50 flex items-center justify-center">
-          <div className="bg-blue-700 text-white px-2 py-1 opacity-90 rounded-lg font-semibold text-xs shadow-lg flex items-center gap-1">
-            <Pause size={12} />
-            PAUSED
+        <div
+          className="absolute -top-1 -right-1 z-50 cursor-pointer"
+          onClick={handleResumeTracking}
+          title="Click to resume tracking"
+        >
+          <div
+            className="bg-amber-500 text-white px-1.5 py-0.5 rounded-md font-semibold shadow-lg flex items-center gap-0.5 animate-pulse hover:bg-amber-400 transition-colors"
+            style={{ fontSize: "9px" }}
+          >
+            <Play size={8} />
+            <span>PAUSED</span>
           </div>
         </div>
       );
@@ -342,15 +356,23 @@ const FloatingDisplay: React.FC = () => {
       ref={draggableRef}
       className={clsx(
         "w-full h-full flex items-center px-0.5 rounded-[10px] select-none relative",
-        "border-2 border-secondary/50",
-        isTrackingPaused && "opacity-75",
-        latestStatus === "maybe" && "animate-pulse",
+        // Default border
+        !isTrackingPaused && "border-2 border-secondary/50",
+        // Paused state: pulsing amber border, slightly dimmed but readable
+        isTrackingPaused && [
+          "border-2 border-amber-500/80",
+          "opacity-85",
+          "shadow-[0_0_8px_rgba(245,158,11,0.4)]",
+          "animate-[pulse-border_2s_ease-in-out_infinite]",
+        ],
+        latestStatus === "maybe" && !isTrackingPaused && "animate-pulse",
       )}
       onMouseDown={handleMouseDownOnDraggable}
-      title="Drag to move"
-      style={{ cursor: "grab" }}
+      onClick={isTrackingPaused ? handleResumeTracking : undefined}
+      title={isTrackingPaused ? "Click to resume tracking" : "Drag to move"}
+      style={{ cursor: isTrackingPaused ? "pointer" : "grab" }}
     >
-      {getPauseIndicator()}
+      {getPauseBadge()}
       <div className="flex flex-col gap-[-1px] mr-[-1px] items-center">
         <Button
           variant="ghost"

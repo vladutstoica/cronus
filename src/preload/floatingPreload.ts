@@ -25,6 +25,7 @@ export interface FloatingWindowApi {
   hideFloatingWindow: () => void;
   requestRecategorizeView: (activity: ActivityToRecategorize) => void;
   openMainAppWindow: () => void;
+  resumeTracking: () => void;
 }
 
 const floatingApi: FloatingWindowApi = {
@@ -48,6 +49,9 @@ const floatingApi: FloatingWindowApi = {
   },
   openMainAppWindow: () => {
     ipcRenderer.send("open-main-app-window");
+  },
+  resumeTracking: () => {
+    ipcRenderer.invoke("resume-window-tracking");
   },
 };
 

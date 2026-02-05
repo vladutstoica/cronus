@@ -49,6 +49,21 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "pulse-border": {
+          "0%, 100%": {
+            borderColor: "rgba(245, 158, 11, 0.8)",
+            boxShadow: "0 0 8px rgba(245, 158, 11, 0.4)",
+          },
+          "50%": {
+            borderColor: "rgba(245, 158, 11, 0.4)",
+            boxShadow: "0 0 4px rgba(245, 158, 11, 0.2)",
+          },
+        },
+      },
+      animation: {
+        "pulse-border": "pulse-border 2s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
