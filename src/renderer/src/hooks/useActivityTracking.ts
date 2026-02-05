@@ -27,7 +27,16 @@ interface UseActivityTrackingReturn {
   isLoadingAllCategories: boolean;
   openRecategorizeDialog: (target: ActivityToRecategorize) => void;
   handleSaveRecategorize: (newCategoryId: string) => void;
-  updateActivityCategoryMutation: any;
+  updateActivityCategoryMutation: {
+    mutate: (variables: {
+      startDateMs: number;
+      endDateMs: number;
+      activityIdentifier: string;
+      itemType: "app" | "website";
+      newCategoryId: string;
+    }) => void;
+    isLoading: boolean;
+  };
 }
 
 export function useActivityTracking({
@@ -56,7 +65,7 @@ export function useActivityTracking({
       localApi.categories
         .getAll()
         .then((categories) => {
-          setAllCategories(categories as any);
+          setAllCategories(categories as Category[]);
         })
         .catch((error) => {
           console.error("Error loading categories:", error);
@@ -106,13 +115,15 @@ export function useActivityTracking({
 
         // Reload categories to refresh data
         const updatedCategories = await localApi.categories.getAll();
-        setAllCategories(updatedCategories as any);
-      } catch (error: any) {
+        setAllCategories(updatedCategories as Category[]);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : String(error);
         console.error("Error updating category:", error);
         toast({
           duration: 1500,
           title: "Error",
-          description: "Failed to re-categorize activity. " + error.message,
+          description: "Failed to re-categorize activity. " + message,
           variant: "destructive",
         });
       } finally {
@@ -211,10 +222,12 @@ export function useActivityTracking({
     }
   }, [openRecategorizeDialog, activeWindow]);
 
-  const mutateAsyncRef = useRef<(eventData: any) => Promise<any>>(null!);
+  const mutateAsyncRef = useRef<
+    (eventData: ActiveWindowDetails) => Promise<Record<string, unknown> | null>
+  >(null!);
 
   const eventCreationMutation = {
-    mutateAsync: async (eventData: any) => {
+    mutateAsync: async (eventData: ActiveWindowDetails) => {
       // Process the event using local IPC
       const processedEvent = await localApi.tracking.processEvent(eventData);
       if (processedEvent) {

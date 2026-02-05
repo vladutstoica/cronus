@@ -9,10 +9,11 @@ import {
   deleteRecentlyCreatedCategories,
 } from "../database/services/categories";
 import { snakeToCamel } from "../utils/snakeToCamel";
+import { Category } from "../database/services/categories";
 
 // Convert category snake_case to camelCase for frontend
-const convertCategoryToCamelCase = (category: any) => ({
-  ...snakeToCamel(category),
+const convertCategoryToCamelCase = (category: Category) => ({
+  ...snakeToCamel(category as unknown as Record<string, unknown>),
   _id: category.id, // frontend expects _id instead of id
 });
 
@@ -29,21 +30,45 @@ export function registerCategoryHandlers(): void {
     return convertCategoryToCamelCase(category);
   });
 
-  ipcMain.handle("local:create-category", (_event, category: any) => {
-    const user = getOrCreateLocalUser();
-    const created = createCategory({
-      ...category,
-      is_productive: category.isProductive,
-      is_default: category.isDefault,
-      is_archived: category.isArchived,
-      user_id: user.id,
-    });
-    return convertCategoryToCamelCase(created);
-  });
+  ipcMain.handle(
+    "local:create-category",
+    (
+      _event,
+      category: {
+        name: string;
+        description?: string;
+        color?: string;
+        isProductive: boolean;
+        isDefault: boolean;
+        isArchived?: boolean;
+      },
+    ) => {
+      const user = getOrCreateLocalUser();
+      const created = createCategory({
+        ...category,
+        is_productive: category.isProductive,
+        is_default: category.isDefault,
+        is_archived: category.isArchived ?? false,
+        user_id: user.id,
+      });
+      return convertCategoryToCamelCase(created);
+    },
+  );
 
   ipcMain.handle(
     "local:update-category",
-    (_event, id: string, updates: any) => {
+    (
+      _event,
+      id: string,
+      updates: Partial<{
+        name: string;
+        description: string;
+        color: string;
+        isProductive: boolean;
+        isDefault: boolean;
+        isArchived: boolean;
+      }>,
+    ) => {
       const updated = updateCategory(id, {
         ...updates,
         is_productive: updates.isProductive,

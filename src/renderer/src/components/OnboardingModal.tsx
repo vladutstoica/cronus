@@ -58,7 +58,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     handleStepNext();
   };
 
-  const handleCategoriesCompleteAndNext = async (categories: any[]) => {
+  const handleCategoriesCompleteAndNext = async (categories: { name: string; description?: string; color?: string; isProductive: boolean; isDefault: boolean; isArchived?: boolean }[]) => {
     await handleCategoriesComplete(categories);
     handleStepNext();
   };

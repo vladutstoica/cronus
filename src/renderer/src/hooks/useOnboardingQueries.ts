@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { localApi } from "../lib/localApi";
+import { localApi, ElectronAppSettings } from "../lib/localApi";
+import { Category } from "@shared/types";
 
 export function useOnboardingQueries() {
   const [isDev, setIsDev] = useState(false);
@@ -10,7 +11,8 @@ export function useOnboardingQueries() {
 
   const { user, isAuthenticated } = useAuth();
 
-  const [electronSettings, setElectronSettings] = useState<any>(null);
+  const [electronSettings, setElectronSettings] =
+    useState<ElectronAppSettings | null>(null);
   const [userProjectsAndGoals, setUserProjectsAndGoals] = useState<string>("");
   const [isLoadingGoals, setIsLoadingGoals] = useState(true);
   const [hasCategories, setHasCategories] = useState(false);
@@ -52,7 +54,16 @@ export function useOnboardingQueries() {
   };
 
   const createCategoriesMutation = {
-    mutateAsync: async (data: { categories: any[] }) => {
+    mutateAsync: async (data: {
+      categories: Array<{
+        name: string;
+        description?: string;
+        color?: string;
+        isProductive: boolean;
+        isDefault: boolean;
+        isArchived?: boolean;
+      }>;
+    }) => {
       setIsCreatingCategories(true);
       try {
         // Create each category
@@ -103,7 +114,16 @@ export function useOnboardingQueries() {
     setUserGoals(goals);
   };
 
-  const handleCategoriesComplete = async (categories: any[]) => {
+  const handleCategoriesComplete = async (
+    categories: Array<{
+      name: string;
+      description?: string;
+      color?: string;
+      isProductive: boolean;
+      isDefault: boolean;
+      isArchived?: boolean;
+    }>,
+  ) => {
     if (categories.length > 0) {
       try {
         await createCategoriesMutation.mutateAsync({

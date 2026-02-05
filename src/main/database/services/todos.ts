@@ -135,7 +135,7 @@ export function updateTodo(
 
   const now = new Date().toISOString();
   const fields: string[] = ["updated_at = ?"];
-  const values: any[] = [now];
+  const values: (string | number | null)[] = [now];
 
   if (updates.title !== undefined) {
     fields.push("title = ?");

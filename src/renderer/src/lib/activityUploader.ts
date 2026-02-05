@@ -6,7 +6,7 @@ const CONTENT_CHAR_CUTOFF = 2000;
 
 // Define the type for the mutateAsync function we expect
 interface MutateAsyncFunction {
-  (variables: any): Promise<any>;
+  (variables: EventData): Promise<Record<string, unknown> | null>;
 }
 
 // Define the event data type

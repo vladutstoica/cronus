@@ -46,9 +46,11 @@ export const CategoryManagementSettings = memo(
         const data = await localApi.categories.getAll();
         setCategories(data as Category[]);
         setFetchError(null);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error loading categories:", error);
-        setFetchError(error);
+        setFetchError(
+          error instanceof Error ? error : new Error(String(error)),
+        );
       } finally {
         setIsLoading(false);
       }
@@ -70,9 +72,11 @@ export const CategoryManagementSettings = memo(
           setIsFormOpen(false);
           setEditingCategory(null);
           setTemplateData(null);
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Error creating category:", err);
-          alert(`Error creating category: ${err.message}`);
+          alert(
+            `Error creating category: ${err instanceof Error ? err.message : String(err)}`,
+          );
           throw err;
         } finally {
           setIsCreating(false);
@@ -83,7 +87,15 @@ export const CategoryManagementSettings = memo(
 
     // Update mutation
     const updateMutation = {
-      mutateAsync: async (data: { id: string; [key: string]: any }) => {
+      mutateAsync: async (data: {
+        id: string;
+        name?: string;
+        description?: string;
+        color?: string;
+        isProductive?: boolean;
+        isDefault?: boolean;
+        isArchived?: boolean;
+      }) => {
         setIsUpdating(true);
         setUpdatingId(data.id);
         try {
@@ -92,9 +104,11 @@ export const CategoryManagementSettings = memo(
           setIsFormOpen(false);
           setEditingCategory(null);
           setTemplateData(null);
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Error updating category:", err);
-          alert(`Error updating category: ${err.message}`);
+          alert(
+            `Error updating category: ${err instanceof Error ? err.message : String(err)}`,
+          );
           throw err;
         } finally {
           setIsUpdating(false);
@@ -113,9 +127,11 @@ export const CategoryManagementSettings = memo(
         try {
           await localApi.categories.delete(data.id);
           await loadCategories();
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Error deleting category:", err);
-          alert(`Error deleting category: ${err.message}`);
+          alert(
+            `Error deleting category: ${err instanceof Error ? err.message : String(err)}`,
+          );
           throw err;
         } finally {
           setIsDeleting(false);
@@ -133,9 +149,11 @@ export const CategoryManagementSettings = memo(
           await localApi.categories.deleteRecent();
           await loadCategories();
           alert("Recently created categories have been deleted.");
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Error deleting recent categories:", err);
-          alert(`Error deleting recent categories: ${err.message}`);
+          alert(
+            `Error deleting recent categories: ${err instanceof Error ? err.message : String(err)}`,
+          );
           throw err;
         }
       },

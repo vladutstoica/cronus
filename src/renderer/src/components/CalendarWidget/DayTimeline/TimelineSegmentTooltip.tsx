@@ -22,9 +22,9 @@ export const TimelineSegmentTooltip = ({
   const isCalendarEvent = segment.name === "Google Calendar";
 
   // For calendar events, use the CalendarEventTooltip
-  if (isCalendarEvent && (segment as any).originalEvent) {
+  if (isCalendarEvent && segment.originalEvent) {
     return (
-      <CalendarEventTooltip event={(segment as any).originalEvent}>
+      <CalendarEventTooltip event={segment.originalEvent}>
         {children}
       </CalendarEventTooltip>
     );

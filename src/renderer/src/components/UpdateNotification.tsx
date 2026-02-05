@@ -21,7 +21,7 @@ export function UpdateNotification({
 }): React.JSX.Element {
   const { theme } = useTheme();
   const isDarkMode = useDarkMode();
-  const toastRef = useRef<any>(null);
+  const toastRef = useRef<ReturnType<typeof toast> | null>(null);
   const [isRestarting, setIsRestarting] = useState(false);
 
   useEffect(() => {

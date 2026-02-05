@@ -231,7 +231,7 @@ export function StatsView({
                   }}
                 />
                 <Legend
-                  formatter={(value, entry: any) => (
+                  formatter={(value) => (
                     <span className="text-sm text-foreground">{value}</span>
                   )}
                 />

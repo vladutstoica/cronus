@@ -3,13 +3,35 @@
  * All data operations now happen locally via Electron IPC
  */
 
+import { User, Category, ActiveWindowDetails } from "@shared/types";
+
+/** Electron app settings shape (extracted from User.electronAppSettings) */
+export interface ElectronAppSettings {
+  calendarZoomLevel?: number;
+  theme?: "light" | "dark" | "system";
+  playDistractionSound?: boolean;
+  distractionSoundInterval?: number;
+  showDistractionNotifications?: boolean;
+  distractionNotificationInterval?: number;
+}
+
 export const localApi = {
   // User operations
   user: {
     get: async () => {
       return window.electron.ipcRenderer.invoke("local:get-user");
     },
-    update: async (updates: any) => {
+    update: async (
+      updates: Partial<{
+        name: string;
+        email: string;
+        has_completed_onboarding: boolean;
+        electron_app_settings: ElectronAppSettings | string;
+        user_projects_and_goals: string | string[];
+        multi_purpose_apps: string[];
+        referral_source: string;
+      }>,
+    ) => {
       return window.electron.ipcRenderer.invoke("local:update-user", updates);
     },
   },
@@ -22,13 +44,30 @@ export const localApi = {
     getById: async (id: string) => {
       return window.electron.ipcRenderer.invoke("local:get-category-by-id", id);
     },
-    create: async (category: any) => {
+    create: async (category: {
+      name: string;
+      description?: string;
+      color?: string;
+      isProductive: boolean;
+      isDefault: boolean;
+      isArchived?: boolean;
+    }) => {
       return window.electron.ipcRenderer.invoke(
         "local:create-category",
         category,
       );
     },
-    update: async (id: string, updates: any) => {
+    update: async (
+      id: string,
+      updates: Partial<{
+        name: string;
+        description: string;
+        color: string;
+        isProductive: boolean;
+        isDefault: boolean;
+        isArchived: boolean;
+      }>,
+    ) => {
       return window.electron.ipcRenderer.invoke(
         "local:update-category",
         id,
@@ -70,7 +109,16 @@ export const localApi = {
     getById: async (id: string) => {
       return window.electron.ipcRenderer.invoke("local:get-event-by-id", id);
     },
-    update: async (id: string, updates: any) => {
+    update: async (
+      id: string,
+      updates: Partial<{
+        categoryId: string;
+        categoryReasoning: string;
+        llmSummary: string;
+        generatedTitle: string;
+        durationMs: number;
+      }>,
+    ) => {
       return window.electron.ipcRenderer.invoke(
         "local:update-event",
         id,
@@ -111,7 +159,7 @@ export const localApi = {
 
   // Window tracking operations
   tracking: {
-    processEvent: async (eventDetails: any) => {
+    processEvent: async (eventDetails: ActiveWindowDetails) => {
       return window.electron.ipcRenderer.invoke(
         "local:process-window-event",
         eventDetails,
@@ -140,14 +188,14 @@ export const localApi = {
     get: async (key: string) => {
       return window.electron.ipcRenderer.invoke("local:get-setting", key);
     },
-    set: async (key: string, value: any) => {
+    set: async (key: string, value: string | boolean | number) => {
       return window.electron.ipcRenderer.invoke(
         "local:set-setting",
         key,
         value,
       );
     },
-    updateMany: async (settings: Record<string, any>) => {
+    updateMany: async (settings: Record<string, string | boolean | number>) => {
       return window.electron.ipcRenderer.invoke(
         "local:update-settings",
         settings,
@@ -274,7 +322,7 @@ export const localApi = {
 
 // Helper hooks for React Query (if needed)
 export const useLocalUser = () => {
-  const [user, setUser] = React.useState<any>(null);
+  const [user, setUser] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
 
@@ -290,7 +338,7 @@ export const useLocalUser = () => {
 };
 
 export const useLocalCategories = () => {
-  const [categories, setCategories] = React.useState<any[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
 

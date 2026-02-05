@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import { useDarkMode } from "../../hooks/useDarkMode";
 import { useWindowWidth } from "../../hooks/useWindowWidth";
-import { localApi } from "../../lib/localApi";
+import { ElectronAppSettings, localApi } from "../../lib/localApi";
 import type { ProcessedEventBlock } from "../DashboardView";
 import { CalendarWidgetHeader } from "./CalendarWidgetHeader";
 import CalendarZoomControls from "./DayTimeline/CalendarZoomControls";
@@ -52,7 +52,7 @@ const CalendarWidget = ({
   const [animationDirection, setAnimationDirection] = useState<
     "prev" | "next" | "none"
   >("none");
-  const [electronSettings, setElectronSettings] = useState<any>(null);
+  const [electronSettings, setElectronSettings] = useState<ElectronAppSettings | null>(null);
 
   // Load electron settings
   useEffect(() => {

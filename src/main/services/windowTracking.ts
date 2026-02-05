@@ -81,7 +81,7 @@ export function clearNonTrackedAppsCache(): void {
  */
 export async function processWindowEvent(
   eventDetails: WindowEventDetails,
-): Promise<any | null> {
+): Promise<Record<string, unknown> | null> {
   try {
     // VIB-73: Check if app is in non-tracked list
     if (eventDetails.ownerName) {
@@ -331,11 +331,11 @@ async function categorizeEventAsync(
       let userGoals = "";
       try {
         if (typeof user.user_projects_and_goals === "string") {
-          const parsed = JSON.parse(user.user_projects_and_goals);
+          const parsed: unknown = JSON.parse(user.user_projects_and_goals);
           // Convert array to readable string
-          userGoals = Array.isArray(parsed) ? parsed.join("\n") : parsed;
-        } else if (Array.isArray(user.user_projects_and_goals)) {
-          userGoals = user.user_projects_and_goals.join("\n");
+          userGoals = Array.isArray(parsed)
+            ? parsed.join("\n")
+            : String(parsed);
         } else {
           userGoals = user.user_projects_and_goals || "";
         }

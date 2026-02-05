@@ -233,7 +233,7 @@ export function DashboardView({
       console.log(`✅ Loaded ${data.length} events from API`);
       console.log(
         "📊 Sample events:",
-        data.slice(0, 3).map((e: any) => ({
+        data.slice(0, 3).map((e: ActiveWindowEvent) => ({
           owner: e.ownerName,
           timestamp: e.timestamp,
           timestampType: typeof e.timestamp,
@@ -241,7 +241,7 @@ export function DashboardView({
         })),
       );
 
-      const eventsWithParsedDates = data.map((event: any) => ({
+      const eventsWithParsedDates = data.map((event: ActiveWindowEvent) => ({
         ...event,
         lastCategorizationAt: event.lastCategorizationAt
           ? new Date(event.lastCategorizationAt)

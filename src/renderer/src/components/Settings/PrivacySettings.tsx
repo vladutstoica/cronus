@@ -36,12 +36,18 @@ export const PrivacySettings = () => {
       const events = await localApi.events.getAll(1000, 0);
       const uniqueApps = new Map<string, string>();
 
-      events?.forEach((event: any) => {
-        if (event.ownerName && !uniqueApps.has(event.ownerName)) {
-          const categoryName = event.categoryDetails?.name || "Uncategorized";
-          uniqueApps.set(event.ownerName, categoryName);
-        }
-      });
+      events?.forEach(
+        (event: {
+          ownerName?: string;
+          categoryDetails?: { name: string };
+        }) => {
+          if (event.ownerName && !uniqueApps.has(event.ownerName)) {
+            const categoryName =
+              event.categoryDetails?.name || "Uncategorized";
+            uniqueApps.set(event.ownerName, categoryName);
+          }
+        },
+      );
 
       const apps: TrackedApp[] = Array.from(uniqueApps.entries())
         .map(([name, category]) => ({ name, category }))

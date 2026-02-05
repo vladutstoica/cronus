@@ -98,7 +98,7 @@ const ActivitiesByCategoryWidget = ({
   };
 
   const createCategoryMutation = {
-    mutateAsync: async (data: any) => {
+    mutateAsync: async (data: Omit<SharedCategory, "_id" | "userId" | "createdAt" | "updatedAt">) => {
       setIsCreatingCategory(true);
       try {
         await localApi.categories.create(data);

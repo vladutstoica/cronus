@@ -6,8 +6,17 @@ import { localApi } from "../../lib/localApi";
 import { CategoryBadge } from "../CategoryBadge";
 import { Button } from "../ui/button";
 
+interface CategoryInput {
+  name: string;
+  description?: string;
+  color: string;
+  isProductive: boolean;
+  isDefault: boolean;
+  isArchived?: boolean;
+}
+
 interface AiCategoryCustomizationProps {
-  onComplete: (categories: any[]) => void;
+  onComplete: (categories: CategoryInput[]) => void;
   goals: string;
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -19,7 +28,9 @@ export function AiCategoryCustomization({
 }: AiCategoryCustomizationProps) {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const [suggestedCategories, setSuggestedCategories] = useState<any[]>([]);
+  const [suggestedCategories, setSuggestedCategories] = useState<
+    CategoryInput[]
+  >([]);
   const [selectedOption, setSelectedOption] = useState<"ai" | "simple">("ai");
   const { user, isAuthenticated } = useAuth();
 

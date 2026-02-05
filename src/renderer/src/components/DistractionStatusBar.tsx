@@ -281,8 +281,8 @@ const DistractionStatusBar = ({
           new Date(currentDayStartDateMs).toISOString(),
           new Date(currentDayEndDateMs).toISOString(),
         );
-        const eventsWithParsedDates = (data || []).map((event: any) => {
-          const e = event as unknown as ActiveWindowEvent;
+        const eventsWithParsedDates = (data || []).map((event: ActiveWindowEvent) => {
+          const e = event;
           return {
             ...e,
             lastCategorizationAt: e.lastCategorizationAt

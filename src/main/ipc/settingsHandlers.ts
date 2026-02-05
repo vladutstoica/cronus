@@ -15,13 +15,16 @@ export function registerSettingsHandlers(): void {
     return getSetting(key);
   });
 
-  ipcMain.handle("local:set-setting", (_event, key: string, value: any) => {
-    return setSetting(key, value);
-  });
+  ipcMain.handle(
+    "local:set-setting",
+    (_event, key: string, value: string | boolean | number) => {
+      return setSetting(key, value);
+    },
+  );
 
   ipcMain.handle(
     "local:update-settings",
-    (_event, settings: Record<string, any>) => {
+    (_event, settings: Record<string, string | boolean | number>) => {
       return updateSettings(settings);
     },
   );

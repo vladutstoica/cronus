@@ -1,8 +1,37 @@
+import { ActiveWindowEvent } from "@shared/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
+
+interface ConferenceEntryPoint {
+  entryPointType: string;
+  uri?: string;
+  meetingCode?: string;
+  accessCode?: string;
+}
+
+interface CalendarEventData extends ActiveWindowEvent {
+  summary?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  conferenceData?: {
+    conferenceSolution?: { key?: { type?: string } };
+    entryPoints?: ConferenceEntryPoint[];
+  };
+  attendees?: Array<{
+    email?: string;
+    displayName?: string;
+    organizer?: boolean;
+    responseStatus?: string;
+  }>;
+  hangoutLink?: string;
+  htmlLink?: string;
+  description?: string;
+  location?: string;
+  organizer?: { displayName?: string; email?: string };
+}
 
 interface CalendarEventTooltipProps {
   children: React.ReactNode;
-  event: any; // The rich calendar event data
+  event: CalendarEventData;
 }
 
 export const CalendarEventTooltip = ({
@@ -20,7 +49,7 @@ export const CalendarEventTooltip = ({
     if (event.hangoutLink) return event.hangoutLink;
     if (event.conferenceData?.entryPoints) {
       const videoEntry = event.conferenceData.entryPoints.find(
-        (entry: any) => entry.entryPointType === "video",
+        (entry: ConferenceEntryPoint) => entry.entryPointType === "video",
       );
       return videoEntry?.uri;
     }
@@ -30,7 +59,7 @@ export const CalendarEventTooltip = ({
   const getMeetingCode = () => {
     if (event.conferenceData?.entryPoints) {
       const videoEntry = event.conferenceData.entryPoints.find(
-        (entry: any) => entry.entryPointType === "video",
+        (entry: ConferenceEntryPoint) => entry.entryPointType === "video",
       );
       return videoEntry?.meetingCode || videoEntry?.accessCode;
     }
@@ -39,13 +68,13 @@ export const CalendarEventTooltip = ({
 
   const getAttendees = () => {
     if (!event.attendees || event.attendees.length === 0) return [];
-    return event.attendees.filter((attendee: any) => !attendee.organizer); // Exclude organizer
+    return event.attendees.filter((attendee: { email?: string; displayName?: string; organizer?: boolean; responseStatus?: string }) => !attendee.organizer); // Exclude organizer
   };
 
   const getAcceptedCount = () => {
     const attendees = getAttendees();
     return attendees.filter(
-      (attendee: any) => attendee.responseStatus === "accepted",
+      (attendee: { email?: string; displayName?: string; organizer?: boolean; responseStatus?: string }) => attendee.responseStatus === "accepted",
     ).length;
   };
 
@@ -149,7 +178,7 @@ export const CalendarEventTooltip = ({
                 )}
               </div>
               <div className="space-y-1 max-h-24 overflow-y-auto">
-                {attendees.slice(0, 5).map((attendee: any, idx: number) => (
+                {attendees.slice(0, 5).map((attendee: { email?: string; displayName?: string; organizer?: boolean; responseStatus?: string }, idx: number) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between text-sm"
