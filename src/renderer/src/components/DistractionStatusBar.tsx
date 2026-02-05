@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   EditIcon,
   ExternalLink,
+  MoreVertical,
   Pause,
   Play,
   Settings as SettingsIcon,
@@ -31,6 +32,13 @@ import { ActivityIcon } from "./ActivityList/ActivityIcon";
 import DistractionStatusLoadingSkeleton from "./DistractionStatusLoadingSkeleton";
 import PauseInfoModal from "./PauseInfoModal";
 import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface DistractionStatusBarProps {
   activeWindow: ActiveWindowDetails | null;
@@ -281,15 +289,17 @@ const DistractionStatusBar = ({
           new Date(currentDayStartDateMs).toISOString(),
           new Date(currentDayEndDateMs).toISOString(),
         );
-        const eventsWithParsedDates = (data || []).map((event: ActiveWindowEvent) => {
-          const e = event;
-          return {
-            ...e,
-            lastCategorizationAt: e.lastCategorizationAt
-              ? new Date(e.lastCategorizationAt)
-              : undefined,
-          };
-        });
+        const eventsWithParsedDates = (data || []).map(
+          (event: ActiveWindowEvent) => {
+            const e = event;
+            return {
+              ...e,
+              lastCategorizationAt: e.lastCategorizationAt
+                ? new Date(e.lastCategorizationAt)
+                : undefined,
+            };
+          },
+        );
         setTodayEvents(eventsWithParsedDates);
       } catch (error) {
         console.error("Error loading today events:", error);
@@ -570,54 +580,80 @@ const DistractionStatusBar = ({
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 text-right flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800/50">
-        {isTrackingPaused && (
-          <Button
-            className="hover:bg-gray-200 dark:hover:bg-gray-700/50"
-            variant="ghost"
-            onClick={onToggleTracking}
-            title="Resume Tracking"
-          >
-            <Play size={20} />
-            {!isNarrowView && <span className="ml-2">Resume</span>}
-          </Button>
-        )}
-
-        {!isMiniTimerVisible && (
-          <Button
-            className="hover:bg-gray-200 dark:hover:bg-gray-700/50"
-            variant="ghost"
-            onClick={onOpenMiniTimerClick}
-            title="Open Mini Timer"
-          >
-            <ExternalLink size={20} />
-            {!isNarrowView && <span className="ml-2">{"Open Mini Timer"}</span>}
-          </Button>
-        )}
-
+      {/* Action buttons container */}
+      <div className="flex-shrink-0 flex items-center gap-1">
+        {/* Primary Action: Pause/Resume - Always visible */}
         <Button
-          variant="ghost"
+          variant={isTrackingPaused ? "default" : "ghost"}
           size={isNarrowView ? "icon" : "default"}
-          className={
-            !isNarrowView
-              ? "w-32 hover:bg-gray-200 dark:hover:bg-gray-700/50"
-              : ""
-          }
-          onClick={onSettingsClick}
-          title="Settings"
-        >
-          {isSettingsOpen ? (
-            <ArrowLeft size={20} />
-          ) : (
-            <SettingsIcon size={20} />
+          className={clsx(
+            isTrackingPaused
+              ? "bg-blue-600 hover:bg-blue-700 text-white"
+              : "hover:bg-gray-200 dark:hover:bg-gray-700/50",
+            !isNarrowView && "min-w-[100px]",
           )}
-          {!isNarrowView &&
-            (isSettingsOpen ? (
-              <span className="ml-2">Dashboard</span>
-            ) : (
-              <span className="ml-2">Settings</span>
-            ))}
+          onClick={handlePauseClick}
+          title={isTrackingPaused ? "Resume Tracking" : "Pause Tracking"}
+        >
+          {isTrackingPaused ? (
+            <>
+              <Play size={18} />
+              {!isNarrowView && <span>Resume</span>}
+            </>
+          ) : (
+            <>
+              <Pause size={18} />
+              {!isNarrowView && <span>Pause</span>}
+            </>
+          )}
         </Button>
+
+        {/* Secondary Actions: Dropdown Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:bg-gray-200 dark:hover:bg-gray-700/50"
+              title="More options"
+            >
+              <MoreVertical size={18} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {/* Mini Timer option - only show when not visible */}
+            {!isMiniTimerVisible && (
+              <>
+                <DropdownMenuItem
+                  onClick={onOpenMiniTimerClick}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink size={16} className="mr-2" />
+                  Open Mini Timer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
+            {/* Settings/Dashboard navigation */}
+            <DropdownMenuItem
+              onClick={onSettingsClick}
+              className="cursor-pointer"
+            >
+              {isSettingsOpen ? (
+                <>
+                  <ArrowLeft size={16} className="mr-2" />
+                  Back to Dashboard
+                </>
+              ) : (
+                <>
+                  <SettingsIcon size={16} className="mr-2" />
+                  Settings
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <PauseInfoModal
         isOpen={showPauseModal}
