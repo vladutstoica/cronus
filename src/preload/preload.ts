@@ -107,6 +107,11 @@ const api = {
 
   // Add these two methods for quit confirmation
   confirmQuit: () => ipcRenderer.invoke("confirm-quit"),
+
+  // Template methods
+  getAvailableTemplates: () => ipcRenderer.invoke("get-available-templates"),
+  applyTemplate: (templateId: string) =>
+    ipcRenderer.invoke("apply-template", templateId),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

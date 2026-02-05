@@ -13,6 +13,7 @@ export function useOnboardingCompletion({
   const handleComplete = async (
     referralSource: string,
     onComplete: () => void,
+    selectedTemplate?: string | null,
   ) => {
     console.log(
       "🔍 [ONBOARDING MODAL DEBUG] handleComplete called - starting onboarding completion",
@@ -34,6 +35,33 @@ export function useOnboardingCompletion({
       } catch (error) {
         console.error(
           "❌ [ONBOARDING MODAL DEBUG] Failed to update referral source:",
+          error,
+        );
+      }
+    }
+
+    // Apply selected template if one was chosen
+    if (selectedTemplate) {
+      console.log(
+        "🔍 [ONBOARDING MODAL DEBUG] Applying template:",
+        selectedTemplate,
+      );
+      try {
+        const result = await window.api.applyTemplate(selectedTemplate);
+        if (result.success) {
+          console.log(
+            "✅ [ONBOARDING MODAL DEBUG] Template applied successfully:",
+            result,
+          );
+        } else {
+          console.error(
+            "❌ [ONBOARDING MODAL DEBUG] Failed to apply template:",
+            result.error,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "❌ [ONBOARDING MODAL DEBUG] Failed to apply template:",
           error,
         );
       }

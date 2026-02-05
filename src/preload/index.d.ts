@@ -93,6 +93,25 @@ declare global {
       redactSensitiveContent: (content: string) => Promise<string>;
       // setSentryUser: (userData: { id: string; email: string; username: string; subscription: boolean } | null) => Promise<void>
       confirmQuit: () => Promise<void>;
+
+      // Template methods
+      getAvailableTemplates: () => Promise<
+        Array<{
+          id: string;
+          name: string;
+          description: string;
+          targetAudience: string;
+          categoryCount: number;
+          ruleCount: number;
+        }>
+      >;
+      applyTemplate: (templateId: string) => Promise<{
+        success: boolean;
+        categoriesCreated: number;
+        rulesCreated: number;
+        warnings: string[];
+        error?: string;
+      }>;
     };
     floatingApi: FloatingWindowApi;
   }

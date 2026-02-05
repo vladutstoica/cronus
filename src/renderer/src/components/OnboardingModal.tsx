@@ -23,6 +23,7 @@ interface OnboardingModalProps {
 
 export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [showSkipConfirmDialog, setShowSkipConfirmDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const { user } = useAuth();
 
   const {
@@ -58,8 +59,22 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     handleStepNext();
   };
 
-  const handleCategoriesCompleteAndNext = async (categories: { name: string; description?: string; color?: string; isProductive: boolean; isDefault: boolean; isArchived?: boolean }[]) => {
+  const handleCategoriesCompleteAndNext = async (
+    categories: {
+      name: string;
+      description?: string;
+      color?: string;
+      isProductive: boolean;
+      isDefault: boolean;
+      isArchived?: boolean;
+    }[],
+  ) => {
     await handleCategoriesComplete(categories);
+    handleStepNext();
+  };
+
+  const handleTemplateSelectAndNext = (templateId: string | null) => {
+    setSelectedTemplate(templateId);
     handleStepNext();
   };
 
@@ -73,6 +88,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     isAccessibilityStep,
     isScreenRecordingStep,
     isWelcomeStep,
+    isTemplateSelectionStep,
     handleNext: handleStepNext,
     handleBack,
     handleSkipToEnd,
@@ -90,6 +106,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
     setReferralSource,
     onGoalsComplete: handleGoalsCompleteAndNext,
     onCategoriesComplete: handleCategoriesCompleteAndNext,
+    onTemplateSelect: handleTemplateSelectAndNext,
     onNext: () => {}, // Will be updated after completion hook
     onAiCategoriesLoadingChange: setIsAiCategoriesLoading,
   });
@@ -120,7 +137,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const handleNext = () => {
     if (isLastStep) {
       // Analytics removed
-      handleComplete(referralSource, onComplete);
+      handleComplete(referralSource, onComplete, selectedTemplate);
     } else {
       handleStepNext();
     }
@@ -163,7 +180,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         onClick={
           isGoalStep
             ? undefined
-            : () => handleComplete(referralSource, onComplete)
+            : () => handleComplete(referralSource, onComplete, selectedTemplate)
         }
       />
 
@@ -195,68 +212,39 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               {currentStepData?.content}
             </div>
 
-            {!isGoalStep && !isAiCategoriesStep && !isAiCategoriesLoading && (
-              <div className="flex justify-center gap-4 items-center">
-                {/* Back button - only show if not on first slide */}
-                {currentStep > 0 ? (
-                  <Button
-                    onClick={handleBackWithReset}
-                    variant="outline"
-                    size="default"
-                    className="min-w-[100px]"
-                    disabled={isCompleting || isRequestingPermission}
-                  >
-                    Back
-                  </Button>
-                ) : (
-                  <div></div> // Empty div to maintain spacing
-                )}
-
-                {/* Main action button */}
-                {isAccessibilityStep && !hasRequestedPermission ? (
-                  <Button
-                    onClick={() => {
-                      // Analytics removed
-                      handleRequestAccessibilityPermission();
-                    }}
-                    disabled={isRequestingPermission}
-                    variant="default"
-                    size="default"
-                    className="min-w-[140px]"
-                  >
-                    {isRequestingPermission ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Requesting...
-                      </div>
-                    ) : (
-                      "Grant Permission"
-                    )}
-                  </Button>
-                ) : isScreenRecordingStep && !hasRequestedScreenRecording ? (
-                  <>
+            {!isGoalStep &&
+              !isAiCategoriesStep &&
+              !isTemplateSelectionStep &&
+              !isAiCategoriesLoading && (
+                <div className="flex justify-center gap-4 items-center">
+                  {/* Back button - only show if not on first slide */}
+                  {currentStep > 0 ? (
                     <Button
-                      onClick={() => {
-                        // Analytics removed
-                        setShowSkipConfirmDialog(true);
-                      }}
+                      onClick={handleBackWithReset}
                       variant="outline"
                       size="default"
                       className="min-w-[100px]"
+                      disabled={isCompleting || isRequestingPermission}
                     >
-                      Skip
+                      Back
                     </Button>
+                  ) : (
+                    <div></div> // Empty div to maintain spacing
+                  )}
+
+                  {/* Main action button */}
+                  {isAccessibilityStep && !hasRequestedPermission ? (
                     <Button
                       onClick={() => {
                         // Analytics removed
-                        handleRequestScreenRecordingPermission();
+                        handleRequestAccessibilityPermission();
                       }}
-                      disabled={isRequestingScreenRecording}
+                      disabled={isRequestingPermission}
                       variant="default"
                       size="default"
                       className="min-w-[140px]"
                     >
-                      {isRequestingScreenRecording ? (
+                      {isRequestingPermission ? (
                         <div className="flex items-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Requesting...
@@ -265,31 +253,63 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                         "Grant Permission"
                       )}
                     </Button>
-                  </>
-                ) : (
-                  <Button
-                    onClick={handleNext}
-                    disabled={isCompleting}
-                    variant="default"
-                    size="default"
-                    className="min-w-[140px]"
-                  >
-                    {isCompleting ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Setting up...
-                      </div>
-                    ) : isLastStep ? (
-                      "Get Started!"
-                    ) : isWelcomeStep ? (
-                      "Accept"
-                    ) : (
-                      "Next"
-                    )}
-                  </Button>
-                )}
-              </div>
-            )}
+                  ) : isScreenRecordingStep && !hasRequestedScreenRecording ? (
+                    <>
+                      <Button
+                        onClick={() => {
+                          // Analytics removed
+                          setShowSkipConfirmDialog(true);
+                        }}
+                        variant="outline"
+                        size="default"
+                        className="min-w-[100px]"
+                      >
+                        Skip
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          // Analytics removed
+                          handleRequestScreenRecordingPermission();
+                        }}
+                        disabled={isRequestingScreenRecording}
+                        variant="default"
+                        size="default"
+                        className="min-w-[140px]"
+                      >
+                        {isRequestingScreenRecording ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Requesting...
+                          </div>
+                        ) : (
+                          "Grant Permission"
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={handleNext}
+                      disabled={isCompleting}
+                      variant="default"
+                      size="default"
+                      className="min-w-[140px]"
+                    >
+                      {isCompleting ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Setting up...
+                        </div>
+                      ) : isLastStep ? (
+                        "Get Started!"
+                      ) : isWelcomeStep ? (
+                        "Accept"
+                      ) : (
+                        "Next"
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
           </div>
         </div>
       </div>

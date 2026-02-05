@@ -8,6 +8,10 @@ import {
   deleteCategory,
   deleteRecentlyCreatedCategories,
 } from "../database/services/categories";
+import {
+  getAvailableTemplates,
+  applyTemplate,
+} from "../services/smartCategorization";
 import { snakeToCamel } from "../utils/snakeToCamel";
 import { Category } from "../database/services/categories";
 
@@ -88,5 +92,15 @@ export function registerCategoryHandlers(): void {
   ipcMain.handle("local:delete-recent-categories", () => {
     const user = getOrCreateLocalUser();
     return deleteRecentlyCreatedCategories(user.id);
+  });
+
+  // Template handlers
+  ipcMain.handle("get-available-templates", () => {
+    return getAvailableTemplates();
+  });
+
+  ipcMain.handle("apply-template", (_event, templateId: string) => {
+    const user = getOrCreateLocalUser();
+    return applyTemplate(user.id, templateId);
   });
 }

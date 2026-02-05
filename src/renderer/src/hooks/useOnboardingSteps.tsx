@@ -3,6 +3,7 @@ import { User } from "@shared/types";
 import { AccessibilityStep } from "../components/Onboarding/AccessibilityStep";
 import { CompleteStep } from "../components/Onboarding/CompleteStep";
 import { ScreenRecordingStep } from "../components/Onboarding/ScreenRecordingStep";
+import { TemplateSelectionStep } from "../components/Onboarding/TemplateSelectionStep";
 import { WelcomeStep } from "../components/Onboarding/WelcomeStep";
 import { AiCategoryCustomization } from "../components/Settings/AiCategoryCustomization";
 import GoalInputForm from "../components/Settings/GoalInputForm";
@@ -30,6 +31,7 @@ interface UseOnboardingStepsProps {
       isArchived?: boolean;
     }>,
   ) => void;
+  onTemplateSelect: (templateId: string | null) => void;
   onNext: () => void;
   onAiCategoriesLoadingChange: (loading: boolean) => void;
 }
@@ -48,6 +50,7 @@ export function useOnboardingSteps({
   setReferralSource,
   onGoalsComplete,
   onCategoriesComplete,
+  onTemplateSelect,
   onNext,
   onAiCategoriesLoadingChange,
 }: UseOnboardingStepsProps) {
@@ -59,6 +62,11 @@ export function useOnboardingSteps({
         id: "welcome",
         title: "We care about your privacy",
         content: <WelcomeStep />,
+      },
+      {
+        id: "template-selection",
+        title: "Choose Your Profession",
+        content: <TemplateSelectionStep onComplete={onTemplateSelect} />,
       },
       {
         id: "goals",
@@ -122,6 +130,7 @@ export function useOnboardingSteps({
       setReferralSource,
       onGoalsComplete,
       onCategoriesComplete,
+      onTemplateSelect,
       onNext,
       onAiCategoriesLoadingChange,
     ],
@@ -171,6 +180,7 @@ export function useOnboardingSteps({
   const isAccessibilityStep = currentStepData?.id === "accessibility";
   const isScreenRecordingStep = currentStepData?.id === "screen-recording";
   const isWelcomeStep = currentStepData?.id === "welcome";
+  const isTemplateSelectionStep = currentStepData?.id === "template-selection";
 
   return {
     currentStep,
@@ -183,6 +193,7 @@ export function useOnboardingSteps({
     isAccessibilityStep,
     isScreenRecordingStep,
     isWelcomeStep,
+    isTemplateSelectionStep,
     handleNext,
     handleBack,
     handleSkipToEnd,
