@@ -1,0 +1,412 @@
+/**
+ * Design System Tokens - CSS Custom Properties
+ *
+ * This file defines all design tokens as CSS custom properties for runtime theming.
+ * These properties are referenced by Tailwind CSS and can be used directly in CSS.
+ *
+ * Token Naming Convention:
+ * --{category}-{name}[-{variant}]
+ *
+ * Categories:
+ * - color: Color values
+ * - spacing: Spacing/sizing values
+ * - font: Typography values
+ * - radius: Border radius values
+ * - shadow: Box shadow values
+ * - duration: Animation duration values
+ * - ease: Animation easing values
+ * - z: Z-index values
+ *
+ * @see /src/renderer/src/lib/designTokens.ts for TypeScript equivalents
+ */
+
+/* =============================================================================
+   ROOT TOKENS (Light Mode)
+   ============================================================================= */
+
+:root {
+  /* -------------------------------------------------------------------------
+     Primitive Color Tokens
+     ------------------------------------------------------------------------- */
+
+  /* Emerald Scale (Productive) */
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
+
+  /* Rose Scale (Unproductive) */
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecdd3;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  --color-rose-900: #881337;
+  --color-rose-950: #4c0519;
+
+  /* Amber Scale (Neutral/Maybe) */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
+  /* Slate Scale (Neutral UI) */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Blue Scale (Primary/Accent) */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+
+  /* -------------------------------------------------------------------------
+     Semantic Color Tokens - Productivity
+     ------------------------------------------------------------------------- */
+
+  /* Productive - Emerald based */
+  --color-productive: var(--color-emerald-500);
+  --color-productive-light: var(--color-emerald-400);
+  --color-productive-dark: var(--color-emerald-600);
+  --color-productive-subtle: var(--color-emerald-100);
+  --color-productive-foreground: #ffffff;
+
+  /* Unproductive - Rose based */
+  --color-unproductive: var(--color-rose-500);
+  --color-unproductive-light: var(--color-rose-400);
+  --color-unproductive-dark: var(--color-rose-600);
+  --color-unproductive-subtle: var(--color-rose-100);
+  --color-unproductive-foreground: #ffffff;
+
+  /* Neutral/Maybe - Amber based */
+  --color-neutral-activity: var(--color-amber-500);
+  --color-neutral-activity-light: var(--color-amber-400);
+  --color-neutral-activity-dark: var(--color-amber-600);
+  --color-neutral-activity-subtle: var(--color-amber-100);
+  --color-neutral-activity-foreground: #ffffff;
+
+  /* Uncategorized - Slate based */
+  --color-uncategorized: var(--color-slate-400);
+  --color-uncategorized-light: var(--color-slate-300);
+  --color-uncategorized-dark: var(--color-slate-500);
+  --color-uncategorized-subtle: var(--color-slate-100);
+  --color-uncategorized-foreground: #ffffff;
+
+  /* -------------------------------------------------------------------------
+     Semantic Color Tokens - Feedback/Status
+     ------------------------------------------------------------------------- */
+
+  /* Success - uses productive green */
+  --color-success: var(--color-emerald-500);
+  --color-success-light: var(--color-emerald-400);
+  --color-success-dark: var(--color-emerald-600);
+  --color-success-subtle: var(--color-emerald-100);
+  --color-success-foreground: #ffffff;
+
+  /* Warning - uses neutral amber */
+  --color-warning: var(--color-amber-500);
+  --color-warning-light: var(--color-amber-400);
+  --color-warning-dark: var(--color-amber-600);
+  --color-warning-subtle: var(--color-amber-100);
+  --color-warning-foreground: #ffffff;
+
+  /* Error - uses unproductive rose */
+  --color-error: var(--color-rose-500);
+  --color-error-light: var(--color-rose-400);
+  --color-error-dark: var(--color-rose-600);
+  --color-error-subtle: var(--color-rose-100);
+  --color-error-foreground: #ffffff;
+
+  /* Info - uses blue */
+  --color-info: var(--color-blue-500);
+  --color-info-light: var(--color-blue-400);
+  --color-info-dark: var(--color-blue-600);
+  --color-info-subtle: var(--color-blue-100);
+  --color-info-foreground: #ffffff;
+
+  /* -------------------------------------------------------------------------
+     Spacing Tokens (4px base unit)
+     ------------------------------------------------------------------------- */
+
+  --spacing-0: 0px;
+  --spacing-px: 1px;
+  --spacing-0-5: 2px;
+  --spacing-1: 4px;
+  --spacing-1-5: 6px;
+  --spacing-2: 8px;
+  --spacing-2-5: 10px;
+  --spacing-3: 12px;
+  --spacing-3-5: 14px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+  --spacing-9: 36px;
+  --spacing-10: 40px;
+  --spacing-11: 44px;
+  --spacing-12: 48px;
+  --spacing-14: 56px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+  --spacing-28: 112px;
+  --spacing-32: 128px;
+
+  /* Spacing Aliases */
+  --spacing-xs: var(--spacing-1);
+  --spacing-sm: var(--spacing-2);
+  --spacing-md: var(--spacing-4);
+  --spacing-lg: var(--spacing-6);
+  --spacing-xl: var(--spacing-8);
+  --spacing-2xl: var(--spacing-12);
+
+  /* -------------------------------------------------------------------------
+     Typography Tokens
+     ------------------------------------------------------------------------- */
+
+  /* Font Families */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+
+  /* Line Heights */
+  --line-height-xs: 1rem;
+  --line-height-sm: 1.25rem;
+  --line-height-base: 1.5rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xl: 1.75rem;
+  --line-height-2xl: 2rem;
+  --line-height-3xl: 2.25rem;
+  --line-height-4xl: 2.5rem;
+
+  /* Font Weights */
+  --font-weight-thin: 100;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+
+  /* -------------------------------------------------------------------------
+     Border Radius Tokens
+     ------------------------------------------------------------------------- */
+
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-default: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* -------------------------------------------------------------------------
+     Shadow Tokens
+     ------------------------------------------------------------------------- */
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-default: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* -------------------------------------------------------------------------
+     Animation Tokens
+     ------------------------------------------------------------------------- */
+
+  /* Durations */
+  --duration-0: 0ms;
+  --duration-75: 75ms;
+  --duration-100: 100ms;
+  --duration-150: 150ms;
+  --duration-200: 200ms;
+  --duration-300: 300ms;
+  --duration-500: 500ms;
+  --duration-700: 700ms;
+  --duration-1000: 1000ms;
+
+  /* Easing Functions */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* -------------------------------------------------------------------------
+     Z-Index Tokens
+     ------------------------------------------------------------------------- */
+
+  --z-behind: -1;
+  --z-base: 0;
+  --z-docked: 10;
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-fixed: 40;
+  --z-modal-backdrop: 50;
+  --z-modal: 60;
+  --z-popover: 70;
+  --z-tooltip: 80;
+  --z-toast: 90;
+  --z-max: 9999;
+}
+
+/* =============================================================================
+   DARK MODE TOKENS
+   ============================================================================= */
+
+.dark {
+  /* Productivity colors - subtle backgrounds are darker in dark mode */
+  --color-productive-subtle: var(--color-emerald-900);
+  --color-unproductive-subtle: var(--color-rose-900);
+  --color-neutral-activity-subtle: var(--color-amber-900);
+  --color-uncategorized-subtle: var(--color-slate-800);
+
+  /* Feedback colors - subtle backgrounds are darker in dark mode */
+  --color-success-subtle: var(--color-emerald-900);
+  --color-warning-subtle: var(--color-amber-900);
+  --color-error-subtle: var(--color-rose-900);
+  --color-info-subtle: var(--color-blue-900);
+
+  /* Shadows are more pronounced in dark mode */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+  --shadow-default: 0 1px 3px 0 rgb(0 0 0 / 0.2),
+    0 1px 2px -1px rgb(0 0 0 / 0.2);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2),
+    0 4px 6px -4px rgb(0 0 0 / 0.2);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.2),
+    0 8px 10px -6px rgb(0 0 0 / 0.2);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+/* Productivity color utility classes */
+.bg-productive {
+  background-color: var(--color-productive);
+}
+
+.bg-productive-subtle {
+  background-color: var(--color-productive-subtle);
+}
+
+.text-productive {
+  color: var(--color-productive);
+}
+
+.border-productive {
+  border-color: var(--color-productive);
+}
+
+.bg-unproductive {
+  background-color: var(--color-unproductive);
+}
+
+.bg-unproductive-subtle {
+  background-color: var(--color-unproductive-subtle);
+}
+
+.text-unproductive {
+  color: var(--color-unproductive);
+}
+
+.border-unproductive {
+  border-color: var(--color-unproductive);
+}
+
+.bg-neutral-activity {
+  background-color: var(--color-neutral-activity);
+}
+
+.bg-neutral-activity-subtle {
+  background-color: var(--color-neutral-activity-subtle);
+}
+
+.text-neutral-activity {
+  color: var(--color-neutral-activity);
+}
+
+.border-neutral-activity {
+  border-color: var(--color-neutral-activity);
+}
+
+.bg-uncategorized {
+  background-color: var(--color-uncategorized);
+}
+
+.bg-uncategorized-subtle {
+  background-color: var(--color-uncategorized-subtle);
+}
+
+.text-uncategorized {
+  color: var(--color-uncategorized);
+}
+
+.border-uncategorized {
+  border-color: var(--color-uncategorized);
+}

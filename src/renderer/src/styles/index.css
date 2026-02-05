@@ -1,3 +1,16 @@
+/**
+ * Cronus Time Tracker - Main Stylesheet
+ *
+ * This file imports Tailwind CSS layers and the design system tokens.
+ * Design tokens provide consistent values for colors, spacing, typography, etc.
+ *
+ * @see /src/renderer/src/styles/tokens.css - Design system tokens (CSS custom properties)
+ * @see /src/renderer/src/lib/designTokens.ts - Design tokens (TypeScript constants)
+ */
+
+/* Design System Tokens - must be imported before Tailwind for CSS variable resolution */
+@import "./tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
