@@ -6,6 +6,7 @@ import { OnboardingModal } from "./components/OnboardingModal";
 import { QuitConfirmationModal } from "./components/QuitConfirmationModal";
 import RecategorizeDialog from "./components/RecategorizeDialog";
 import { SettingsPage } from "./components/SettingsPage";
+import { SkipLink } from "./components/ui/SkipLink";
 import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { UpdateNotification } from "./components/UpdateNotification";
@@ -221,7 +222,10 @@ export function MainAppContent(): React.ReactElement {
   return (
     <TooltipProvider delayDuration={150}>
       <div className={cn("flex flex-col", !isSettingsOpen && "h-screen")}>
-        <div className="sticky top-0 z-50 bg-background">
+        {/* Skip link for keyboard navigation */}
+        <SkipLink targetId="main-content">Skip to main content</SkipLink>
+
+        <header className="sticky top-0 z-50 bg-background">
           <div className="custom-title-bar" />
           <div className="flex-none px-3 pb-2">
             <DistractionStatusBar
@@ -235,9 +239,15 @@ export function MainAppContent(): React.ReactElement {
               onToggleTracking={handleToggleTracking}
             />
           </div>
-        </div>
+        </header>
 
-        <div className="flex-1 flex flex-col overflow-auto">
+        <main
+          id="main-content"
+          className="flex-1 flex flex-col overflow-auto"
+          tabIndex={-1}
+          role="main"
+          aria-label={isSettingsOpen ? "Settings" : "Dashboard"}
+        >
           <div
             className={`flex-1 flex-col min-h-0 ${isSettingsOpen ? "hidden" : "flex"}`}
           >
@@ -252,7 +262,7 @@ export function MainAppContent(): React.ReactElement {
               onToggleTracking={handleToggleTracking}
             />
           </div>
-        </div>
+        </main>
 
         {showOnboarding && (
           <OnboardingModal onComplete={handleOnboardingComplete} />

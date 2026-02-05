@@ -95,6 +95,8 @@ function TrayAppIcon({
     <div
       className={`flex items-center justify-center bg-gradient-to-br ${getAppColor(appName)} rounded-sm text-primary-foreground font-semibold`}
       style={{ width: size, height: size, fontSize: size * 0.5 }}
+      role="img"
+      aria-label={`${appName} icon`}
     >
       {appName.charAt(0).toUpperCase()}
     </div>
@@ -120,11 +122,15 @@ export function TrayAppsList({ topApps, isLoading }: TrayAppsListProps) {
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-lg p-3">
+      <section
+        className="border border-border rounded-lg p-3"
+        aria-label="Apps and websites usage"
+        aria-busy="true"
+      >
         <div className="h-4 bg-muted rounded w-28 mb-3 animate-pulse"></div>
-        <div className="space-y-3">
+        <div className="space-y-3" role="list" aria-label="Loading app list">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center gap-3">
+            <div key={i} className="flex items-center gap-3" role="listitem">
               <div className="w-5 h-5 bg-muted rounded animate-pulse"></div>
               <div className="flex-1">
                 <div className="h-3 bg-muted rounded w-24 mb-1 animate-pulse"></div>
@@ -134,31 +140,48 @@ export function TrayAppsList({ topApps, isLoading }: TrayAppsListProps) {
             </div>
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
   if (topApps.length === 0) {
     return (
-      <div className="border border-border rounded-lg p-3">
+      <section
+        className="border border-border rounded-lg p-3"
+        aria-label="Apps and websites usage"
+      >
         <h3 className="text-xs text-muted-foreground mb-3">Apps & Websites</h3>
         <p className="text-sm text-muted-foreground text-center py-4">
           No activity tracked yet today
         </p>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="border border-border rounded-lg p-3">
-      <h3 className="text-xs text-muted-foreground mb-3">Apps & Websites</h3>
+    <section
+      className="border border-border rounded-lg p-3"
+      aria-label="Apps and websites usage"
+    >
+      <h3 id="tray-apps-heading" className="text-xs text-muted-foreground mb-3">
+        Apps & Websites
+      </h3>
 
-      <div className="space-y-2">
+      <ul
+        className="space-y-2"
+        role="list"
+        aria-labelledby="tray-apps-heading"
+      >
         {topApps.slice(0, 6).map((app) => {
           const widthPercent = (app.durationMs / maxDuration) * 100;
+          const formattedDuration = formatDuration(app.durationMs);
 
           return (
-            <div key={app.name} className="flex items-center gap-2">
+            <li
+              key={app.name}
+              className="flex items-center gap-2"
+              aria-label={`${app.name}: ${formattedDuration}`}
+            >
               {/* App icon */}
               <TrayAppIcon appName={app.name} size={20} />
 
@@ -167,7 +190,14 @@ export function TrayAppsList({ topApps, isLoading }: TrayAppsListProps) {
                 <p className="text-xs text-foreground truncate mb-0.5">
                   {app.name}
                 </p>
-                <div className="h-1 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-1 bg-muted rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={Math.round(widthPercent)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`${app.name} usage: ${Math.round(widthPercent)}% of maximum`}
+                >
                   <div
                     className="h-full bg-chart-accent rounded-full transition-all"
                     style={{ width: `${widthPercent}%` }}
@@ -176,13 +206,16 @@ export function TrayAppsList({ topApps, isLoading }: TrayAppsListProps) {
               </div>
 
               {/* Duration */}
-              <span className="text-xs text-muted-foreground flex-shrink-0">
-                {formatDuration(app.durationMs)}
+              <span
+                className="text-xs text-muted-foreground flex-shrink-0"
+                aria-hidden="true"
+              >
+                {formattedDuration}
               </span>
-            </div>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }

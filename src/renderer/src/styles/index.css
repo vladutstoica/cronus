@@ -76,6 +76,27 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Accessibility: Ensure all interactive elements have visible focus indicators */
+  /* This provides a consistent focus ring for keyboard navigation */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Remove default focus outline for mouse users (focus-visible handles keyboard focus) */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Skip link styling - visually hidden until focused */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:z-[9999];
+    @apply focus:top-2 focus:left-2 focus:px-4 focus:py-2;
+    @apply focus:bg-primary focus:text-primary-foreground;
+    @apply focus:rounded-md focus:font-medium focus:text-sm;
+    @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    @apply focus:shadow-lg;
+  }
 }
 
 /* Updated scrollbar styles using CSS variables */

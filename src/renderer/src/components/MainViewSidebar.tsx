@@ -23,7 +23,11 @@ export function MainViewSidebar({
   onSectionChange,
 }: MainViewSidebarProps) {
   return (
-    <nav className="flex flex-col gap-1 w-32 flex-shrink-0">
+    <nav
+      className="flex flex-col gap-1 w-32 flex-shrink-0"
+      aria-label="Main navigation"
+      role="navigation"
+    >
       {menuItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeSection === item.id;
@@ -32,6 +36,8 @@ export function MainViewSidebar({
           <button
             key={item.id}
             onClick={() => onSectionChange(item.id)}
+            aria-current={isActive ? "page" : undefined}
+            aria-label={`Navigate to ${item.label}`}
             className={cn(
               "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors text-left",
               isActive
@@ -39,7 +45,7 @@ export function MainViewSidebar({
                 : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
             )}
           >
-            <Icon size={18} />
+            <Icon size={18} aria-hidden="true" />
             {item.label}
           </button>
         );
