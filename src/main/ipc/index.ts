@@ -10,6 +10,7 @@ import { registerAiHandlers } from "./aiHandlers";
 import { registerFileHandlers } from "./fileHandlers";
 import { registerWindowHandlers } from "./windowHandlers";
 import { registerSettingsHandlers } from "./settingsHandlers";
+import { registerExportHandlers } from "./exportHandlers";
 
 export function registerIpcHandlers(
   windows: Windows,
@@ -27,4 +28,5 @@ export function registerIpcHandlers(
   registerFileHandlers();
   registerWindowHandlers(windows, recreateFloatingWindow, recreateMainWindow);
   registerSettingsHandlers();
+  registerExportHandlers();
 }

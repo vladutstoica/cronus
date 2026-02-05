@@ -9,6 +9,7 @@ import { MultiPurposeAppsSettings } from "./Settings/MultiPurposeAppsSettings";
 import PauseTrackingSettings from "./Settings/PauseTrackingSettings";
 import { PermissionsStatus } from "./Settings/PermissionsStatus";
 import { PrivacySettings } from "./Settings/PrivacySettings";
+import { ExportSettings } from "./Settings/ExportSettings";
 import { SettingsSidebar, SettingsSection } from "./Settings/SettingsSidebar";
 import { ThemeSwitcher } from "./Settings/ThemeSwitcher";
 import { AppInformation } from "./Settings/VersionDisplay";
@@ -72,7 +73,12 @@ export const SettingsPage = memo(function SettingsPage({
       case "apps":
         return <MultiPurposeAppsSettings />;
       case "privacy":
-        return <PrivacySettings />;
+        return (
+          <div className="space-y-4">
+            <PrivacySettings />
+            <ExportSettings />
+          </div>
+        );
       case "about":
         return (
           <div className="space-y-4">

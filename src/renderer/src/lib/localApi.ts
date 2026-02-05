@@ -4,6 +4,11 @@
  */
 
 import { User, Category, ActiveWindowDetails } from "@shared/types";
+import {
+  ExportOptions,
+  ExportResult,
+  ExportProgress,
+} from "@shared/exportTypes";
 
 /** Electron app settings shape (extracted from User.electronAppSettings) */
 export interface ElectronAppSettings {
@@ -316,6 +321,28 @@ export const localApi = {
       return window.electron.ipcRenderer.invoke(
         "local:clear-ai-availability-cache",
       );
+    },
+  },
+
+  // Export operations
+  export: {
+    start: async (options: ExportOptions): Promise<ExportResult> => {
+      return window.electron.ipcRenderer.invoke("export:start", options);
+    },
+    estimate: async (
+      options: ExportOptions,
+    ): Promise<{ estimatedActivities: number; estimatedCategories: number }> => {
+      return window.electron.ipcRenderer.invoke("export:estimate", options);
+    },
+    onProgress: (callback: (progress: ExportProgress) => void) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        progress: ExportProgress,
+      ) => callback(progress);
+      window.electron.ipcRenderer.on("export:progress", listener);
+      return () => {
+        window.electron.ipcRenderer.removeListener("export:progress", listener);
+      };
     },
   },
 };
