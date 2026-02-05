@@ -135,16 +135,29 @@ export const ActivityListItem = ({
     });
   };
 
+  const formattedDuration = formatDuration(activity.durationMs);
+  const activityDescription = `${activity.name}, ${activity.itemType}, duration: ${formattedDuration}`;
+
   const content = (
     <>
       <Tooltip>
         <div
           key={uniqueKey}
-          className={`group flex w-full select-none items-center cursor-pointer justify-between px-1 py-0.5 ${borderRadiusClass} ${
+          role="listitem"
+          aria-selected={isSelected}
+          aria-label={activityDescription}
+          className={`group flex w-full select-none items-center cursor-pointer justify-between px-1 py-1 ${borderRadiusClass} ${
             isSelected ? "bg-blue-100 dark:bg-blue-900/50" : "hover:bg-muted"
           }`}
           onMouseEnter={() => setHoveredActivityKey(uniqueKey)}
           onMouseLeave={() => setHoveredActivityKey(null)}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectActivity(selectionKey, e as unknown as React.MouseEvent);
+            }
+          }}
         >
           <TooltipTrigger asChild>
             <div
@@ -197,14 +210,14 @@ export const ActivityListItem = ({
                 onAddNewCategory={onAddNewCategory}
               />
             ) : (
-              <span className="text-sm text-muted-foreground">
-                {formatDuration(activity.durationMs)}
+              <span className="text-sm text-muted-foreground" aria-hidden="true">
+                {formattedDuration}
               </span>
             )}
           </div>
         </div>
         <TooltipContent className="max-w-xs text-muted-foreground sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
-          <ul>
+          <ul aria-label="Activity details">
             <li>
               <strong className="text-primary">Name:</strong> {activity.name}
             </li>

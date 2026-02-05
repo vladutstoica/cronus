@@ -34,7 +34,11 @@ export function TrayStats({ workStarted, totalMs, isLoading }: TrayStatsProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <section
+        className="grid grid-cols-2 gap-4"
+        aria-label="Work statistics"
+        aria-busy="true"
+      >
         <div className="border border-border rounded-lg p-3 animate-pulse">
           <div className="h-4 bg-muted rounded w-20 mb-2"></div>
           <div className="h-6 bg-muted rounded w-16"></div>
@@ -43,33 +47,51 @@ export function TrayStats({ workStarted, totalMs, isLoading }: TrayStatsProps) {
           <div className="h-4 bg-muted rounded w-20 mb-2"></div>
           <div className="h-6 bg-muted rounded w-16"></div>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <section className="grid grid-cols-2 gap-4" aria-label="Work statistics">
       {/* Work started */}
-      <div className="border border-border rounded-lg p-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <Play size={12} className="text-success" />
-          <span className="text-xs text-muted-foreground">Work started</span>
+      <div
+        className="border border-border rounded-lg p-3"
+        role="group"
+        aria-label={`Work started at ${formattedWorkStarted}`}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Play size={12} className="text-success" aria-hidden="true" />
+          <span id="work-started-label" className="text-xs text-muted-foreground">
+            Work started
+          </span>
         </div>
-        <p className="text-lg font-semibold text-foreground">
+        <p
+          className="text-lg font-semibold text-foreground"
+          aria-labelledby="work-started-label"
+        >
           {formattedWorkStarted}
         </p>
       </div>
 
       {/* Total hours */}
-      <div className="border border-border rounded-lg p-3">
-        <div className="flex items-center gap-1.5 mb-1">
-          <Clock size={12} className="text-chart-accent" />
-          <span className="text-xs text-muted-foreground">Total hours</span>
+      <div
+        className="border border-border rounded-lg p-3"
+        role="group"
+        aria-label={`Total hours: ${formattedTotalTime}`}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Clock size={12} className="text-chart-accent" aria-hidden="true" />
+          <span id="total-hours-label" className="text-xs text-muted-foreground">
+            Total hours
+          </span>
         </div>
-        <p className="text-lg font-semibold text-foreground">
+        <p
+          className="text-lg font-semibold text-foreground"
+          aria-labelledby="total-hours-label"
+        >
           {formattedTotalTime}
         </p>
       </div>
-    </div>
+    </section>
   );
 }

@@ -75,7 +75,7 @@ export const CategorySectionHeader: React.FC<CategorySectionHeaderProps> = ({
       <div className="sticky top-0 z-10 flex select-none items-center justify-between border-b border-border bg-card py-2 pl-2">
         <div className="flex items-center gap-2">
           <div
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: category.color }}
           />
           <h3 className="text-md font-semibold" style={{ color: textColor }}>

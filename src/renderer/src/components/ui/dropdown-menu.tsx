@@ -25,8 +25,8 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-      inset && "pl-8",
+      "flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0", // gap-2 = 8px, px-2 = 8px, py-2 = 8px (changed from py-1.5 = 6px)
+      inset && "pl-8", // pl-8 = 32px
       className,
     )}
     {...props}
@@ -81,8 +81,8 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-      inset && "pl-8",
+      "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0", // gap-2 = 8px, px-2 = 8px, py-2 = 8px (changed from py-1.5 = 6px)
+      inset && "pl-8", // pl-8 = 32px
       className,
     )}
     {...props}
@@ -97,13 +97,13 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm py-2 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", // py-2 = 8px (changed from py-1.5 = 6px), pl-8 = 32px, pr-2 = 8px
       className,
     )}
     checked={checked}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
         <Check className="h-4 w-4" />
       </DropdownMenuPrimitive.ItemIndicator>
@@ -121,12 +121,12 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm py-2 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", // py-2 = 8px (changed from py-1.5 = 6px), pl-8 = 32px, pr-2 = 8px
       className,
     )}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
         <Circle className="h-2 w-2 fill-current" />
       </DropdownMenuPrimitive.ItemIndicator>
@@ -145,8 +145,8 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      "px-2 py-1.5 text-sm font-semibold",
-      inset && "pl-8",
+      "px-2 py-2 text-sm font-semibold", // px-2 = 8px, py-2 = 8px (changed from py-1.5 = 6px)
+      inset && "pl-8", // pl-8 = 32px
       className,
     )}
     {...props}

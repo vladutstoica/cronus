@@ -226,14 +226,12 @@ export function TrayPopover() {
         <h1 className="text-sm font-semibold text-foreground">Cronus</h1>
         {statusUpdate && (
           <div
-            className={`flex items-center gap-1.5 text-xs ${
-              statusUpdate.isTrackingPaused
-                ? "text-warning"
-                : "text-success"
+            className={`flex items-center gap-2 text-xs ${
+              statusUpdate.isTrackingPaused ? "text-warning" : "text-success"
             }`}
           >
             <div
-              className={`w-1.5 h-1.5 rounded-full ${
+              className={`w-2 h-2 rounded-full ${
                 statusUpdate.isTrackingPaused ? "bg-warning" : "bg-success"
               }`}
             />
@@ -249,7 +247,10 @@ export function TrayPopover() {
           onValueChange={handleTabChange}
           className="flex-1 flex flex-col overflow-hidden"
         >
-          <TabsList className="grid w-full grid-cols-3 mx-4 mt-3 flex-shrink-0" style={{ width: "calc(100% - 32px)" }}>
+          <TabsList
+            className="grid w-full grid-cols-3 mx-4 mt-3 flex-shrink-0"
+            style={{ width: "calc(100% - 32px)" }}
+          >
             <TabsTrigger value="today" className="gap-1">
               <Calendar size={12} />
               Today

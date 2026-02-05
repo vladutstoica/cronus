@@ -20,12 +20,12 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        "2xs": "h-6 w-6 px-2 py-1",
-        xs: "h-8 px-2 py-1",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        default: "h-10 px-4 py-2", // 40px height, 16px horizontal, 8px vertical
+        "2xs": "h-6 w-6 px-2 py-1", // 24px height/width, 8px horizontal, 4px vertical
+        xs: "h-8 px-2 py-1", // 32px height, 8px horizontal, 4px vertical
+        sm: "h-8 rounded-md px-3", // 32px height, 12px horizontal
+        lg: "h-12 rounded-md px-8", // 48px height, 32px horizontal (changed from h-11/44px to h-12/48px)
+        icon: "h-10 w-10", // 40px height/width
       },
     },
     defaultVariants: {
@@ -39,6 +39,11 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  /**
+   * Accessible label for icon-only buttons.
+   * Required when the button contains only an icon without visible text.
+   */
+  "aria-label"?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
