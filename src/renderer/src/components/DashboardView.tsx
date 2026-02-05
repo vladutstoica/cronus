@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ActiveWindowEvent, Category } from "@shared/types";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigation } from "../contexts/NavigationContext";
 import { useWindowFocus } from "../hooks/useWindowFocus";
 import { REFRESH_EVENTS_INTERVAL_MS } from "../lib/constants";
 import { generateProcessedEventBlocks } from "../utils/eventProcessing";
@@ -9,7 +10,7 @@ import { localApi } from "../lib/localApi";
 import ActivitiesByCategoryWidget from "./ActivityList/ActivitiesByCategoryWidget";
 import CalendarWidget from "./CalendarWidget/CalendarWidget";
 import { activityEventService } from "../lib/activityEventService";
-import { MainViewSidebar, MainSection } from "./MainViewSidebar";
+import { MainViewSidebar } from "./MainViewSidebar";
 import { TimeBlocksTimeline } from "./Stats/TimeBlocksTimeline";
 import { StatsView } from "./Stats/StatsView";
 import { TodoView } from "./Todos/TodoView";
@@ -86,7 +87,7 @@ export function DashboardView({
   className?: string;
 }): ReactElement {
   const { user, isAuthenticated } = useAuth();
-  const [activeSection, setActiveSection] = useState<MainSection>("dashboard");
+  const { activeSection, setActiveSection } = useNavigation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);

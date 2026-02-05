@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { CommandPalette, useCommandPalette } from "./components/CommandPalette";
 import { DashboardView } from "./components/DashboardView";
 import DistractionStatusBar from "./components/DistractionStatusBar";
 import { OnboardingModal } from "./components/OnboardingModal";
@@ -9,6 +10,7 @@ import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { UpdateNotification } from "./components/UpdateNotification";
 import { useAuth } from "./contexts/AuthContext";
+import { useNavigation } from "./contexts/NavigationContext";
 import { useSettings } from "./contexts/SettingsContext";
 import { useAccessibilityPermission } from "./hooks/useAccessibilityPermission";
 import { useActivityTracking } from "./hooks/useActivityTracking";
@@ -25,6 +27,8 @@ export const APP_USP =
 export function MainAppContent(): React.ReactElement {
   const { isAuthenticated } = useAuth();
   const { isSettingsOpen, setIsSettingsOpen, setFocusOn } = useSettings();
+  const { setActiveSection } = useNavigation();
+  const commandPalette = useCommandPalette();
 
   const [isMiniTimerVisible, setIsMiniTimerVisible] = useState(false);
   const [isTrackingPaused, setIsTrackingPaused] = useState(false);
@@ -84,6 +88,36 @@ export function MainAppContent(): React.ReactElement {
       window.electron.ipcRenderer.send("show-floating-window");
     }
   };
+
+  const handleToggleFloatingWindow = useCallback((): void => {
+    if (window.electron?.ipcRenderer) {
+      if (isMiniTimerVisible) {
+        window.electron.ipcRenderer.send("hide-floating-window");
+      } else {
+        window.electron.ipcRenderer.send("show-floating-window");
+      }
+    }
+  }, [isMiniTimerVisible]);
+
+  // Command palette navigation handlers
+  const handleNavigateDashboard = useCallback(() => {
+    setIsSettingsOpen(false);
+    setActiveSection("dashboard");
+  }, [setIsSettingsOpen, setActiveSection]);
+
+  const handleNavigateTodos = useCallback(() => {
+    setIsSettingsOpen(false);
+    setActiveSection("todos");
+  }, [setIsSettingsOpen, setActiveSection]);
+
+  const handleNavigateStats = useCallback(() => {
+    setIsSettingsOpen(false);
+    setActiveSection("stats");
+  }, [setIsSettingsOpen, setActiveSection]);
+
+  const handleNavigateSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+  }, [setIsSettingsOpen]);
 
   // Mini timer visibility management
   useEffect(() => {
@@ -233,6 +267,21 @@ export function MainAppContent(): React.ReactElement {
 
         <UpdateNotification onRestartBegin={handleSystemRestartBegin} />
         <Toaster />
+
+        {/* Command Palette */}
+        <CommandPalette
+          isOpen={commandPalette.isOpen}
+          onClose={commandPalette.close}
+          onNavigateDashboard={handleNavigateDashboard}
+          onNavigateTodos={handleNavigateTodos}
+          onNavigateStats={handleNavigateStats}
+          onNavigateSettings={handleNavigateSettings}
+          isTrackingPaused={isTrackingPaused}
+          onToggleTracking={handleToggleTracking}
+          isMiniTimerVisible={isMiniTimerVisible}
+          onToggleFloatingWindow={handleToggleFloatingWindow}
+        />
+
         {allCategories && recategorizeTarget && (
           <RecategorizeDialog
             open={isRecategorizeDialogOpen}

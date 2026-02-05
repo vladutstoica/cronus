@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./AppWrapper";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NavigationProvider } from "./contexts/NavigationContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
@@ -18,7 +19,9 @@ const Main = () => {
         <AuthProvider>
           <ThemeProvider>
             <SettingsProvider>
-              <App />
+              <NavigationProvider>
+                <App />
+              </NavigationProvider>
             </SettingsProvider>
           </ThemeProvider>
         </AuthProvider>
