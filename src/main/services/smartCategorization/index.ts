@@ -1,6 +1,6 @@
 /**
  * Smart Categorization Module
- * Exports the rule engine, pattern learner, and related types
+ * Exports the rule engine, pattern learner, templates, and related types
  */
 
 export { RuleEngine, getRuleEngine, resetRuleEngine } from "./ruleEngine";
@@ -11,11 +11,25 @@ export {
   clearPatternLearnerCache,
 } from "./patternLearner";
 
+export {
+  getAvailableTemplates,
+  getTemplateById,
+  applyTemplate,
+  hasAppliedTemplate,
+} from "./templates";
+
 export type {
   ExtractedPattern,
   PatternMatch,
   CategorySuggestion,
 } from "./patternLearner";
+
+export type {
+  TemplateCategory,
+  TemplateRule,
+  CategoryTemplate,
+  ApplyTemplateResult,
+} from "./templates";
 
 export type {
   ActivityForMatching,
