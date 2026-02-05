@@ -233,6 +233,62 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_work_sessions_user_date ON work_sessions(user_id, started_at);
       `,
     },
+    {
+      name: "007_categorization_rules",
+      up: `
+        -- Categorization patterns table for learned patterns from user corrections
+        CREATE TABLE IF NOT EXISTS categorization_patterns (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          pattern_type TEXT NOT NULL CHECK (pattern_type IN ('app', 'domain', 'url_path', 'title_keyword')),
+          pattern_value TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          confidence REAL DEFAULT 0.5,
+          match_count INTEGER DEFAULT 0,
+          correction_count INTEGER DEFAULT 0,
+          source TEXT NOT NULL CHECK (source IN ('user_correction', 'manual', 'template')),
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+          UNIQUE (user_id, pattern_type, pattern_value)
+        );
+
+        -- Categorization rules table for user-defined and template rules
+        CREATE TABLE IF NOT EXISTS categorization_rules (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          category_id TEXT NOT NULL,
+          conditions TEXT NOT NULL, -- JSON array of condition objects
+          condition_logic TEXT DEFAULT 'AND' CHECK (condition_logic IN ('AND', 'OR')),
+          priority INTEGER DEFAULT 0,
+          confidence REAL DEFAULT 1.0,
+          is_enabled INTEGER DEFAULT 1,
+          is_system INTEGER DEFAULT 0,
+          source TEXT NOT NULL CHECK (source IN ('user', 'template')),
+          match_count INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+        );
+
+        -- Indexes for categorization_patterns
+        CREATE INDEX IF NOT EXISTS idx_cat_patterns_user_id ON categorization_patterns(user_id);
+        CREATE INDEX IF NOT EXISTS idx_cat_patterns_category_id ON categorization_patterns(category_id);
+        CREATE INDEX IF NOT EXISTS idx_cat_patterns_type_value ON categorization_patterns(pattern_type, pattern_value);
+        CREATE INDEX IF NOT EXISTS idx_cat_patterns_confidence ON categorization_patterns(confidence DESC);
+
+        -- Indexes for categorization_rules
+        CREATE INDEX IF NOT EXISTS idx_cat_rules_user_id ON categorization_rules(user_id);
+        CREATE INDEX IF NOT EXISTS idx_cat_rules_category_id ON categorization_rules(category_id);
+        CREATE INDEX IF NOT EXISTS idx_cat_rules_priority ON categorization_rules(priority DESC);
+        CREATE INDEX IF NOT EXISTS idx_cat_rules_enabled ON categorization_rules(is_enabled);
+        CREATE INDEX IF NOT EXISTS idx_cat_rules_user_enabled_priority ON categorization_rules(user_id, is_enabled, priority DESC);
+      `,
+    },
   ];
 
   // Apply migrations
