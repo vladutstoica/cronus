@@ -289,6 +289,136 @@ function runMigrations(database: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_cat_rules_user_enabled_priority ON categorization_rules(user_id, is_enabled, priority DESC);
       `,
     },
+    {
+      name: "008_task_tracking",
+      up: `
+        -- External tasks table: cached Jira/Linear issues
+        CREATE TABLE IF NOT EXISTS external_tasks (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          provider TEXT NOT NULL CHECK (provider IN ('jira', 'linear')),
+          external_id TEXT NOT NULL,
+          external_url TEXT,
+          title TEXT NOT NULL,
+          description TEXT,
+          project_key TEXT,
+          project_name TEXT,
+          status TEXT,
+          assignee TEXT,
+          labels TEXT, -- JSON array
+          priority TEXT,
+          estimate_seconds INTEGER,
+          last_synced_at TEXT,
+          is_archived INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE (user_id, provider, external_id)
+        );
+
+        -- Task associations table: links activity events to tasks
+        CREATE TABLE IF NOT EXISTS task_associations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          event_id INTEGER NOT NULL,
+          task_id INTEGER NOT NULL,
+          detection_method TEXT NOT NULL CHECK (detection_method IN ('git_branch', 'window_title', 'url_pattern', 'manual', 'active_session')),
+          confidence_score REAL DEFAULT 0.0 CHECK (confidence_score >= 0.0 AND confidence_score <= 1.0),
+          is_confirmed INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (task_id) REFERENCES external_tasks(id) ON DELETE CASCADE,
+          UNIQUE (event_id, task_id)
+        );
+
+        -- Worklogs table: aggregated time per task per day
+        CREATE TABLE IF NOT EXISTS worklogs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          task_id INTEGER NOT NULL,
+          date TEXT NOT NULL, -- YYYY-MM-DD format
+          total_seconds INTEGER NOT NULL DEFAULT 0,
+          description TEXT,
+          sync_status TEXT DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed', 'skipped')),
+          external_worklog_id TEXT,
+          synced_at TEXT,
+          error_message TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (task_id) REFERENCES external_tasks(id) ON DELETE CASCADE,
+          UNIQUE (user_id, task_id, date)
+        );
+
+        -- Task detection rules table: custom detection patterns
+        CREATE TABLE IF NOT EXISTS task_detection_rules (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          rule_type TEXT NOT NULL CHECK (rule_type IN ('git_branch_pattern', 'window_title_pattern', 'url_pattern')),
+          pattern TEXT NOT NULL,
+          task_id INTEGER,
+          project_key TEXT,
+          priority INTEGER DEFAULT 0,
+          is_enabled INTEGER DEFAULT 1,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (task_id) REFERENCES external_tasks(id) ON DELETE SET NULL
+        );
+
+        -- Integration credentials table: encrypted API tokens
+        CREATE TABLE IF NOT EXISTS integration_credentials (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL,
+          provider TEXT NOT NULL CHECK (provider IN ('jira', 'linear')),
+          auth_type TEXT NOT NULL CHECK (auth_type IN ('api_token', 'oauth')),
+          encrypted_credentials TEXT NOT NULL, -- JSON with encrypted data
+          base_url TEXT,
+          is_enabled INTEGER DEFAULT 1,
+          last_verified_at TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE (user_id, provider)
+        );
+
+        -- Indexes for external_tasks
+        CREATE INDEX IF NOT EXISTS idx_external_tasks_user_id ON external_tasks(user_id);
+        CREATE INDEX IF NOT EXISTS idx_external_tasks_provider ON external_tasks(provider);
+        CREATE INDEX IF NOT EXISTS idx_external_tasks_project_key ON external_tasks(project_key);
+        CREATE INDEX IF NOT EXISTS idx_external_tasks_status ON external_tasks(status);
+        CREATE INDEX IF NOT EXISTS idx_external_tasks_user_provider ON external_tasks(user_id, provider);
+        CREATE INDEX IF NOT EXISTS idx_external_tasks_last_synced ON external_tasks(last_synced_at);
+
+        -- Indexes for task_associations
+        CREATE INDEX IF NOT EXISTS idx_task_assoc_user_id ON task_associations(user_id);
+        CREATE INDEX IF NOT EXISTS idx_task_assoc_event_id ON task_associations(event_id);
+        CREATE INDEX IF NOT EXISTS idx_task_assoc_task_id ON task_associations(task_id);
+        CREATE INDEX IF NOT EXISTS idx_task_assoc_detection_method ON task_associations(detection_method);
+        CREATE INDEX IF NOT EXISTS idx_task_assoc_confirmed ON task_associations(is_confirmed);
+
+        -- Indexes for worklogs
+        CREATE INDEX IF NOT EXISTS idx_worklogs_user_id ON worklogs(user_id);
+        CREATE INDEX IF NOT EXISTS idx_worklogs_task_id ON worklogs(task_id);
+        CREATE INDEX IF NOT EXISTS idx_worklogs_date ON worklogs(date);
+        CREATE INDEX IF NOT EXISTS idx_worklogs_sync_status ON worklogs(sync_status);
+        CREATE INDEX IF NOT EXISTS idx_worklogs_user_date ON worklogs(user_id, date);
+        CREATE INDEX IF NOT EXISTS idx_worklogs_task_date ON worklogs(task_id, date);
+
+        -- Indexes for task_detection_rules
+        CREATE INDEX IF NOT EXISTS idx_detection_rules_user_id ON task_detection_rules(user_id);
+        CREATE INDEX IF NOT EXISTS idx_detection_rules_type ON task_detection_rules(rule_type);
+        CREATE INDEX IF NOT EXISTS idx_detection_rules_enabled ON task_detection_rules(is_enabled);
+        CREATE INDEX IF NOT EXISTS idx_detection_rules_priority ON task_detection_rules(priority DESC);
+        CREATE INDEX IF NOT EXISTS idx_detection_rules_user_enabled ON task_detection_rules(user_id, is_enabled, priority DESC);
+
+        -- Indexes for integration_credentials
+        CREATE INDEX IF NOT EXISTS idx_integration_creds_user_id ON integration_credentials(user_id);
+        CREATE INDEX IF NOT EXISTS idx_integration_creds_provider ON integration_credentials(provider);
+        CREATE INDEX IF NOT EXISTS idx_integration_creds_enabled ON integration_credentials(is_enabled);
+      `,
+    },
   ];
 
   // Apply migrations
