@@ -2,12 +2,12 @@
  * Mock for the 'electron' module used in main process tests.
  * Provides stubs for commonly used Electron APIs.
  */
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 export const app = {
-  getPath: vi.fn().mockReturnValue('/tmp/test-user-data'),
-  getName: vi.fn().mockReturnValue('cronus-test'),
-  getVersion: vi.fn().mockReturnValue('0.0.0-test'),
+  getPath: vi.fn().mockReturnValue("/tmp/test-user-data"),
+  getName: vi.fn().mockReturnValue("cronus-test"),
+  getVersion: vi.fn().mockReturnValue("0.0.0-test"),
   on: vi.fn(),
   quit: vi.fn(),
   whenReady: vi.fn().mockResolvedValue(undefined),
@@ -42,7 +42,7 @@ export const ipcRenderer = {
 
 export const nativeTheme = {
   shouldUseDarkColors: false,
-  themeSource: 'system',
+  themeSource: "system",
   on: vi.fn(),
 };
 

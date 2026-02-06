@@ -101,7 +101,16 @@ const WeekBreakdown = ({
       notionStyleCategoryColors[index % notionStyleCategoryColors.length],
   }));
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { name: string; totalDurationMs: number; color: string } }> }) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: Array<{
+      value: number;
+      payload: { name: string; totalDurationMs: number; color: string };
+    }>;
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

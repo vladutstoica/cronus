@@ -1,8 +1,5 @@
 import { ipcMain } from "electron";
-import {
-  getOrCreateLocalUser,
-  updateUser,
-} from "../database/services/users";
+import { getOrCreateLocalUser, updateUser } from "../database/services/users";
 
 export function registerUserHandlers(): void {
   // User handlers

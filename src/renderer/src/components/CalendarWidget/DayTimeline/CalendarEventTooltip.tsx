@@ -68,13 +68,25 @@ export const CalendarEventTooltip = ({
 
   const getAttendees = () => {
     if (!event.attendees || event.attendees.length === 0) return [];
-    return event.attendees.filter((attendee: { email?: string; displayName?: string; organizer?: boolean; responseStatus?: string }) => !attendee.organizer); // Exclude organizer
+    return event.attendees.filter(
+      (attendee: {
+        email?: string;
+        displayName?: string;
+        organizer?: boolean;
+        responseStatus?: string;
+      }) => !attendee.organizer,
+    ); // Exclude organizer
   };
 
   const getAcceptedCount = () => {
     const attendees = getAttendees();
     return attendees.filter(
-      (attendee: { email?: string; displayName?: string; organizer?: boolean; responseStatus?: string }) => attendee.responseStatus === "accepted",
+      (attendee: {
+        email?: string;
+        displayName?: string;
+        organizer?: boolean;
+        responseStatus?: string;
+      }) => attendee.responseStatus === "accepted",
     ).length;
   };
 
@@ -178,35 +190,47 @@ export const CalendarEventTooltip = ({
                 )}
               </div>
               <div className="space-y-1 max-h-24 overflow-y-auto">
-                {attendees.slice(0, 5).map((attendee: { email?: string; displayName?: string; organizer?: boolean; responseStatus?: string }, idx: number) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-gray-700 dark:text-gray-300 truncate flex-1">
-                      {attendee.displayName || attendee.email}
-                    </span>
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0 ${
-                        attendee.responseStatus === "accepted"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : attendee.responseStatus === "declined"
-                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                            : attendee.responseStatus === "tentative"
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                      }`}
-                    >
-                      {attendee.responseStatus === "accepted"
-                        ? "✓"
-                        : attendee.responseStatus === "declined"
-                          ? "✗"
-                          : attendee.responseStatus === "tentative"
-                            ? "?"
-                            : "○"}
-                    </span>
-                  </div>
-                ))}
+                {attendees
+                  .slice(0, 5)
+                  .map(
+                    (
+                      attendee: {
+                        email?: string;
+                        displayName?: string;
+                        organizer?: boolean;
+                        responseStatus?: string;
+                      },
+                      idx: number,
+                    ) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-gray-700 dark:text-gray-300 truncate flex-1">
+                          {attendee.displayName || attendee.email}
+                        </span>
+                        <span
+                          className={`text-xs px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0 ${
+                            attendee.responseStatus === "accepted"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : attendee.responseStatus === "declined"
+                                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                : attendee.responseStatus === "tentative"
+                                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                          }`}
+                        >
+                          {attendee.responseStatus === "accepted"
+                            ? "✓"
+                            : attendee.responseStatus === "declined"
+                              ? "✗"
+                              : attendee.responseStatus === "tentative"
+                                ? "?"
+                                : "○"}
+                        </span>
+                      </div>
+                    ),
+                  )}
                 {attendees.length > 5 && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-1">
                     +{attendees.length - 5} more

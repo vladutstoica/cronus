@@ -406,7 +406,7 @@ export function rowToExternalTask(row: ExternalTaskRow): ExternalTask {
  * Convert an ExternalTask to database row format
  */
 export function externalTaskToRow(
-  task: Omit<ExternalTask, "id" | "createdAt" | "updatedAt">
+  task: Omit<ExternalTask, "id" | "createdAt" | "updatedAt">,
 ): Omit<ExternalTaskRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: task.userId,
@@ -448,7 +448,7 @@ export function rowToTaskAssociation(row: TaskAssociationRow): TaskAssociation {
  * Convert a TaskAssociation to database row format
  */
 export function taskAssociationToRow(
-  assoc: Omit<TaskAssociation, "id" | "createdAt" | "updatedAt">
+  assoc: Omit<TaskAssociation, "id" | "createdAt" | "updatedAt">,
 ): Omit<TaskAssociationRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: assoc.userId,
@@ -484,7 +484,7 @@ export function rowToWorklog(row: WorklogRow): Worklog {
  * Convert a Worklog to database row format
  */
 export function worklogToRow(
-  worklog: Omit<Worklog, "id" | "createdAt" | "updatedAt">
+  worklog: Omit<Worklog, "id" | "createdAt" | "updatedAt">,
 ): Omit<WorklogRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: worklog.userId,
@@ -503,7 +503,7 @@ export function worklogToRow(
  * Convert a database row to a TaskDetectionRule object
  */
 export function rowToTaskDetectionRule(
-  row: TaskDetectionRuleRow
+  row: TaskDetectionRuleRow,
 ): TaskDetectionRule {
   return {
     id: row.id,
@@ -523,7 +523,7 @@ export function rowToTaskDetectionRule(
  * Convert a TaskDetectionRule to database row format
  */
 export function taskDetectionRuleToRow(
-  rule: Omit<TaskDetectionRule, "id" | "createdAt" | "updatedAt">
+  rule: Omit<TaskDetectionRule, "id" | "createdAt" | "updatedAt">,
 ): Omit<TaskDetectionRuleRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: rule.userId,
@@ -540,7 +540,7 @@ export function taskDetectionRuleToRow(
  * Convert a database row to an IntegrationCredential object
  */
 export function rowToIntegrationCredential(
-  row: IntegrationCredentialRow
+  row: IntegrationCredentialRow,
 ): IntegrationCredential {
   return {
     id: row.id,
@@ -560,7 +560,7 @@ export function rowToIntegrationCredential(
  * Convert an IntegrationCredential to database row format
  */
 export function integrationCredentialToRow(
-  cred: Omit<IntegrationCredential, "id" | "createdAt" | "updatedAt">
+  cred: Omit<IntegrationCredential, "id" | "createdAt" | "updatedAt">,
 ): Omit<IntegrationCredentialRow, "id" | "created_at" | "updated_at"> {
   return {
     user_id: cred.userId,

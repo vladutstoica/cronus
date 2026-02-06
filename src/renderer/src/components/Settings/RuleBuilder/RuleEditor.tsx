@@ -151,9 +151,7 @@ export function RuleEditor({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {rule ? "Edit Rule" : "Create New Rule"}
-          </DialogTitle>
+          <DialogTitle>{rule ? "Edit Rule" : "Create New Rule"}</DialogTitle>
           <DialogDescription>
             {rule
               ? "Update the rule settings and conditions."
@@ -311,11 +309,7 @@ export function RuleEditor({
           >
             Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSaving}
-          >
+          <Button type="button" onClick={handleSubmit} disabled={isSaving}>
             {isSaving ? (
               <>
                 <Loader2 size={16} className="mr-2 animate-spin" />

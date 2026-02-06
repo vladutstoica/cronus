@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__linear__create_project",
+      "mcp__linear__create_issue_label",
+      "mcp__linear__create_issue",
+      "mcp__linear__create_document",
+      "mcp__linear__list_projects",
+      "mcp__linear__list_issues",
+      "mcp__linear__get_project",
+      "mcp__linear__update_issue",
+      "WebFetch(domain:github.com)",
+      "Bash(npm install:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm rebuild:*)",
+      "mcp__linear__get_issue",
+      "Bash(npx tsc:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run make:*)",
+      "mcp__linear__list_teams",
+      "Bash(bun add:*)",
+      "Bash(bun run lint:*)",
+      "Bash(pkill:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run typecheck:web:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run format:*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  }
+}

@@ -49,7 +49,8 @@ export function useDistractionSound(
 
     // console.log('[useDistractionSound] Settings updated:', electronSettings)
     const { playDistractionSound, distractionSoundInterval } = electronSettings;
-    const DISTRACTION_SOUND_INTERVAL_MS = (distractionSoundInterval ?? 30) * 1000;
+    const DISTRACTION_SOUND_INTERVAL_MS =
+      (distractionSoundInterval ?? 30) * 1000;
 
     if (!playDistractionSound) {
       // console.log('[useDistractionSound] Sound is disabled. Stopping playback.')

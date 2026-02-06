@@ -47,7 +47,12 @@ export interface FindRulesOptions {
   /** Maximum number of results */
   limit?: number;
   /** Order by field (default: priority DESC) */
-  orderBy?: "priority" | "confidence" | "match_count" | "created_at" | "updated_at";
+  orderBy?:
+    | "priority"
+    | "confidence"
+    | "match_count"
+    | "created_at"
+    | "updated_at";
   /** Order direction (default: DESC) */
   orderDirection?: "ASC" | "DESC";
 }
@@ -55,7 +60,9 @@ export interface FindRulesOptions {
 /**
  * Create a new categorization rule
  */
-export function createRule(input: CreateCategorizationRuleInput): CategorizationRule {
+export function createRule(
+  input: CreateCategorizationRuleInput,
+): CategorizationRule {
   const db = getDatabase();
   const now = new Date().toISOString();
 
@@ -88,7 +95,7 @@ export function createRule(input: CreateCategorizationRuleInput): Categorization
     input.source,
     0, // match_count
     now,
-    now
+    now,
   );
 
   return {
@@ -113,7 +120,9 @@ export function createRule(input: CreateCategorizationRuleInput): Categorization
 /**
  * Create multiple rules in a single transaction
  */
-export function createRulesBatch(inputs: CreateCategorizationRuleInput[]): CategorizationRule[] {
+export function createRulesBatch(
+  inputs: CreateCategorizationRuleInput[],
+): CategorizationRule[] {
   const db = getDatabase();
   const now = new Date().toISOString();
 
@@ -150,7 +159,7 @@ export function createRulesBatch(inputs: CreateCategorizationRuleInput[]): Categ
         input.source,
         0,
         now,
-        now
+        now,
       );
 
       results.push({
@@ -182,7 +191,7 @@ export function createRulesBatch(inputs: CreateCategorizationRuleInput[]): Categ
  */
 export function updateRule(
   id: number,
-  updates: Partial<Omit<UpdateCategorizationRuleInput, "id">>
+  updates: Partial<Omit<UpdateCategorizationRuleInput, "id">>,
 ): CategorizationRule | undefined {
   const db = getDatabase();
   const now = new Date().toISOString();
@@ -208,7 +217,7 @@ export function updateRule(
       const columnName = fieldMapping[key];
       if (!columnName || !ALLOWED_UPDATE_COLUMNS.includes(columnName)) {
         console.warn(
-          `[categorizationRules] Rejected invalid column name in update: "${key}"`
+          `[categorizationRules] Rejected invalid column name in update: "${key}"`,
         );
         return;
       }
@@ -263,7 +272,7 @@ export function findRuleById(id: number): CategorizationRule | undefined {
  */
 export function findRules(
   userId: string,
-  options: FindRulesOptions = {}
+  options: FindRulesOptions = {},
 ): CategorizationRule[] {
   const db = getDatabase();
 
@@ -332,7 +341,7 @@ export function findRules(
  */
 export function findRulesBySource(
   userId: string,
-  source: RuleSource
+  source: RuleSource,
 ): CategorizationRule[] {
   return findRules(userId, { source });
 }
@@ -370,7 +379,9 @@ export function deleteTemplateRulesForUser(userId: string): number {
   const db = getDatabase();
 
   const result = db
-    .prepare("DELETE FROM categorization_rules WHERE user_id = ? AND source = 'template'")
+    .prepare(
+      "DELETE FROM categorization_rules WHERE user_id = ? AND source = 'template'",
+    )
     .run(userId);
 
   return result.changes;
@@ -388,7 +399,7 @@ export function incrementMatchCount(id: number): void {
     UPDATE categorization_rules
     SET match_count = match_count + 1, updated_at = ?
     WHERE id = ?
-  `
+  `,
   ).run(now, id);
 }
 
@@ -404,7 +415,7 @@ export function setRuleEnabled(id: number, enabled: boolean): void {
     UPDATE categorization_rules
     SET is_enabled = ?, updated_at = ?
     WHERE id = ?
-  `
+  `,
   ).run(enabled ? 1 : 0, now, id);
 }
 
@@ -431,7 +442,7 @@ export function getRuleStats(userId: string): RuleStats {
         SUM(CASE WHEN is_enabled = 1 THEN 1 ELSE 0 END) as enabled
       FROM categorization_rules
       WHERE user_id = ?
-    `
+    `,
     )
     .get(userId) as { total: number; enabled: number };
 
@@ -443,7 +454,7 @@ export function getRuleStats(userId: string): RuleStats {
       FROM categorization_rules
       WHERE user_id = ?
       GROUP BY source
-    `
+    `,
     )
     .all(userId) as Array<{ source: RuleSource; count: number }>;
 
@@ -454,9 +465,12 @@ export function getRuleStats(userId: string): RuleStats {
       SELECT AVG(confidence) as avg_confidence, SUM(match_count) as total_matches
       FROM categorization_rules
       WHERE user_id = ?
-    `
+    `,
     )
-    .get(userId) as { avg_confidence: number | null; total_matches: number | null };
+    .get(userId) as {
+    avg_confidence: number | null;
+    total_matches: number | null;
+  };
 
   // Build rulesBySource with all sources defaulting to 0
   const rulesBySource: Record<RuleSource, number> = {
@@ -484,7 +498,7 @@ export function hasTemplateRules(userId: string): boolean {
 
   const result = db
     .prepare(
-      "SELECT COUNT(*) as count FROM categorization_rules WHERE user_id = ? AND source = 'template'"
+      "SELECT COUNT(*) as count FROM categorization_rules WHERE user_id = ? AND source = 'template'",
     )
     .get(userId) as { count: number };
 

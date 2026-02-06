@@ -1,6 +1,9 @@
 import { FlaskConical, Loader2 } from "lucide-react";
 import { JSX, useState } from "react";
-import type { RuleCondition, ConditionLogic } from "@shared/categorizationTypes";
+import type {
+  RuleCondition,
+  ConditionLogic,
+} from "@shared/categorizationTypes";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 
@@ -42,9 +45,7 @@ export function RuleTester({
         "Rule testing not yet implemented. IPC handler needed: window.api.testRule()",
       );
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to test rule",
-      );
+      setError(err instanceof Error ? err.message : "Failed to test rule");
       setMatchCount(null);
     } finally {
       setIsLoading(false);
@@ -90,8 +91,8 @@ export function RuleTester({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Test how many of your recent activities would match this rule.
-        Logic: <span className="font-medium">{conditionLogic}</span> (
+        Test how many of your recent activities would match this rule. Logic:{" "}
+        <span className="font-medium">{conditionLogic}</span> (
         {conditionLogic === "AND"
           ? "all conditions must match"
           : "any condition can match"}

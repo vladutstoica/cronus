@@ -13,8 +13,7 @@ export const isVeryLikelyProductive = (windowDetails: ActiveWindowDetails) => {
     }
   }
   return (
-    isProductiveSite ||
-    alwaysProductiveOwners.includes(windowDetails.ownerName)
+    isProductiveSite || alwaysProductiveOwners.includes(windowDetails.ownerName)
   );
 };
 

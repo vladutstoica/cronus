@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  RuleEngine,
-  getRuleEngine,
-  resetRuleEngine,
-} from "../ruleEngine";
+import { RuleEngine, getRuleEngine, resetRuleEngine } from "../ruleEngine";
 import type {
   ActivityForMatching,
   CategorizationRule,
@@ -33,7 +29,7 @@ function setEngineRules(engine: RuleEngine, rules: CategorizationRule[]): void {
  * Helper to create a rule for testing
  */
 function createTestRule(
-  overrides: Partial<CategorizationRule> = {}
+  overrides: Partial<CategorizationRule> = {},
 ): CategorizationRule {
   return {
     id: 1,
@@ -59,7 +55,7 @@ function createTestRule(
  * Helper to create a condition
  */
 function createCondition(
-  overrides: Partial<RuleCondition> = {}
+  overrides: Partial<RuleCondition> = {},
 ): RuleCondition {
   return {
     field: "app_name",
@@ -74,7 +70,7 @@ function createCondition(
  * Helper to create an activity for matching
  */
 function createActivity(
-  overrides: Partial<ActivityForMatching> = {}
+  overrides: Partial<ActivityForMatching> = {},
 ): ActivityForMatching {
   return {
     appName: "Chrome",
@@ -598,11 +594,7 @@ describe("RuleEngine", () => {
           conditions: [chromeCondition],
         });
 
-        setEngineRules(engine, [
-          enabledRule,
-          disabledRule,
-        ]);
-        
+        setEngineRules(engine, [enabledRule, disabledRule]);
 
         const activity = createActivity({ appName: "Chrome" });
         const matches = engine.evaluate(activity);
@@ -623,11 +615,7 @@ describe("RuleEngine", () => {
           conditions: [chromeCondition],
         });
 
-        setEngineRules(engine, [
-          enabledRule,
-          disabledRule,
-        ]);
-        
+        setEngineRules(engine, [enabledRule, disabledRule]);
 
         const activity = createActivity({ appName: "Chrome" });
         const matches = engine.evaluate(activity, { includeDisabled: true });

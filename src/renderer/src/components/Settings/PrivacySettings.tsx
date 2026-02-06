@@ -37,13 +37,9 @@ export const PrivacySettings = () => {
       const uniqueApps = new Map<string, string>();
 
       events?.forEach(
-        (event: {
-          ownerName?: string;
-          categoryDetails?: { name: string };
-        }) => {
+        (event: { ownerName?: string; categoryDetails?: { name: string } }) => {
           if (event.ownerName && !uniqueApps.has(event.ownerName)) {
-            const categoryName =
-              event.categoryDetails?.name || "Uncategorized";
+            const categoryName = event.categoryDetails?.name || "Uncategorized";
             uniqueApps.set(event.ownerName, categoryName);
           }
         },
@@ -61,9 +57,7 @@ export const PrivacySettings = () => {
       setNonTrackedApps(nonTrackedList);
 
       // Filter non-tracked apps out of the tracked list
-      setTrackedApps(
-        apps.filter((app) => !nonTrackedList.includes(app.name)),
-      );
+      setTrackedApps(apps.filter((app) => !nonTrackedList.includes(app.name)));
     } catch (error) {
       console.error("Failed to load privacy settings:", error);
     } finally {

@@ -117,8 +117,7 @@ export function useActivityTracking({
         const updatedCategories = await localApi.categories.getAll();
         setAllCategories(updatedCategories as Category[]);
       } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : String(error);
+        const message = error instanceof Error ? error.message : String(error);
         console.error("Error updating category:", error);
         toast({
           duration: 1500,

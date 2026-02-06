@@ -45,8 +45,12 @@ export function registerFileHandlers(): void {
 
   ipcMain.handle("read-file", async (_event, filePath: string) => {
     if (!isPathAllowed(filePath)) {
-      console.warn(`[IPC] Blocked read-file access to path outside allowed directories: ${filePath}`);
-      throw new Error('Access denied: file path is outside allowed directories');
+      console.warn(
+        `[IPC] Blocked read-file access to path outside allowed directories: ${filePath}`,
+      );
+      throw new Error(
+        "Access denied: file path is outside allowed directories",
+      );
     }
     try {
       const buffer = await fs.readFile(filePath);
@@ -59,8 +63,12 @@ export function registerFileHandlers(): void {
 
   ipcMain.handle("delete-file", async (_event, filePath: string) => {
     if (!isPathAllowed(filePath)) {
-      console.warn(`[IPC] Blocked delete-file access to path outside allowed directories: ${filePath}`);
-      throw new Error('Access denied: file path is outside allowed directories');
+      console.warn(
+        `[IPC] Blocked delete-file access to path outside allowed directories: ${filePath}`,
+      );
+      throw new Error(
+        "Access denied: file path is outside allowed directories",
+      );
     }
     try {
       await fs.unlink(filePath);

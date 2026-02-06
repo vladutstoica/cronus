@@ -49,14 +49,18 @@ export interface FindPatternsOptions {
  * Create a new categorization pattern
  */
 export function createPattern(
-  input: CreateCategorizationPatternInput
+  input: CreateCategorizationPatternInput,
 ): CategorizationPattern {
   const db = getDatabase();
   const now = new Date().toISOString();
 
   // Default confidence based on source
   const defaultConfidence =
-    input.source === "user_correction" ? 0.5 : input.source === "manual" ? 0.7 : 0.3;
+    input.source === "user_correction"
+      ? 0.5
+      : input.source === "manual"
+        ? 0.7
+        : 0.3;
   const confidence = input.confidence ?? defaultConfidence;
 
   const stmt = db.prepare(`
@@ -77,7 +81,7 @@ export function createPattern(
     1, // correction_count (starts at 1 since it was just corrected/created)
     input.source,
     now,
-    now
+    now,
   );
 
   return {
@@ -100,7 +104,7 @@ export function createPattern(
  */
 export function updatePattern(
   id: number,
-  updates: Partial<Omit<UpdateCategorizationPatternInput, "id">>
+  updates: Partial<Omit<UpdateCategorizationPatternInput, "id">>,
 ): CategorizationPattern | undefined {
   const db = getDatabase();
   const now = new Date().toISOString();
@@ -121,7 +125,7 @@ export function updatePattern(
       const columnName = fieldMapping[key];
       if (!columnName || !ALLOWED_UPDATE_COLUMNS.includes(columnName)) {
         console.warn(
-          `[categorizationPatterns] Rejected invalid column name in update: "${key}"`
+          `[categorizationPatterns] Rejected invalid column name in update: "${key}"`,
         );
         return;
       }
@@ -167,7 +171,7 @@ export function findPatternById(id: number): CategorizationPattern | undefined {
  */
 export function findPatterns(
   userId: string,
-  options: FindPatternsOptions = {}
+  options: FindPatternsOptions = {},
 ): CategorizationPattern[] {
   const db = getDatabase();
 
@@ -230,7 +234,7 @@ export function findPatterns(
 export function findByTypeAndValue(
   userId: string,
   patternType: PatternType,
-  patternValue: string
+  patternValue: string,
 ): CategorizationPattern | undefined {
   const db = getDatabase();
 
@@ -239,9 +243,11 @@ export function findByTypeAndValue(
       `
       SELECT * FROM categorization_patterns
       WHERE user_id = ? AND pattern_type = ? AND pattern_value = ?
-    `
+    `,
     )
-    .get(userId, patternType, patternValue) as CategorizationPatternRow | undefined;
+    .get(userId, patternType, patternValue) as
+    | CategorizationPatternRow
+    | undefined;
 
   return row ? rowToPattern(row) : undefined;
 }
@@ -252,7 +258,7 @@ export function findByTypeAndValue(
  */
 export function findMatchingPatterns(
   userId: string,
-  patternMatches: Array<{ type: PatternType; value: string }>
+  patternMatches: Array<{ type: PatternType; value: string }>,
 ): CategorizationPattern[] {
   if (patternMatches.length === 0) {
     return [];
@@ -293,7 +299,7 @@ export function incrementMatchCount(id: number): void {
     UPDATE categorization_patterns
     SET match_count = match_count + 1, updated_at = ?
     WHERE id = ?
-  `
+  `,
   ).run(now, id);
 }
 
@@ -309,7 +315,7 @@ export function incrementCorrectionCount(id: number): void {
     UPDATE categorization_patterns
     SET correction_count = correction_count + 1, updated_at = ?
     WHERE id = ?
-  `
+  `,
   ).run(now, id);
 }
 
@@ -328,7 +334,7 @@ export function updateConfidence(id: number, newConfidence: number): void {
     UPDATE categorization_patterns
     SET confidence = ?, updated_at = ?
     WHERE id = ?
-  `
+  `,
   ).run(clampedConfidence, now, id);
 }
 
@@ -375,7 +381,7 @@ export function getPatternStats(userId: string): PatternStats {
   // Get total count
   const totalResult = db
     .prepare(
-      "SELECT COUNT(*) as count FROM categorization_patterns WHERE user_id = ?"
+      "SELECT COUNT(*) as count FROM categorization_patterns WHERE user_id = ?",
     )
     .get(userId) as { count: number };
 
@@ -387,7 +393,7 @@ export function getPatternStats(userId: string): PatternStats {
       FROM categorization_patterns
       WHERE user_id = ?
       GROUP BY pattern_type
-    `
+    `,
     )
     .all(userId) as Array<{ pattern_type: PatternType; count: number }>;
 
@@ -399,7 +405,7 @@ export function getPatternStats(userId: string): PatternStats {
       FROM categorization_patterns
       WHERE user_id = ?
       GROUP BY source
-    `
+    `,
     )
     .all(userId) as Array<{ source: PatternSource; count: number }>;
 
@@ -410,7 +416,7 @@ export function getPatternStats(userId: string): PatternStats {
       SELECT AVG(confidence) as avg_confidence
       FROM categorization_patterns
       WHERE user_id = ?
-    `
+    `,
     )
     .get(userId) as { avg_confidence: number | null };
 
@@ -421,7 +427,7 @@ export function getPatternStats(userId: string): PatternStats {
       SELECT COUNT(*) as count
       FROM categorization_patterns
       WHERE user_id = ? AND confidence > 0.7
-    `
+    `,
     )
     .get(userId) as { count: number };
 

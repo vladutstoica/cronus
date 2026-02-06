@@ -94,14 +94,16 @@ export class RuleEngine {
         SELECT * FROM categorization_rules
         WHERE user_id = ?
         ORDER BY priority DESC, created_at ASC
-      `
+      `,
       )
       .all(userId) as CategorizationRuleRow[];
 
     this.rules = rows.map((row) => rowToRule(row));
     this.loadedUserId = userId;
 
-    console.log(`[RuleEngine] Loaded ${this.rules.length} rules for user ${userId}`);
+    console.log(
+      `[RuleEngine] Loaded ${this.rules.length} rules for user ${userId}`,
+    );
   }
 
   /**
@@ -128,13 +130,9 @@ export class RuleEngine {
    */
   evaluate(
     activity: ActivityForMatching,
-    options: RuleEvaluationOptions = {}
+    options: RuleEvaluationOptions = {},
   ): RuleMatch[] {
-    const {
-      maxResults,
-      minConfidence = 0,
-      includeDisabled = false,
-    } = options;
+    const { maxResults, minConfidence = 0, includeDisabled = false } = options;
 
     this.stats.totalEvaluations++;
 
@@ -184,7 +182,7 @@ export class RuleEngine {
    */
   private evaluateRule(
     rule: CategorizationRule,
-    activity: ActivityForMatching
+    activity: ActivityForMatching,
   ): RuleEvaluationResult {
     const conditionResults: ConditionEvaluationResult[] = [];
 
@@ -221,7 +219,7 @@ export class RuleEngine {
    */
   evaluateCondition(
     condition: RuleCondition,
-    activity: ActivityForMatching
+    activity: ActivityForMatching,
   ): ConditionEvaluationResult {
     const testedValue = this.getValueForField(condition.field, activity);
 
@@ -238,7 +236,7 @@ export class RuleEngine {
       testedValue,
       condition.operator,
       condition.value,
-      condition.caseSensitive ?? false
+      condition.caseSensitive ?? false,
     );
 
     return {
@@ -256,7 +254,7 @@ export class RuleEngine {
    */
   private getValueForField(
     field: ConditionField,
-    activity: ActivityForMatching
+    activity: ActivityForMatching,
   ): string | null {
     switch (field) {
       case "app_name":
@@ -294,7 +292,7 @@ export class RuleEngine {
     value: string,
     operator: ConditionOperator,
     pattern: string,
-    caseSensitive: boolean
+    caseSensitive: boolean,
   ): boolean {
     const normalizedValue = caseSensitive ? value : value.toLowerCase();
     const normalizedPattern = caseSensitive ? pattern : pattern.toLowerCase();
@@ -335,7 +333,7 @@ export class RuleEngine {
   private matchRegex(
     value: string,
     pattern: string,
-    caseSensitive: boolean
+    caseSensitive: boolean,
   ): boolean {
     const cacheKey = `${pattern}:${caseSensitive ? "s" : "i"}`;
 
@@ -378,7 +376,7 @@ export class RuleEngine {
    */
   calculateScore(
     rule: CategorizationRule,
-    evaluationResult: RuleEvaluationResult
+    evaluationResult: RuleEvaluationResult,
   ): number {
     // Base score is the rule's configured confidence
     let score = rule.confidence;
@@ -403,7 +401,10 @@ export class RuleEngine {
     // Factor in match count for system rules (more matches = more reliable)
     if (rule.isSystem && rule.matchCount > 0) {
       // Logarithmic boost for high match counts (max 10% boost at 1000 matches)
-      const matchCountBoost = Math.min(0.1, Math.log10(rule.matchCount + 1) / 30);
+      const matchCountBoost = Math.min(
+        0.1,
+        Math.log10(rule.matchCount + 1) / 30,
+      );
       score = Math.min(1, score + matchCountBoost);
     }
 
@@ -415,7 +416,7 @@ export class RuleEngine {
    */
   private generateReasoning(
     rule: CategorizationRule,
-    evaluationResult: RuleEvaluationResult
+    evaluationResult: RuleEvaluationResult,
   ): string {
     const matchedConditions = evaluationResult.conditionResults
       .filter((r) => r.matched)
@@ -487,7 +488,7 @@ export class RuleEngine {
     // If still over limit, remove least used entries
     if (this.regexCache.size > REGEX_CACHE_MAX_SIZE) {
       const sortedEntries = Array.from(this.regexCache.entries()).sort(
-        (a, b) => a[1].useCount - b[1].useCount
+        (a, b) => a[1].useCount - b[1].useCount,
       );
 
       const toRemove = this.regexCache.size - REGEX_CACHE_MAX_SIZE;
@@ -578,7 +579,7 @@ export class RuleEngine {
       SET match_count = match_count + 1,
           updated_at = datetime('now')
       WHERE id = ?
-    `
+    `,
     ).run(ruleId);
 
     // Update the in-memory rule

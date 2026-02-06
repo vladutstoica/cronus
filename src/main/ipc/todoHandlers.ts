@@ -13,7 +13,11 @@ import {
   clearFocusTodos,
 } from "../database/services/todos";
 import { snakeToCamel } from "../utils/snakeToCamel";
-import { Todo, CreateTodoInput, UpdateTodoInput } from "../database/services/todos";
+import {
+  Todo,
+  CreateTodoInput,
+  UpdateTodoInput,
+} from "../database/services/todos";
 
 // Convert todo snake_case to camelCase for frontend
 const convertTodoToCamelCase = (todo: Todo) => ({
@@ -65,11 +69,14 @@ export function registerTodoHandlers(): void {
     return convertTodoToCamelCase(todo);
   });
 
-  ipcMain.handle("local:update-todo", (_event, id: string, updates: UpdateTodoInput) => {
-    const todo = updateTodo(id, updates);
-    if (!todo) return null;
-    return convertTodoToCamelCase(todo);
-  });
+  ipcMain.handle(
+    "local:update-todo",
+    (_event, id: string, updates: UpdateTodoInput) => {
+      const todo = updateTodo(id, updates);
+      if (!todo) return null;
+      return convertTodoToCamelCase(todo);
+    },
+  );
 
   ipcMain.handle("local:delete-todo", (_event, id: string) => {
     return deleteTodo(id);

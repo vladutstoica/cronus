@@ -1,4 +1,4 @@
-import { AppWindow, Info, Palette, Settings, Shield, Tags } from "lucide-react";
+import { AppWindow, Info, Palette, Plug, Settings, Shield, Tags } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export type SettingsSection =
@@ -6,6 +6,7 @@ export type SettingsSection =
   | "categories"
   | "appearance"
   | "apps"
+  | "integrations"
   | "privacy"
   | "about";
 
@@ -24,6 +25,7 @@ const menuItems: {
   { id: "categories", label: "Categories", icon: Tags },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "apps", label: "Apps", icon: AppWindow },
+  { id: "integrations", label: "Integrations", icon: Plug, badge: "New" },
   { id: "privacy", label: "Privacy", icon: Shield, badge: "Beta" },
   { id: "about", label: "About", icon: Info, badge: "Beta" },
 ];

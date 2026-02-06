@@ -52,7 +52,8 @@ const CalendarWidget = ({
   const [animationDirection, setAnimationDirection] = useState<
     "prev" | "next" | "none"
   >("none");
-  const [electronSettings, setElectronSettings] = useState<ElectronAppSettings | null>(null);
+  const [electronSettings, setElectronSettings] =
+    useState<ElectronAppSettings | null>(null);
 
   // Load electron settings
   useEffect(() => {

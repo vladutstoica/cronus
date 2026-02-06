@@ -271,7 +271,7 @@ export class PatternLearner {
   recordCorrection(
     activity: ActivityForMatching,
     newCategoryId: string,
-    oldCategoryId?: string
+    oldCategoryId?: string,
   ): CategorizationPattern[] {
     const extractedPatterns = this.extractPatterns(activity);
     const updatedPatterns: CategorizationPattern[] = [];
@@ -281,7 +281,7 @@ export class PatternLearner {
       const existingPattern = findByTypeAndValue(
         this.userId,
         extracted.type,
-        extracted.value
+        extracted.value,
       );
 
       if (existingPattern) {
@@ -289,7 +289,7 @@ export class PatternLearner {
           // Pattern already points to the correct category - increase confidence
           const newConfidence = Math.min(
             CONFIDENCE_CONFIG.maximum,
-            existingPattern.confidence + CONFIDENCE_CONFIG.increaseOnCorrection
+            existingPattern.confidence + CONFIDENCE_CONFIG.increaseOnCorrection,
           );
           updateConfidence(existingPattern.id, newConfidence);
           incrementCorrectionCount(existingPattern.id);
@@ -307,7 +307,8 @@ export class PatternLearner {
             // Decrease its confidence
             const newConfidence = Math.max(
               CONFIDENCE_CONFIG.minimum,
-              existingPattern.confidence - CONFIDENCE_CONFIG.decreaseOnWrongMatch
+              existingPattern.confidence -
+                CONFIDENCE_CONFIG.decreaseOnWrongMatch,
             );
             updateConfidence(existingPattern.id, newConfidence);
           }
@@ -369,7 +370,9 @@ export class PatternLearner {
     for (const dbPattern of dbPatterns) {
       // Find the corresponding extracted pattern to get signal strength
       const extracted = extractedPatterns.find(
-        (e) => e.type === dbPattern.patternType && e.value === dbPattern.patternValue
+        (e) =>
+          e.type === dbPattern.patternType &&
+          e.value === dbPattern.patternValue,
       );
 
       if (extracted) {
@@ -393,7 +396,7 @@ export class PatternLearner {
    */
   private generateMatchReasoning(
     pattern: CategorizationPattern,
-    extracted: ExtractedPattern
+    extracted: ExtractedPattern,
   ): string {
     const typeDescriptions: Record<PatternType, string> = {
       app: "application",
@@ -414,7 +417,7 @@ export class PatternLearner {
    */
   suggestCategory(
     activity: ActivityForMatching,
-    minConfidence = 0.3
+    minConfidence = 0.3,
   ): CategorySuggestion | null {
     const matches = this.findMatchingPatterns(activity);
 
@@ -440,7 +443,9 @@ export class PatternLearner {
       matches: PatternMatch[];
     }> = [];
 
-    for (const [categoryId, catMatches] of Array.from(categoryMatches.entries())) {
+    for (const [categoryId, catMatches] of Array.from(
+      categoryMatches.entries(),
+    )) {
       // Calculate weighted confidence
       // Higher-scoring patterns contribute more to the overall confidence
       const totalScore = catMatches.reduce((sum, m) => sum + m.score, 0);
@@ -448,7 +453,10 @@ export class PatternLearner {
 
       // Boost confidence if multiple patterns agree
       const multiPatternBoost = Math.min(0.15, (catMatches.length - 1) * 0.05);
-      const finalConfidence = Math.min(1.0, weightedConfidence + multiPatternBoost);
+      const finalConfidence = Math.min(
+        1.0,
+        weightedConfidence + multiPatternBoost,
+      );
 
       if (finalConfidence >= minConfidence) {
         categoryScores.push({
@@ -504,7 +512,7 @@ export class PatternLearner {
 
     if (!pattern) {
       console.warn(
-        `[PatternLearner] Pattern ${patternId} not found for confidence adjustment`
+        `[PatternLearner] Pattern ${patternId} not found for confidence adjustment`,
       );
       return;
     }
@@ -514,7 +522,7 @@ export class PatternLearner {
       const boost = CONFIDENCE_CONFIG.increaseOnCorrection * 0.5; // Half the correction boost
       const newConfidence = Math.min(
         CONFIDENCE_CONFIG.maximum,
-        pattern.confidence + boost
+        pattern.confidence + boost,
       );
       updateConfidence(patternId, newConfidence);
       incrementMatchCount(patternId);
@@ -522,7 +530,7 @@ export class PatternLearner {
       // Decrease confidence for incorrect matches
       const newConfidence = Math.max(
         CONFIDENCE_CONFIG.minimum,
-        pattern.confidence - CONFIDENCE_CONFIG.decreaseOnWrongMatch
+        pattern.confidence - CONFIDENCE_CONFIG.decreaseOnWrongMatch,
       );
       updateConfidence(patternId, newConfidence);
     }

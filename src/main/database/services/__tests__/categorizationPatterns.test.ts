@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { CategorizationPatternRow, PatternType } from "../../../../shared/categorizationTypes";
+import type {
+  CategorizationPatternRow,
+  PatternType,
+} from "../../../../shared/categorizationTypes";
 
 // Mock the database
 const mockDb = {
@@ -48,7 +51,7 @@ describe("categorizationPatterns database service", () => {
       });
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("INSERT INTO categorization_patterns")
+        expect.stringContaining("INSERT INTO categorization_patterns"),
       );
       expect(mockStmt.run).toHaveBeenCalledWith(
         "user-1",
@@ -60,7 +63,7 @@ describe("categorizationPatterns database service", () => {
         1, // correction_count
         "user_correction",
         expect.any(String), // created_at
-        expect.any(String) // updated_at
+        expect.any(String), // updated_at
       );
       expect(result.id).toBe(1);
       expect(result.confidence).toBe(0.5);
@@ -91,7 +94,7 @@ describe("categorizationPatterns database service", () => {
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
       expect(result.confidence).toBe(0.8);
     });
@@ -120,7 +123,7 @@ describe("categorizationPatterns database service", () => {
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
   });
@@ -158,7 +161,7 @@ describe("categorizationPatterns database service", () => {
         "category-2",
         0.9,
         expect.any(String), // updated_at
-        1 // id
+        1, // id
       );
       expect(result).toBeDefined();
     });
@@ -183,10 +186,12 @@ describe("categorizationPatterns database service", () => {
       mockDb.prepare.mockReturnValue(mockGetStmt);
 
       // Try to update with invalid field
-      updatePattern(1, { invalidField: "value" } as unknown as Parameters<typeof updatePattern>[1]);
+      updatePattern(1, { invalidField: "value" } as unknown as Parameters<
+        typeof updatePattern
+      >[1]);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Rejected invalid column name")
+        expect.stringContaining("Rejected invalid column name"),
       );
       consoleSpy.mockRestore();
     });
@@ -262,16 +267,16 @@ describe("categorizationPatterns database service", () => {
       const result = findPatterns("user-1", options);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("WHERE user_id = ?")
+        expect.stringContaining("WHERE user_id = ?"),
       );
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("AND pattern_type = ?")
+        expect.stringContaining("AND pattern_type = ?"),
       );
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("AND confidence >= ?")
+        expect.stringContaining("AND confidence >= ?"),
       );
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("LIMIT ?")
+        expect.stringContaining("LIMIT ?"),
       );
       expect(result).toHaveLength(1);
       expect(result[0].patternType).toBe("app");
@@ -286,7 +291,7 @@ describe("categorizationPatterns database service", () => {
       findPatterns("user-1");
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("ORDER BY confidence DESC")
+        expect.stringContaining("ORDER BY confidence DESC"),
       );
     });
   });
@@ -312,7 +317,11 @@ describe("categorizationPatterns database service", () => {
 
       const result = findByTypeAndValue("user-1", "domain", "github.com");
 
-      expect(mockStmt.get).toHaveBeenCalledWith("user-1", "domain", "github.com");
+      expect(mockStmt.get).toHaveBeenCalledWith(
+        "user-1",
+        "domain",
+        "github.com",
+      );
       expect(result).toBeDefined();
       expect(result!.patternValue).toBe("github.com");
     });
@@ -358,7 +367,7 @@ describe("categorizationPatterns database service", () => {
       ]);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("(pattern_type = ? AND pattern_value = ?)")
+        expect.stringContaining("(pattern_type = ? AND pattern_value = ?)"),
       );
       expect(result).toHaveLength(2);
     });
@@ -379,7 +388,7 @@ describe("categorizationPatterns database service", () => {
       incrementMatchCount(1);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("SET match_count = match_count + 1")
+        expect.stringContaining("SET match_count = match_count + 1"),
       );
       expect(mockStmt.run).toHaveBeenCalledWith(expect.any(String), 1);
     });
@@ -395,7 +404,7 @@ describe("categorizationPatterns database service", () => {
       incrementCorrectionCount(1);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("SET correction_count = correction_count + 1")
+        expect.stringContaining("SET correction_count = correction_count + 1"),
       );
       expect(mockStmt.run).toHaveBeenCalledWith(expect.any(String), 1);
     });
@@ -411,7 +420,7 @@ describe("categorizationPatterns database service", () => {
       updateConfidence(1, 0.75);
 
       expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining("SET confidence = ?")
+        expect.stringContaining("SET confidence = ?"),
       );
       expect(mockStmt.run).toHaveBeenCalledWith(0.75, expect.any(String), 1);
     });

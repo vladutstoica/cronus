@@ -87,10 +87,7 @@ export function redactSensitiveContent(content: string): string {
     );
 
     // Social Security Numbers (XXX-XX-XXXX)
-    redacted = redacted.replace(
-      /\b\d{3}-\d{2}-\d{4}\b/g,
-      "[REDACTED_SSN]",
-    );
+    redacted = redacted.replace(/\b\d{3}-\d{2}-\d{4}\b/g, "[REDACTED_SSN]");
 
     // Phone numbers (but preserve email addresses)
     redacted = redacted.replace(

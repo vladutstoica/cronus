@@ -292,9 +292,7 @@ export function clearAllActiveEvents(): void {
     clearedCount++;
   }
 
-  console.log(
-    `[WindowTracking] Cleared all ${clearedCount} active event(s)`,
-  );
+  console.log(`[WindowTracking] Cleared all ${clearedCount} active event(s)`);
 }
 
 /**

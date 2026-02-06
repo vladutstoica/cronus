@@ -273,9 +273,7 @@ export const RuleList = memo(function RuleList(): JSX.Element {
       setFetchError(null);
     } catch (error) {
       console.error("Error loading rules:", error);
-      setFetchError(
-        error instanceof Error ? error : new Error(String(error)),
-      );
+      setFetchError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setIsLoading(false);
     }
@@ -371,7 +369,8 @@ export const RuleList = memo(function RuleList(): JSX.Element {
       return;
     }
 
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    const targetIndex =
+      direction === "up" ? currentIndex - 1 : currentIndex + 1;
     const targetRule = sortedRules[targetIndex];
 
     // Swap priorities

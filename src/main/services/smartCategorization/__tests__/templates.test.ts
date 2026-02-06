@@ -30,13 +30,16 @@ vi.mock("../../../database/services/categorizationRules", () => ({
       matchCount: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    }))
+    })),
   ),
   deleteTemplateRulesForUser: vi.fn(() => 0),
   hasTemplateRules: vi.fn(() => false),
 }));
 
-import { createCategory, getCategoriesByUserId } from "../../../database/services/categories";
+import {
+  createCategory,
+  getCategoriesByUserId,
+} from "../../../database/services/categories";
 import {
   createRulesBatch,
   deleteTemplateRulesForUser,
@@ -80,9 +83,7 @@ describe("Category Templates", () => {
     it("should have 50+ rules for professional templates", () => {
       const templates = getAvailableTemplates();
 
-      const professionalTemplates = templates.filter(
-        (t) => t.id !== "simple"
-      );
+      const professionalTemplates = templates.filter((t) => t.id !== "simple");
 
       professionalTemplates.forEach((template) => {
         expect(template.ruleCount).toBeGreaterThanOrEqual(50);
@@ -139,7 +140,13 @@ describe("Category Templates", () => {
   });
 
   describe("Template Structure", () => {
-    const templateIds = ["developer", "designer", "manager", "writer", "simple"];
+    const templateIds = [
+      "developer",
+      "designer",
+      "manager",
+      "writer",
+      "simple",
+    ];
 
     templateIds.forEach((templateId) => {
       describe(`${templateId} template`, () => {
@@ -160,7 +167,7 @@ describe("Category Templates", () => {
 
         it("should have a Distraction category", () => {
           const hasDistraction = template.categories.some(
-            (c) => c.name === "Distraction"
+            (c) => c.name === "Distraction",
           );
           expect(hasDistraction).toBe(true);
         });
@@ -187,7 +194,7 @@ describe("Category Templates", () => {
 
         it("should have distraction rules", () => {
           const distractionRules = template.rules.filter(
-            (r) => r.categoryName === "Distraction"
+            (r) => r.categoryName === "Distraction",
           );
           expect(distractionRules.length).toBeGreaterThan(10);
         });
@@ -243,7 +250,9 @@ describe("Category Templates", () => {
         user_id: mockUserId,
       };
 
-      vi.mocked(getCategoriesByUserId).mockReturnValueOnce([existingCategory] as never);
+      vi.mocked(getCategoriesByUserId).mockReturnValueOnce([
+        existingCategory,
+      ] as never);
 
       const result = applyTemplate(mockUserId, "developer", {
         keepExistingCategories: true,
@@ -369,7 +378,7 @@ describe("Category Templates", () => {
 
       it("should include Google Calendar rule", () => {
         const calendarRule = template.rules.find(
-          (r) => r.name === "Google Calendar"
+          (r) => r.name === "Google Calendar",
         );
         expect(calendarRule).toBeDefined();
         expect(calendarRule?.categoryName).toBe("Meetings");
@@ -396,7 +405,9 @@ describe("Category Templates", () => {
       });
 
       it("should include Grammarly rule", () => {
-        const grammarlyRule = template.rules.find((r) => r.name === "Grammarly");
+        const grammarlyRule = template.rules.find(
+          (r) => r.name === "Grammarly",
+        );
         expect(grammarlyRule).toBeDefined();
         expect(grammarlyRule?.categoryName).toBe("Editing");
       });
@@ -409,7 +420,7 @@ describe("Category Templates", () => {
 
       it("should include Google Analytics rule", () => {
         const analyticsRule = template.rules.find(
-          (r) => r.name === "Google Analytics"
+          (r) => r.name === "Google Analytics",
         );
         expect(analyticsRule).toBeDefined();
         expect(analyticsRule?.categoryName).toBe("Analytics");

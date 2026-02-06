@@ -4,6 +4,7 @@ import { AISettings } from "./Settings/AISettings";
 import { CategoryManagementSettings } from "./Settings/CategoryManagementSettings";
 import { DistractionSoundSettings } from "./Settings/DistractionSoundSettings";
 import GoalInputForm from "./Settings/GoalInputForm";
+import { IntegrationsSettings } from "./Settings/IntegrationsSettings";
 import { ManualUpdateSettings } from "./Settings/ManualUpdateSettings";
 import { MultiPurposeAppsSettings } from "./Settings/MultiPurposeAppsSettings";
 import PauseTrackingSettings from "./Settings/PauseTrackingSettings";
@@ -72,6 +73,8 @@ export const SettingsPage = memo(function SettingsPage({
         );
       case "apps":
         return <MultiPurposeAppsSettings />;
+      case "integrations":
+        return <IntegrationsSettings />;
       case "privacy":
         return (
           <div className="space-y-4">

@@ -141,7 +141,7 @@ export const REGEX_OPERATORS: readonly ConditionOperator[] = [
  * Type guard to check if an operator is a negation operator
  */
 export function isNegationOperator(
-  operator: ConditionOperator
+  operator: ConditionOperator,
 ): operator is "not_equals" | "not_contains" {
   return NEGATION_OPERATORS.includes(operator);
 }
@@ -150,7 +150,7 @@ export function isNegationOperator(
  * Type guard to check if an operator is a regex operator
  */
 export function isRegexOperator(
-  operator: ConditionOperator
+  operator: ConditionOperator,
 ): operator is "matches_regex" {
   return REGEX_OPERATORS.includes(operator);
 }

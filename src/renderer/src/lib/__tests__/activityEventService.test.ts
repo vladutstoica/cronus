@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { BehaviorSubject } from 'rxjs';
-import { firstValueFrom, take, toArray } from 'rxjs';
+import { describe, it, expect, beforeEach } from "vitest";
+import { BehaviorSubject } from "rxjs";
+import { firstValueFrom, take, toArray } from "rxjs";
 
 /**
  * Tests for the ActivityEventService RxJS-based event store.
@@ -41,44 +41,44 @@ function createEvent(
   overrides: Partial<MockActiveWindowEvent> = {},
 ): MockActiveWindowEvent {
   return {
-    userId: 'user-1',
-    ownerName: 'Chrome',
-    type: 'browser',
+    userId: "user-1",
+    ownerName: "Chrome",
+    type: "browser",
     timestamp: Date.now(),
     ...overrides,
   };
 }
 
-describe('ActivityEventService', () => {
+describe("ActivityEventService", () => {
   let service: ActivityEventService;
 
   beforeEach(() => {
     service = new ActivityEventService();
   });
 
-  describe('initial state', () => {
-    it('should start with an empty events array', () => {
+  describe("initial state", () => {
+    it("should start with an empty events array", () => {
       expect(service.getEvents()).toEqual([]);
     });
 
-    it('should emit empty array as initial observable value', async () => {
+    it("should emit empty array as initial observable value", async () => {
       const value = await firstValueFrom(service.events$);
       expect(value).toEqual([]);
     });
   });
 
-  describe('addEvent', () => {
-    it('should add a single event', () => {
-      const event = createEvent({ ownerName: 'VS Code' });
+  describe("addEvent", () => {
+    it("should add a single event", () => {
+      const event = createEvent({ ownerName: "VS Code" });
       service.addEvent(event);
       expect(service.getEvents()).toHaveLength(1);
-      expect(service.getEvents()[0].ownerName).toBe('VS Code');
+      expect(service.getEvents()[0].ownerName).toBe("VS Code");
     });
 
-    it('should append events preserving order', () => {
-      const event1 = createEvent({ ownerName: 'VS Code', timestamp: 1000 });
-      const event2 = createEvent({ ownerName: 'Chrome', timestamp: 2000 });
-      const event3 = createEvent({ ownerName: 'Slack', timestamp: 3000 });
+    it("should append events preserving order", () => {
+      const event1 = createEvent({ ownerName: "VS Code", timestamp: 1000 });
+      const event2 = createEvent({ ownerName: "Chrome", timestamp: 2000 });
+      const event3 = createEvent({ ownerName: "Slack", timestamp: 3000 });
 
       service.addEvent(event1);
       service.addEvent(event2);
@@ -86,17 +86,17 @@ describe('ActivityEventService', () => {
 
       const events = service.getEvents();
       expect(events).toHaveLength(3);
-      expect(events[0].ownerName).toBe('VS Code');
-      expect(events[1].ownerName).toBe('Chrome');
-      expect(events[2].ownerName).toBe('Slack');
+      expect(events[0].ownerName).toBe("VS Code");
+      expect(events[1].ownerName).toBe("Chrome");
+      expect(events[2].ownerName).toBe("Slack");
     });
 
-    it('should not mutate the previous events array', () => {
-      const event1 = createEvent({ ownerName: 'VS Code' });
+    it("should not mutate the previous events array", () => {
+      const event1 = createEvent({ ownerName: "VS Code" });
       service.addEvent(event1);
       const firstSnapshot = service.getEvents();
 
-      const event2 = createEvent({ ownerName: 'Chrome' });
+      const event2 = createEvent({ ownerName: "Chrome" });
       service.addEvent(event2);
       const secondSnapshot = service.getEvents();
 
@@ -106,22 +106,22 @@ describe('ActivityEventService', () => {
     });
   });
 
-  describe('setEvents', () => {
-    it('should replace all events', () => {
-      service.addEvent(createEvent({ ownerName: 'Old Event' }));
+  describe("setEvents", () => {
+    it("should replace all events", () => {
+      service.addEvent(createEvent({ ownerName: "Old Event" }));
       expect(service.getEvents()).toHaveLength(1);
 
       const newEvents = [
-        createEvent({ ownerName: 'New Event 1' }),
-        createEvent({ ownerName: 'New Event 2' }),
+        createEvent({ ownerName: "New Event 1" }),
+        createEvent({ ownerName: "New Event 2" }),
       ];
       service.setEvents(newEvents);
 
       expect(service.getEvents()).toHaveLength(2);
-      expect(service.getEvents()[0].ownerName).toBe('New Event 1');
+      expect(service.getEvents()[0].ownerName).toBe("New Event 1");
     });
 
-    it('should allow clearing all events with empty array', () => {
+    it("should allow clearing all events with empty array", () => {
       service.addEvent(createEvent());
       service.addEvent(createEvent());
       expect(service.getEvents()).toHaveLength(2);
@@ -131,15 +131,15 @@ describe('ActivityEventService', () => {
     });
   });
 
-  describe('events$ observable', () => {
-    it('should emit when events are added', async () => {
+  describe("events$ observable", () => {
+    it("should emit when events are added", async () => {
       const emissions: MockActiveWindowEvent[][] = [];
       const subscription = service.events$.subscribe((events) => {
         emissions.push(events);
       });
 
-      service.addEvent(createEvent({ ownerName: 'Event 1' }));
-      service.addEvent(createEvent({ ownerName: 'Event 2' }));
+      service.addEvent(createEvent({ ownerName: "Event 1" }));
+      service.addEvent(createEvent({ ownerName: "Event 2" }));
 
       // Initial emission + 2 add emissions
       expect(emissions).toHaveLength(3);
@@ -150,7 +150,7 @@ describe('ActivityEventService', () => {
       subscription.unsubscribe();
     });
 
-    it('should emit when events are replaced', async () => {
+    it("should emit when events are replaced", async () => {
       const emissions: MockActiveWindowEvent[][] = [];
       const subscription = service.events$.subscribe((events) => {
         emissions.push(events);
@@ -165,7 +165,7 @@ describe('ActivityEventService', () => {
       subscription.unsubscribe();
     });
 
-    it('should stop emitting after unsubscribe', () => {
+    it("should stop emitting after unsubscribe", () => {
       const emissions: MockActiveWindowEvent[][] = [];
       const subscription = service.events$.subscribe((events) => {
         emissions.push(events);
@@ -180,18 +180,18 @@ describe('ActivityEventService', () => {
     });
   });
 
-  describe('getEvents', () => {
-    it('should return the current state synchronously', () => {
+  describe("getEvents", () => {
+    it("should return the current state synchronously", () => {
       const events = [
-        createEvent({ ownerName: 'App1' }),
-        createEvent({ ownerName: 'App2' }),
+        createEvent({ ownerName: "App1" }),
+        createEvent({ ownerName: "App2" }),
       ];
       service.setEvents(events);
 
       const result = service.getEvents();
       expect(result).toHaveLength(2);
-      expect(result[0].ownerName).toBe('App1');
-      expect(result[1].ownerName).toBe('App2');
+      expect(result[0].ownerName).toBe("App1");
+      expect(result[1].ownerName).toBe("App2");
     });
   });
 });

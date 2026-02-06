@@ -1,151 +1,151 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   isVeryLikelyProductive,
   alwaysProductiveSites,
   alwaysProductiveOwners,
-} from '../distractionRules';
+} from "../distractionRules";
 
-describe('Distraction Rules', () => {
-  describe('alwaysProductiveSites', () => {
-    it('should contain expected productive sites', () => {
-      expect(alwaysProductiveSites).toContain('cursor.com');
-      expect(alwaysProductiveSites).toContain('figma.com');
+describe("Distraction Rules", () => {
+  describe("alwaysProductiveSites", () => {
+    it("should contain expected productive sites", () => {
+      expect(alwaysProductiveSites).toContain("cursor.com");
+      expect(alwaysProductiveSites).toContain("figma.com");
       expect(alwaysProductiveSites).toContain(
-        'us-east-1.console.aws.amazon.com',
+        "us-east-1.console.aws.amazon.com",
       );
     });
 
-    it('should be a non-empty array', () => {
+    it("should be a non-empty array", () => {
       expect(alwaysProductiveSites.length).toBeGreaterThan(0);
     });
   });
 
-  describe('alwaysProductiveOwners', () => {
-    it('should contain expected productive app owners', () => {
-      expect(alwaysProductiveOwners).toContain('Cursor');
-      expect(alwaysProductiveOwners).toContain('Toggl Track');
-      expect(alwaysProductiveOwners).toContain('MongoDB Compass');
-      expect(alwaysProductiveOwners).toContain('Postman');
-      expect(alwaysProductiveOwners).toContain('1Password');
-      expect(alwaysProductiveOwners).toContain('Electron');
+  describe("alwaysProductiveOwners", () => {
+    it("should contain expected productive app owners", () => {
+      expect(alwaysProductiveOwners).toContain("Cursor");
+      expect(alwaysProductiveOwners).toContain("Toggl Track");
+      expect(alwaysProductiveOwners).toContain("MongoDB Compass");
+      expect(alwaysProductiveOwners).toContain("Postman");
+      expect(alwaysProductiveOwners).toContain("1Password");
+      expect(alwaysProductiveOwners).toContain("Electron");
     });
 
-    it('should be a non-empty array', () => {
+    it("should be a non-empty array", () => {
       expect(alwaysProductiveOwners.length).toBeGreaterThan(0);
     });
   });
 
-  describe('isVeryLikelyProductive', () => {
-    it('should return true for a productive site URL', () => {
+  describe("isVeryLikelyProductive", () => {
+    it("should return true for a productive site URL", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
-        url: 'https://cursor.com/settings',
+        ownerName: "Chrome",
+        type: "browser",
+        url: "https://cursor.com/settings",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should return true for a productive app owner', () => {
+    it("should return true for a productive app owner", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Cursor',
-        type: 'window',
+        ownerName: "Cursor",
+        type: "window",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should return true for Toggl Track', () => {
+    it("should return true for Toggl Track", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Toggl Track',
-        type: 'window',
+        ownerName: "Toggl Track",
+        type: "window",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should return true for Postman', () => {
+    it("should return true for Postman", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Postman',
-        type: 'window',
+        ownerName: "Postman",
+        type: "window",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should return false for a non-productive app', () => {
+    it("should return false for a non-productive app", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Netflix',
-        type: 'window',
+        ownerName: "Netflix",
+        type: "window",
         timestamp: Date.now(),
       });
       expect(result).toBe(false);
     });
 
-    it('should return false for a non-productive URL', () => {
+    it("should return false for a non-productive URL", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
-        url: 'youtube.com',
+        ownerName: "Chrome",
+        type: "browser",
+        url: "youtube.com",
         timestamp: Date.now(),
       });
       expect(result).toBe(false);
     });
 
-    it('should return false when URL is null/undefined', () => {
+    it("should return false when URL is null/undefined", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
+        ownerName: "Chrome",
+        type: "browser",
         url: null,
         timestamp: Date.now(),
       });
       expect(result).toBe(false);
     });
 
-    it('should return false for an unknown app with no URL', () => {
+    it("should return false for an unknown app with no URL", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'SomeRandomApp',
-        type: 'window',
+        ownerName: "SomeRandomApp",
+        type: "window",
         timestamp: Date.now(),
       });
       expect(result).toBe(false);
     });
 
-    it('should handle Figma site correctly', () => {
+    it("should handle Figma site correctly", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
-        url: 'https://figma.com/design/abc123',
+        ownerName: "Chrome",
+        type: "browser",
+        url: "https://figma.com/design/abc123",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should handle AWS console correctly', () => {
+    it("should handle AWS console correctly", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
-        url: 'https://us-east-1.console.aws.amazon.com/ec2',
+        ownerName: "Chrome",
+        type: "browser",
+        url: "https://us-east-1.console.aws.amazon.com/ec2",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should match subdomains of productive sites', () => {
+    it("should match subdomains of productive sites", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
-        url: 'https://www.figma.com/files',
+        ownerName: "Chrome",
+        type: "browser",
+        url: "https://www.figma.com/files",
         timestamp: Date.now(),
       });
       expect(result).toBe(true);
     });
 
-    it('should handle bare domain URLs gracefully (no protocol)', () => {
+    it("should handle bare domain URLs gracefully (no protocol)", () => {
       const result = isVeryLikelyProductive({
-        ownerName: 'Chrome',
-        type: 'browser',
-        url: 'cursor.com',
+        ownerName: "Chrome",
+        type: "browser",
+        url: "cursor.com",
         timestamp: Date.now(),
       });
       // Bare domains without protocol are not valid URLs, function handles gracefully

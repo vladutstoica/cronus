@@ -6,7 +6,10 @@ import {
   type ExtractedPattern,
 } from "../patternLearner";
 import type { ActivityForMatching } from "../types";
-import type { CategorizationPattern, PatternType } from "../../../../shared/categorizationTypes";
+import type {
+  CategorizationPattern,
+  PatternType,
+} from "../../../../shared/categorizationTypes";
 
 // Track mock pattern storage for testing
 let mockPatternStore: Map<string, CategorizationPattern[]>;
@@ -39,26 +42,32 @@ vi.mock("../../../database/services/categorizationPatterns", () => ({
   findByTypeAndValue: vi.fn((userId, patternType, patternValue) => {
     const patterns = mockPatternStore.get(userId) ?? [];
     return patterns.find(
-      (p) => p.patternType === patternType && p.patternValue === patternValue
+      (p) => p.patternType === patternType && p.patternValue === patternValue,
     );
   }),
   findMatchingPatterns: vi.fn((userId, patternMatches) => {
     const patterns = mockPatternStore.get(userId) ?? [];
-    return patterns.filter((p) =>
-      patternMatches.some(
-        (m: { type: PatternType; value: string }) =>
-          m.type === p.patternType && m.value === p.patternValue
+    return patterns
+      .filter((p) =>
+        patternMatches.some(
+          (m: { type: PatternType; value: string }) =>
+            m.type === p.patternType && m.value === p.patternValue,
+        ),
       )
-    ).sort((a, b) => b.confidence - a.confidence);
+      .sort((a, b) => b.confidence - a.confidence);
   }),
   updatePattern: vi.fn((id, updates) => {
     for (const patterns of mockPatternStore.values()) {
       const pattern = patterns.find((p) => p.id === id);
       if (pattern) {
-        if (updates.categoryId !== undefined) pattern.categoryId = updates.categoryId;
-        if (updates.confidence !== undefined) pattern.confidence = updates.confidence;
-        if (updates.matchCount !== undefined) pattern.matchCount = updates.matchCount;
-        if (updates.correctionCount !== undefined) pattern.correctionCount = updates.correctionCount;
+        if (updates.categoryId !== undefined)
+          pattern.categoryId = updates.categoryId;
+        if (updates.confidence !== undefined)
+          pattern.confidence = updates.confidence;
+        if (updates.matchCount !== undefined)
+          pattern.matchCount = updates.matchCount;
+        if (updates.correctionCount !== undefined)
+          pattern.correctionCount = updates.correctionCount;
         return pattern;
       }
     }
@@ -110,7 +119,7 @@ vi.mock("../../../database/services/categorizationPatterns", () => ({
  * Helper to create an activity for matching
  */
 function createActivity(
-  overrides: Partial<ActivityForMatching> = {}
+  overrides: Partial<ActivityForMatching> = {},
 ): ActivityForMatching {
   return {
     appName: "Chrome",
@@ -127,7 +136,7 @@ function createActivity(
  */
 function createMockPattern(
   userId: string,
-  overrides: Partial<CategorizationPattern> = {}
+  overrides: Partial<CategorizationPattern> = {},
 ): CategorizationPattern {
   const pattern: CategorizationPattern = {
     id: nextPatternId++,
@@ -178,7 +187,7 @@ describe("PatternLearner", () => {
           type: "app",
           value: "vs code",
           signalStrength: 0.9,
-        })
+        }),
       );
     });
 
@@ -193,7 +202,7 @@ describe("PatternLearner", () => {
           type: "domain",
           value: "github.com",
           signalStrength: 0.85,
-        })
+        }),
       );
     });
 
@@ -208,7 +217,7 @@ describe("PatternLearner", () => {
           type: "url_path",
           value: "/pulls",
           signalStrength: 0.6,
-        })
+        }),
       );
     });
 
@@ -218,7 +227,9 @@ describe("PatternLearner", () => {
       });
       const patterns = learner.extractPatterns(activity);
 
-      const keywordPatterns = patterns.filter((p) => p.type === "title_keyword");
+      const keywordPatterns = patterns.filter(
+        (p) => p.type === "title_keyword",
+      );
       expect(keywordPatterns.length).toBeGreaterThan(0);
       expect(keywordPatterns[0].signalStrength).toBe(0.4);
     });
@@ -229,7 +240,9 @@ describe("PatternLearner", () => {
       });
       const patterns = learner.extractPatterns(activity);
 
-      const keywordPatterns = patterns.filter((p) => p.type === "title_keyword");
+      const keywordPatterns = patterns.filter(
+        (p) => p.type === "title_keyword",
+      );
       const keywords = keywordPatterns.map((p) => p.value);
 
       // Should not include "the", "new", "tab"
@@ -253,7 +266,7 @@ describe("PatternLearner", () => {
       // Verify sorted by signal strength (descending)
       for (let i = 1; i < patterns.length; i++) {
         expect(patterns[i - 1].signalStrength).toBeGreaterThanOrEqual(
-          patterns[i].signalStrength
+          patterns[i].signalStrength,
         );
       }
 
@@ -292,7 +305,9 @@ describe("PatternLearner", () => {
       });
       const patterns = learner.extractPatterns(activity);
 
-      const keywordPatterns = patterns.filter((p) => p.type === "title_keyword");
+      const keywordPatterns = patterns.filter(
+        (p) => p.type === "title_keyword",
+      );
       expect(keywordPatterns.length).toBeLessThanOrEqual(3);
     });
   });
@@ -322,7 +337,10 @@ describe("PatternLearner", () => {
       });
 
       const activity = createActivity({ appName: "Slack" });
-      const updatedPatterns = learner.recordCorrection(activity, "category-comm");
+      const updatedPatterns = learner.recordCorrection(
+        activity,
+        "category-comm",
+      );
 
       // Find the updated app pattern
       const appPattern = updatedPatterns.find((p) => p.patternType === "app");
@@ -343,7 +361,7 @@ describe("PatternLearner", () => {
       const updatedPatterns = learner.recordCorrection(
         activity,
         "category-comm",
-        "category-work"
+        "category-work",
       );
 
       const appPattern = updatedPatterns.find((p) => p.patternType === "app");
@@ -370,7 +388,7 @@ describe("PatternLearner", () => {
       );
       expect(updateConfidence).toHaveBeenCalledWith(
         existingPattern.id,
-        expect.any(Number)
+        expect.any(Number),
       );
     });
 
@@ -383,7 +401,10 @@ describe("PatternLearner", () => {
       });
 
       const activity = createActivity({ appName: "Slack" });
-      const updatedPatterns = learner.recordCorrection(activity, "category-comm");
+      const updatedPatterns = learner.recordCorrection(
+        activity,
+        "category-comm",
+      );
 
       const appPattern = updatedPatterns.find((p) => p.patternType === "app");
       expect(appPattern!.confidence).toBeLessThanOrEqual(1.0);
@@ -566,7 +587,9 @@ describe("PatternLearner", () => {
 
       expect(suggestion).not.toBeNull();
       expect(suggestion!.matchedPatterns).toHaveLength(1);
-      expect(suggestion!.matchedPatterns[0].pattern.patternValue).toBe("github.com");
+      expect(suggestion!.matchedPatterns[0].pattern.patternValue).toBe(
+        "github.com",
+      );
     });
 
     it("should include reasoning in suggestion", () => {
@@ -628,7 +651,7 @@ describe("PatternLearner", () => {
       );
       expect(updateConfidence).toHaveBeenCalledWith(
         pattern.id,
-        expect.closeTo(0.55, 1) // 0.5 + (0.1 * 0.5)
+        expect.closeTo(0.55, 1), // 0.5 + (0.1 * 0.5)
       );
       expect(incrementMatchCount).toHaveBeenCalledWith(pattern.id);
     });
@@ -648,7 +671,7 @@ describe("PatternLearner", () => {
       );
       expect(updateConfidence).toHaveBeenCalledWith(
         pattern.id,
-        expect.closeTo(0.35, 1) // 0.5 - 0.15
+        expect.closeTo(0.35, 1), // 0.5 - 0.15
       );
     });
 
@@ -771,17 +794,23 @@ describe("PatternLearner", () => {
 
       // First correction
       const patterns1 = learner.recordCorrection(activity, "category-comm");
-      const initialConfidence = patterns1.find((p) => p.patternType === "app")!.confidence;
+      const initialConfidence = patterns1.find(
+        (p) => p.patternType === "app",
+      )!.confidence;
       expect(initialConfidence).toBe(0.5);
 
       // Second correction to same category
       const patterns2 = learner.recordCorrection(activity, "category-comm");
-      const updatedConfidence = patterns2.find((p) => p.patternType === "app")!.confidence;
+      const updatedConfidence = patterns2.find(
+        (p) => p.patternType === "app",
+      )!.confidence;
       expect(updatedConfidence).toBe(0.6);
 
       // Third correction
       const patterns3 = learner.recordCorrection(activity, "category-comm");
-      const finalConfidence = patterns3.find((p) => p.patternType === "app")!.confidence;
+      const finalConfidence = patterns3.find(
+        (p) => p.patternType === "app",
+      )!.confidence;
       expect(finalConfidence).toBe(0.7);
     });
 

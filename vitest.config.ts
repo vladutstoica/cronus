@@ -41,10 +41,7 @@ export default defineConfig({
           setupFiles: ["./src/renderer/src/__tests__/setup.ts"],
           coverage: {
             provider: "v8",
-            include: [
-              "src/renderer/src/**/*.ts",
-              "src/renderer/src/**/*.tsx",
-            ],
+            include: ["src/renderer/src/**/*.ts", "src/renderer/src/**/*.tsx"],
             exclude: ["src/renderer/src/**/__tests__/**"],
           },
         },

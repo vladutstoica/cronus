@@ -31,7 +31,7 @@ const mockExecSync = vi.mocked(execSync);
  * Helper to create an activity for testing
  */
 function createActivity(
-  overrides: Partial<ActivityForTaskDetection> = {}
+  overrides: Partial<ActivityForTaskDetection> = {},
 ): ActivityForTaskDetection {
   return {
     appName: "Chrome",
@@ -45,7 +45,7 @@ function createActivity(
  * Helper to create a custom rule for testing
  */
 function createCustomRule(
-  overrides: Partial<TaskDetectionRule> = {}
+  overrides: Partial<TaskDetectionRule> = {},
 ): TaskDetectionRule {
   return {
     id: 1,
@@ -114,7 +114,10 @@ describe("TaskDetectionEngine", () => {
 
     it("should handle longer project keys", () => {
       const result = extractTaskId("MYPROJECT-123");
-      expect(result).toEqual({ taskId: "MYPROJECT-123", projectKey: "MYPROJECT" });
+      expect(result).toEqual({
+        taskId: "MYPROJECT-123",
+        projectKey: "MYPROJECT",
+      });
     });
 
     it("should normalize to uppercase", () => {
@@ -202,7 +205,7 @@ describe("TaskDetectionEngine", () => {
         createActivity({
           url: "https://linear.app/team/issue/VIB-300",
           title: "VIB-400 - Some Task",
-        })
+        }),
       );
 
       // Active session should win
@@ -343,7 +346,7 @@ describe("TaskDetectionEngine", () => {
   describe("URL Pattern Detection", () => {
     it("should detect Linear issue URL", () => {
       const result = engine.detectFromUrl(
-        "https://linear.app/company/issue/VIB-50"
+        "https://linear.app/company/issue/VIB-50",
       );
 
       expect(result).not.toBeNull();
@@ -354,9 +357,7 @@ describe("TaskDetectionEngine", () => {
     });
 
     it("should detect Linear URL without team", () => {
-      const result = engine.detectFromUrl(
-        "https://linear.app/issue/ENG-123"
-      );
+      const result = engine.detectFromUrl("https://linear.app/issue/ENG-123");
 
       expect(result).not.toBeNull();
       expect(result?.taskId).toBe("ENG-123");
@@ -365,7 +366,7 @@ describe("TaskDetectionEngine", () => {
 
     it("should detect Jira Cloud URL", () => {
       const result = engine.detectFromUrl(
-        "https://mycompany.atlassian.net/browse/PROJ-123"
+        "https://mycompany.atlassian.net/browse/PROJ-123",
       );
 
       expect(result).not.toBeNull();
@@ -376,7 +377,7 @@ describe("TaskDetectionEngine", () => {
 
     it("should detect Jira Server URL", () => {
       const result = engine.detectFromUrl(
-        "https://jira.company.com/browse/TASK-456"
+        "https://jira.company.com/browse/TASK-456",
       );
 
       expect(result).not.toBeNull();
@@ -405,7 +406,7 @@ describe("TaskDetectionEngine", () => {
     it("should detect task ID in window title", () => {
       const result = engine.detectFromWindowTitle(
         "VIB-123 - Add new feature",
-        "Chrome"
+        "Chrome",
       );
 
       expect(result).not.toBeNull();
@@ -418,7 +419,7 @@ describe("TaskDetectionEngine", () => {
 
       expect(result).not.toBeNull();
       expect(result?.confidence).toBe(
-        DEFAULT_CONFIDENCE.window_title + NATIVE_APP_CONFIDENCE_BOOST
+        DEFAULT_CONFIDENCE.window_title + NATIVE_APP_CONFIDENCE_BOOST,
       );
       expect(result?.provider).toBe("linear");
     });
@@ -428,7 +429,7 @@ describe("TaskDetectionEngine", () => {
 
       expect(result).not.toBeNull();
       expect(result?.confidence).toBe(
-        DEFAULT_CONFIDENCE.window_title + NATIVE_APP_CONFIDENCE_BOOST
+        DEFAULT_CONFIDENCE.window_title + NATIVE_APP_CONFIDENCE_BOOST,
       );
       expect(result?.provider).toBe("jira");
     });
@@ -436,7 +437,7 @@ describe("TaskDetectionEngine", () => {
     it("should detect task ID at end of title", () => {
       const result = engine.detectFromWindowTitle(
         "Working on feature PROJ-789",
-        "VS Code"
+        "VS Code",
       );
 
       expect(result).not.toBeNull();
@@ -465,7 +466,7 @@ describe("TaskDetectionEngine", () => {
       engine.loadCustomRules("user-1", [rule]);
 
       const result = engine.detectTask(
-        createActivity({ title: "Working on VIB-123" })
+        createActivity({ title: "Working on VIB-123" }),
       );
 
       expect(result.taskId).toBe("VIB-123");
@@ -484,7 +485,7 @@ describe("TaskDetectionEngine", () => {
         createActivity({
           url: "https://internal.company.com/tasks/PROJ-456",
           title: "Internal Tool",
-        })
+        }),
       );
 
       expect(result.taskId).toBe("PROJ-456");
@@ -534,9 +535,7 @@ describe("TaskDetectionEngine", () => {
       engine.loadCustomRules("user-1", [rule]);
 
       // Should not throw
-      const result = engine.detectTask(
-        createActivity({ title: "VIB-123" })
-      );
+      const result = engine.detectTask(createActivity({ title: "VIB-123" }));
 
       // Should still detect via other methods
       expect(result.taskId).toBe("VIB-123");
@@ -555,7 +554,7 @@ describe("TaskDetectionEngine", () => {
         createActivity({
           url: "https://linear.app/team/issue/VIB-200",
           title: "VIB-300 - Task Title",
-        })
+        }),
       );
 
       // Should have results from git, URL, and title
@@ -571,7 +570,7 @@ describe("TaskDetectionEngine", () => {
       const result = engine.detectTask(
         createActivity({
           url: "https://linear.app/team/issue/VIB-200",
-        })
+        }),
       );
 
       // Active session should win
@@ -584,7 +583,9 @@ describe("TaskDetectionEngine", () => {
 
       const result = engine.detectTask(createActivity());
 
-      expect(result.confidence).toBeGreaterThanOrEqual(AUTO_ASSOCIATE_THRESHOLD);
+      expect(result.confidence).toBeGreaterThanOrEqual(
+        AUTO_ASSOCIATE_THRESHOLD,
+      );
       expect(result.shouldAutoAssociate).toBe(true);
       expect(result.shouldSuggest).toBe(false);
     });
@@ -599,7 +600,7 @@ describe("TaskDetectionEngine", () => {
         createActivity({
           appName: "Chrome",
           title: "VIB-123 in Chrome",
-        })
+        }),
       );
 
       expect(result.confidence).toBeGreaterThanOrEqual(SUGGEST_THRESHOLD);
@@ -616,7 +617,7 @@ describe("TaskDetectionEngine", () => {
           appName: "Chrome",
           url: "https://google.com",
           title: "Google",
-        })
+        }),
       );
 
       expect(result.taskId).toBeNull();
