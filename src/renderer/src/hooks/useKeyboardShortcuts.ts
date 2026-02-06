@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import type { MainSection } from "../components/MainViewSidebar";
 
 /**
@@ -25,6 +25,7 @@ export interface UseKeyboardShortcutsOptions {
   // Action handlers
   onToggleTracking: () => void;
   onOpenCommandPalette: () => void;
+  onOpenTaskPicker?: () => void;
 
   // Help dialog state
   isShortcutsHelpOpen: boolean;
@@ -99,6 +100,7 @@ export function useKeyboardShortcuts(
     onNavigateSettings,
     onToggleTracking,
     onOpenCommandPalette,
+    onOpenTaskPicker,
     isShortcutsHelpOpen,
     setIsShortcutsHelpOpen,
     enabled = true,
@@ -113,85 +115,104 @@ export function useKeyboardShortcuts(
   }, [setIsShortcutsHelpOpen]);
 
   // Define all keyboard shortcuts
-  const shortcuts: KeyboardShortcut[] = [
-    // Navigation shortcuts
-    {
-      id: "nav-dashboard",
-      key: "1",
-      modifiers: ["meta"],
-      label: "Cmd+1",
-      description: "Go to Dashboard",
-      category: "navigation",
-      action: () => onNavigateSection("dashboard"),
-    },
-    {
-      id: "nav-todos",
-      key: "2",
-      modifiers: ["meta"],
-      label: "Cmd+2",
-      description: "Go to Todos",
-      category: "navigation",
-      action: () => onNavigateSection("todos"),
-    },
-    {
-      id: "nav-stats",
-      key: "3",
-      modifiers: ["meta"],
-      label: "Cmd+3",
-      description: "Go to Stats",
-      category: "navigation",
-      action: () => onNavigateSection("stats"),
-    },
-    {
-      id: "nav-settings",
-      key: ",",
-      modifiers: ["meta"],
-      label: "Cmd+,",
-      description: "Open Settings",
-      category: "navigation",
-      action: onNavigateSettings,
-    },
+  const shortcuts: KeyboardShortcut[] = useMemo(
+    () => [
+      // Navigation shortcuts
+      {
+        id: "nav-dashboard",
+        key: "1",
+        modifiers: ["meta"],
+        label: "Cmd+1",
+        description: "Go to Dashboard",
+        category: "navigation",
+        action: () => onNavigateSection("dashboard"),
+      },
+      {
+        id: "nav-todos",
+        key: "2",
+        modifiers: ["meta"],
+        label: "Cmd+2",
+        description: "Go to Todos",
+        category: "navigation",
+        action: () => onNavigateSection("todos"),
+      },
+      {
+        id: "nav-stats",
+        key: "3",
+        modifiers: ["meta"],
+        label: "Cmd+3",
+        description: "Go to Stats",
+        category: "navigation",
+        action: () => onNavigateSection("stats"),
+      },
+      {
+        id: "nav-settings",
+        key: ",",
+        modifiers: ["meta"],
+        label: "Cmd+,",
+        description: "Open Settings",
+        category: "navigation",
+        action: onNavigateSettings,
+      },
 
-    // Action shortcuts
-    {
-      id: "action-pause",
-      key: "p",
-      modifiers: ["meta"],
-      label: "Cmd+P",
-      description: "Pause/Resume Tracking",
-      category: "actions",
-      action: onToggleTracking,
-    },
-    {
-      id: "action-command-palette",
-      key: "k",
-      modifiers: ["meta"],
-      label: "Cmd+K",
-      description: "Open Command Palette",
-      category: "actions",
-      action: onOpenCommandPalette,
-    },
+      // Action shortcuts
+      {
+        id: "action-pause",
+        key: "p",
+        modifiers: ["meta"],
+        label: "Cmd+P",
+        description: "Pause/Resume Tracking",
+        category: "actions",
+        action: onToggleTracking,
+      },
+      {
+        id: "action-command-palette",
+        key: "k",
+        modifiers: ["meta"],
+        label: "Cmd+K",
+        description: "Open Command Palette",
+        category: "actions",
+        action: onOpenCommandPalette,
+      },
+      {
+        id: "action-task-picker",
+        key: "t",
+        modifiers: ["meta", "shift"],
+        label: "Cmd+Shift+T",
+        description: "Open Task Picker",
+        category: "actions",
+        action: () => onOpenTaskPicker?.(),
+      },
 
-    // General shortcuts
-    {
-      id: "help-shortcuts",
-      key: "?",
-      modifiers: [],
-      label: "?",
-      description: "Show Keyboard Shortcuts",
-      category: "general",
-      action: openShortcutsHelp,
-    },
-    {
-      id: "help-shortcuts-alt",
-      key: "/",
-      modifiers: ["meta"],
-      label: "Cmd+/",
-      description: "Show Keyboard Shortcuts",
-      category: "general",
-      action: openShortcutsHelp,
-    },
-  ];
+      // General shortcuts
+      {
+        id: "help-shortcuts",
+        key: "?",
+        modifiers: [],
+        label: "?",
+        description: "Show Keyboard Shortcuts",
+        category: "general",
+        action: openShortcutsHelp,
+      },
+      {
+        id: "help-shortcuts-alt",
+        key: "/",
+        modifiers: ["meta"],
+        label: "Cmd+/",
+        description: "Show Keyboard Shortcuts",
+        category: "general",
+        action: openShortcutsHelp,
+      },
+    ],
+    [
+      onNavigateSection,
+      onNavigateSettings,
+      onToggleTracking,
+      onOpenCommandPalette,
+      onOpenTaskPicker,
+      openShortcutsHelp,
+    ],
+  );
 
   // Handle keyboard events
   useEffect(() => {

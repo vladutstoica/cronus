@@ -1,6 +1,7 @@
 import { ElectronAPI } from "@electron-toolkit/preload";
 import { ActiveWindowDetails, ActivityToRecategorize } from "@shared/types";
-import { FloatingWindowApi } from "./floatingPreload";
+import type { FloatingWindowApi } from "./floatingPreload";
+import type { TaskProvider } from "../shared/taskTypes";
 
 // Use the BaseElectronAPI type from electron-toolkit if available
 type BaseElectronAPI = ElectronAPI;
