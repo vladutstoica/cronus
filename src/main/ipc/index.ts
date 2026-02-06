@@ -13,6 +13,7 @@ import { registerSettingsHandlers } from "./settingsHandlers";
 import { registerExportHandlers } from "./exportHandlers";
 import { registerCategorizationPatternsHandlers } from "./categorizationPatternsHandlers";
 import { registerWorklogHandlers } from "./worklogHandlers";
+import { registerIntegrationHandlers } from "./integrationHandlers";
 
 export function registerIpcHandlers(
   windows: Windows,
@@ -33,4 +34,5 @@ export function registerIpcHandlers(
   registerExportHandlers();
   registerCategorizationPatternsHandlers();
   registerWorklogHandlers();
+  registerIntegrationHandlers();
 }
