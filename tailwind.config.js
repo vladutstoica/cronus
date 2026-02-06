@@ -10,7 +10,12 @@
  */
 module.exports = {
   darkMode: "class",
-  content: ["./src/renderer/**/*.{js,jsx,ts,tsx}", "./src/renderer/index.html"],
+  content: [
+    "./src/renderer/**/*.{js,jsx,ts,tsx}",
+    "./src/renderer/index.html",
+    "./src/renderer/tray.html",
+    "./src/renderer/floating.html",
+  ],
   theme: {
     extend: {
       // =========================================================================

@@ -100,8 +100,24 @@ function App() {
 
     // Toggle tray popover function
     const toggleTrayPopover = () => {
-      if (!trayPopoverWindow) {
+      // Recreate window if it was destroyed
+      if (!trayPopoverWindow || trayPopoverWindow.isDestroyed()) {
         trayPopoverWindow = createTrayPopoverWindow();
+        windows.trayPopoverWindow = trayPopoverWindow;
+
+        // Set up closed event handler for the new window
+        if (trayPopoverWindow) {
+          trayPopoverWindow.on("closed", () => {
+            trayPopoverWindow = null;
+            windows.trayPopoverWindow = null;
+          });
+        }
+        // New window needs to load before showing, so return and let it show after load
+        return;
+      }
+
+      if (trayPopoverWindow.isDestroyed()) {
+        return;
       }
 
       if (trayPopoverWindow.isVisible()) {

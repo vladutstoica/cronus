@@ -263,7 +263,10 @@ export function createTrayPopoverWindow(): BrowserWindow {
 
   // Hide when loses focus (click outside)
   popover.on("blur", () => {
-    popover.hide();
+    // Only hide if not being closed
+    if (!popover.isDestroyed()) {
+      popover.hide();
+    }
   });
 
   popover.webContents.on("did-finish-load", () => {
