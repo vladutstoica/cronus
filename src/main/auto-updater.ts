@@ -125,6 +125,16 @@ function setupRecurringUpdateCheck(): void {
   }, intervalMs);
 }
 
+/**
+ * Cleanup auto-updater resources. Call this on app quit.
+ */
+export function cleanupAutoUpdater(): void {
+  if (updateTimer) {
+    clearInterval(updateTimer);
+    updateTimer = null;
+  }
+}
+
 export function registerAutoUpdaterHandlers(): void {
   ipcMain.handle("check-for-updates", () => {
     // log.info('🖱️ Manual update check requested')

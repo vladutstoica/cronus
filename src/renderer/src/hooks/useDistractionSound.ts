@@ -32,15 +32,29 @@ export function useDistractionSound(
   }, [isAuthenticated]);
 
   // On mount, get the audio data URL from the main process and create the Audio object.
+  // Cleanup the audio element on unmount to prevent memory leaks.
   useEffect(() => {
+    let audio: HTMLAudioElement | null = null;
+
     const loadAudio = async () => {
       // @ts-ignore
       const dataUrl = await window.api?.getAudioDataUrl();
       if (dataUrl) {
-        setDistractionAudio(new Audio(dataUrl));
+        audio = new Audio(dataUrl);
+        setDistractionAudio(audio);
       }
     };
     loadAudio();
+
+    // Cleanup: pause audio and release the HTMLAudioElement on unmount
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = ""; // Release the audio resource
+        audio.load(); // Reset the element
+      }
+      setDistractionAudio(null);
+    };
   }, []);
 
   // This effect runs whenever the category details change, to start or stop the sound.

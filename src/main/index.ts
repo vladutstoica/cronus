@@ -10,6 +10,7 @@ import {
 import {
   initializeAutoUpdater,
   registerAutoUpdaterHandlers,
+  cleanupAutoUpdater,
 } from "./auto-updater";
 import { initDatabase, closeDatabase } from "./database";
 import { getOrCreateLocalUser } from "./database/services/users";
@@ -295,6 +296,7 @@ function App() {
 
   app.on("will-quit", () => {
     destroyTray();
+    cleanupAutoUpdater();
     closeDatabase();
   });
 

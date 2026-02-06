@@ -110,7 +110,14 @@ const FloatingDisplay: React.FC = () => {
           }
         },
       );
-      return cleanup;
+      // Cleanup: unsubscribe from status updates AND clear any pending timeout
+      return () => {
+        cleanup();
+        if (ocrIndicatorTimeout.current) {
+          clearTimeout(ocrIndicatorTimeout.current);
+          ocrIndicatorTimeout.current = null;
+        }
+      };
     }
     return () => {};
   }, []);
@@ -189,6 +196,15 @@ const FloatingDisplay: React.FC = () => {
     document.removeEventListener("mouseup", handleGlobalMouseUp);
     dragStartInfoRef.current = null;
   }, [handleGlobalMouseMove]);
+
+  // Cleanup document event listeners on unmount to prevent memory leaks
+  // This handles the case where component unmounts during an active drag
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
+      document.removeEventListener("mouseup", handleGlobalMouseUp);
+    };
+  }, [handleGlobalMouseMove, handleGlobalMouseUp]);
 
   const handleMouseDownOnDraggable = (
     event: React.MouseEvent<HTMLDivElement>,
